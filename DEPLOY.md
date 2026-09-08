@@ -2,6 +2,18 @@
 
 Solo-dev safety system. Every deployment follows this file. Every deploy maps to a git commit — rollback is always "redeploy the previous tag".
 
+## CI runner (self-hosted)
+
+- **Where:** `C:\Users\hp\actions-runner`, registered to `er4l1m4d/lokkin` as `lokkin-pc` (labels: `self-hosted, lokkin-pc, Windows, X64`)
+- **Why:** GitHub's hosted runners are blocked for this account (see ERROR.md E-013). The self-hosted runner is the CI gate until that lifts.
+- **Auto-start:** on logon via `Startup\lokkin-runner.bat` (starts minimized). 
+- **Manual start:** run `C:\Users\hp\actions-runner\run.cmd`
+- **Manual stop:** close its console window / stop the process
+- **Logs:** `C:\Users\hp\actions-runner\runner-run.log` (listener) + `_diag\` (job logs)
+- **If jobs sit queued:** runner is offline → start it, jobs pick up automatically.
+- **SECURITY (public repo):** the workflow must NEVER run on `pull_request` — fork PRs would execute untrusted code on this PC. Push to `main` and `workflow_dispatch` only. If the restriction (E-013) lifts and we move back to hosted runners, re-adding `pull_request` is safe.
+- **Upgrading to hosted runners later:** change `runs-on:` back to `ubuntu-latest`, remove the runner (`.\config.cmd remove --token <token>`), delete the Startup .bat.
+
 ## Workflow (per feature slice)
 
 ```
