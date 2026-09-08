@@ -59,14 +59,15 @@
 - [x] **3.7 (added) Mock flow integration tests** — `flow.test.ts`: 6 tests covering the DEPLOY.md critical flows on the mock layer (create → join x4 → idempotent join → hidden correct answers → one-answer enforcement → auto-VALIDATING → conserved payouts). 10/10 tests total.
 - [ ] **3.6 Backend: public quiz list** — `GET /api/quizzes` (status filter, joinable first, paged); wire Home to it. Test, then commit.
 
-## Phase 4 — Creation & Commitment Flow (+ join slice)
+## Phase 4 — Creation & Commitment Flow (+ join slice) ✅ (4.6 backend pending)
 **Goal:** Users can create quizzes and join with stakes (mock payments).
 
-- [ ] **4.1 Create — Upload** — Paste text or PDF upload → send to backend draft endpoint; show parsing state.
-- [ ] **4.2 Create — Generate** — AI generation progress screen; handle failure with retry.
-- [ ] **4.3 Create — Review** — Editable question cards (edit text/options/answers, delete, reorder), settings (question count, duration, window), Publish CTA → quiz goes OPEN.
-- [ ] **4.4 Commitment (mock)** — Amount selector (1–1000 NIM, presets), confirm → mock tx instantly CONFIRMED, memo code `LK-XXXX` card shown for real-mode later.
-- [ ] **4.5 Lobby** — Countdown ring, participants grid, commitment meter, "auto-refund if <3 confirmed" warning, creator-blind note.
+- [x] **4.1 Create — Upload** — Title/description inputs, file upload (.txt/.md via FileReader; PDF politely deferred to the AI backend), paste area with char count, settings choosers (questions 5–20, duration 1–15 min, stake presets, start delay 15/30/60 min).
+- [x] **4.2 Create — Generate** — Staged progress (Reading → Drafting → Polishing) with `lib/generator.ts`: cloze-style mock AI from pasted material (unique answer words, distractor pool, explanations). Real Gemini swaps in at Phase 6 behind the same interface. Failure path with retry.
+- [x] **4.3 Create — Review** — Editable question cards (text, 4 options, correct-key selector, explanation), reorder/delete/add, blank-draft templates; publish = createQuiz → addQuestion×N → publish → open → navigate to detail.
+- [x] **4.4 Commitment (mock)** — Stake summary + payout rules recap, confirming spinner, instant-CONFIRMED mock tx → join → MemoCard with `LK-XXXX` code + escrow address → lobby CTA.
+- [x] **4.5 Lobby** — SVG countdown ring to `startsAt`, quorum MeterBar (min 3) with success/warning states, participants list (host badge, creator-plays-blind note), auto-detects LIVE → "Enter the quiz", closed rooms → results link.
+- [x] **4.7 (added) Generator tests** — `generator.test.ts`: 6 tests (count, cloze shape, unique options/answers, thin-material rejection, blank draft, memo format).
 - [ ] **4.6 Backend: join endpoint** — `POST /api/quizzes/{id}/join` (user + amount → PENDING participant; mock mode auto-confirms tx); wire Commitment + Lobby to it. Test, then commit.
 
 ## Phase 5 — Results & Post-Quiz (+ results slice)
