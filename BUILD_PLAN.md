@@ -7,7 +7,7 @@
 ## Process rules
 
 1. **Phase by phase.** Never one-shot the project. One phase at a time → verify (lint, typecheck, build) → tick boxes → **commit & push** → post a phase summary (added / changed / improved).
-2. **CI gate.** GitHub Actions runs on every push: frontend lint + typecheck + build, backend install + compile. Red CI blocks progress until fixed.
+2. **CI gate.** GitHub Actions runs on every push: frontend lint + typecheck + build, backend install + compile. **Currently blocked by account-level restriction (E-013) — until it lifts, the mandatory gate of record is local: `npm run lint` + `npm run build` (frontend), `python -m compileall app` (backend), run before every commit.**
 3. **Error discipline.** Every error gets logged in `ERROR.md` with cause + fix. When a new error appears, **scan `ERROR.md` first** — similar signatures often repeat.
 4. **Build in slices.** UI for a flow → backend for that flow → test → commit. Integration happens per-flow, not as a big bang at the end.
 5. **Deploy via `DEPLOY.md`.** Checklist before/after every deploy; every deploy maps to a git commit (rollback = redeploy previous tag).
