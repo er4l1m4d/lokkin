@@ -59,6 +59,12 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 
 ## Process / environment
 
+### E-014 — CI backend job failed: pip `getaddrinfo failed` (transient DNS)
+- **When:** Phase 0.5, first self-hosted CI run
+- **Error:** `WARNING: Retrying ... connection broken by 'NewConnectionError': Failed to establish a new connection: [Errno 11001] getaddrinfo failed': /simple/fastapi/` → `ERROR: No matching distribution found for fastapi==0.116.1`
+- **Cause:** Machine-wide network blip during the job — DNS resolution failed for pypi.org. Evidence: npm + git + checkout worked fine in the same run; `gh run watch` stream dropped at the same moment; a plain `pip download` outside CI hit the same failure; rerun passed with zero changes.
+- **Fix:** `gh run rerun <id> --failed`. **Rule: single `getaddrinfo failed` / network retry warnings in CI = rerun first, debug second.** If it recurs often, consider a pip cache or vendored wheels.
+
 ### E-013 — GitHub Actions runs fail instantly, no runner assigned (account-level restriction)
 - **When:** Phase 0.5, first CI runs on the new repo
 - **Error:** Every run: `startup_failure` (private) / `failure` after 3s (public) · jobs created but `runner_id: 0`, `runner_name: ""`, zero steps, no logs, "This workflow run cannot be retried".

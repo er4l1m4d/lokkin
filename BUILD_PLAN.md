@@ -7,7 +7,7 @@
 ## Process rules
 
 1. **Phase by phase.** Never one-shot the project. One phase at a time → verify (lint, typecheck, build) → tick boxes → **commit & push** → post a phase summary (added / changed / improved).
-2. **CI gate.** CI runs on the **self-hosted runner `lokkin-pc`** (the dev PC — GitHub-hosted runners are account-blocked, E-013; setup/ops in DEPLOY.md). Pushes to `main` trigger: frontend lint + typecheck + build, backend install + compile. If the runner is offline, start it with `C:\Users\hp\actions-runner\run.cmd` — queued jobs pick up automatically. Local gates (lint + build before every commit) remain mandatory regardless.
+2. **CI gate.** CI runs on the **self-hosted runner `lokkin-pc`** (the dev PC — GitHub-hosted runners are account-blocked, E-013; setup/ops in DEPLOY.md). Pushes to `main` trigger: frontend lint + typecheck + build, backend install + compile. **CI green as of Phase 0.5.** If the runner is offline, start it with `C:\Users\hp\actions-runner\run.cmd` — queued jobs pick up automatically. Local gates (lint + build before every commit) remain mandatory regardless.
 3. **Error discipline.** Every error gets logged in `ERROR.md` with cause + fix. When a new error appears, **scan `ERROR.md` first** — similar signatures often repeat.
 4. **Build in slices.** UI for a flow → backend for that flow → test → commit. Integration happens per-flow, not as a big bang at the end.
 5. **Deploy via `DEPLOY.md`.** Checklist before/after every deploy; every deploy maps to a git commit (rollback = redeploy previous tag).
