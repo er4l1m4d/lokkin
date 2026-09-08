@@ -1,0 +1,29 @@
+# Dependencies & build output
+node_modules/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Env & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# Private planning docs — this repo goes public for the competition
+lokkin-conversation.md
+FireShot*.pdf
+inspos/
+lokkin-core-mvp.zip
+
+# OS / editors
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
