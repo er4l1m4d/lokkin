@@ -6,11 +6,15 @@ Solo-dev safety system. Every deployment follows this file. Every deploy maps to
 
 - **Where:** `C:\Users\hp\actions-runner`, registered to `er4l1m4d/lokkin` as `lokkin-pc` (labels: `self-hosted, lokkin-pc, Windows, X64`)
 - **Why:** GitHub's hosted runners are blocked for this account (see ERROR.md E-013). The self-hosted runner is the CI gate until that lifts.
-- **Auto-start:** on logon via `Startup\lokkin-runner.bat` (starts minimized). 
-- **Manual start:** run `C:\Users\hp\actions-runner\run.cmd`
-- **Manual stop:** close its console window / stop the process
-- **Logs:** `C:\Users\hp\actions-runner\runner-run.log` (listener) + `_diag\` (job logs)
-- **If jobs sit queued:** runner is offline → start it, jobs pick up automatically.
+- **Auto-start:** NOT automatic yet (scheduled-task creation denied — no admin). Runner must be started per boot/session with the WMI detach (see E-018):
+  ```powershell
+  Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{
+    CommandLine = 'cmd /c cd /d C:\Users\hp\actions-runner && run.cmd >> runner-run.log 2>&1' }
+  ```
+- **Manual start (fallback, dies with the shell session):** run `C:\Users\hp\actions-runner\run.cmd`
+- **Manual stop:** kill the Runner process in Task Manager
+- **Logs:** `C:\Users\hp\actions-runner\runner-run.log` (listener + job results) + `_diag\` (detailed job logs)
+- **If jobs sit queued:** check `gh api repos/er4l1m4d/lokkin/actions/runners --jq '.runners[].status'` — if `offline`, run the WMI start above. If `online` + `busy`, it's working — verify in `runner-run.log` (jobs run one at a time and can show `queued` in the API meanwhile).
 - **SECURITY (public repo):** the workflow must NEVER run on `pull_request` — fork PRs would execute untrusted code on this PC. Push to `main` and `workflow_dispatch` only. If the restriction (E-013) lifts and we move back to hosted runners, re-adding `pull_request` is safe.
 - **Upgrading to hosted runners later:** change `runs-on:` back to `ubuntu-latest`, remove the runner (`.\config.cmd remove --token <token>`), delete the Startup .bat.
 

@@ -71,6 +71,13 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Cause:** Vite's react-ts template enables `erasableSyntaxOnly` (TS must stay erasable to plain JS) — constructor parameter properties are TS-only syntax.
 - **Fix:** Declare class fields explicitly and assign in the constructor body. **Rule: on this codebase, never use TS-only runtime syntax (parameter properties, enums) — only type-level annotations.**
 
+### E-018 — Self-hosted runner died silently (child of the shell session)
+- **When:** Phase 1, after the tool session that started it ended
+- **Error:** Jobs stuck `queued` forever; API showed runner `status: offline`, no Runner process on the machine.
+- **Cause:** `Start-Process cmd /c run.cmd` created the runner as a descendant of the shell session; the session teardown killed the process tree. The Startup-folder .bat only helps after a manual logon.
+- **Attempts:** (1) `svc.cmd install` — file doesn't exist in runner v2.337.0 Windows zip. (2) `schtasks /create` — `Access is denied` (needs admin on this machine).
+- **Fix (works, no admin):** start via WMI so the process is owned by WmiPrvSE and survives the session: `Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = 'cmd /c cd /d C:\Users\hp\actions-runner && run.cmd >> runner-run.log 2>&1' }`. **Rule: if CI jobs sit queued, check runner status first — `gh api repos/er4l1m4d/lokkin/actions/runners --jq '.runners[].status'`; if offline, re-run the WMI command.** Also note: jobs show `queued` with empty runner name while the runner works through them one at a time — check `runner-run.log` tail for truth.
+
 ### E-017 — Payout math double-scaled the pool (logic bug, caught by conservation tests)
 - **When:** Phase 1, writing payout tests for mock.ts
 - **Symptom:** First implementation took `bonus = pool * 0.1`, then `pool *= 0.9`, then computed winner shares (50/30/10) **on the reduced pool** — allocations + bonus did not sum to the pool; 3 of 4 tests failed with a shortfall. Second pass also let skipped tie allocations vanish instead of flowing to the completion bonus.
