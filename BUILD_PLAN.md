@@ -42,11 +42,11 @@
 - [x] **1.6 Quiz components** — QuizCard, OptionButton (idle/selected/correct/wrong/missed), PodiumSlot (2-1-3 order, medals, heights), ParticipantRow (status dots), MemoCard (code + escrow address, copy buttons).
 - [x] **1.7 (added) Payout regression tests** — `payouts.test.ts` (vitest): 4 scenarios incl. tie competition ranking (1,1,3) and no-shows, every case asserts money conservation (E-017). `npm test` added to gates + CI.
 
-## Phase 2 — App Shell & Navigation
+## Phase 2 — App Shell & Navigation ✅
 **Goal:** Mobile-first frame all screens live in.
 
-- [ ] **2.1 Router + shell** — Routes for all 11 screens; bottom tab bar (Home, Create, Profile) mobile-first; safe-area padding.
-- [ ] **2.2 Session context** — `context/SessionContext.tsx`: display name, wallet (null until linked), mode (demo/practice/commitment); persists to localStorage.
+- [x] **2.1 Router + shell** — BrowserRouter, all 11 routes + session gates (`RequireSession` / `RedirectIfSession`); `AppShell` (max-w-md, safe areas); `BottomNav` (Home/Create/Profile, active pill); `vercel.json` SPA rewrites; dev-only `/dev/gallery` for components.
+- [x] **2.2 Session context** — `SessionProvider` with lazy localStorage init (no restore flicker), `signIn`/`setMode`/`signOut`, display name + mode persisted.
 
 ## Phase 3 — Core MVP Screens (+ browse/detail/play slice)
 **Goal:** The demo-critical path works end-to-end. Slice: browse → detail → play wired to the real backend wherever endpoints exist.

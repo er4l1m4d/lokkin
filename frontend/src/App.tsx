@@ -1,254 +1,129 @@
-import { useState } from 'react'
-import { BrowserRouter } from 'react-router-dom'
-import type { Participant, Quiz, ResultRow } from '@/api/types'
-import { Button } from '@/components/Button'
-import { EmptyState } from '@/components/EmptyState'
-import { MemoCard } from '@/components/MemoCard'
-import { MeterBar } from '@/components/MeterBar'
-import { Modal } from '@/components/Modal'
-import { OptionButton } from '@/components/OptionButton'
-import { ParticipantRow } from '@/components/ParticipantRow'
-import { PodiumSlot } from '@/components/PodiumSlot'
-import { QuizCard } from '@/components/QuizCard'
-import { StatusPill } from '@/components/StatusPill'
-import { StepDots } from '@/components/StepDots'
-import { TimerPill } from '@/components/TimerPill'
+import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { useSession } from '@/context/useSession'
+import { DevGallery } from '@/screens/DevGallery'
+import { CommitScreen } from '@/screens/CommitScreen'
+import { CreateScreen } from '@/screens/CreateScreen'
+import { HomeScreen } from '@/screens/HomeScreen'
+import { LobbyScreen } from '@/screens/LobbyScreen'
+import { ProfileScreen } from '@/screens/ProfileScreen'
+import { QuizDetailScreen } from '@/screens/QuizDetailScreen'
+import { QuizPlayScreen } from '@/screens/QuizPlayScreen'
+import { ResultsScreen } from '@/screens/ResultsScreen'
+import { ReviewScreen } from '@/screens/ReviewScreen'
+import { SubmittedScreen } from '@/screens/SubmittedScreen'
+import { WelcomeScreen } from '@/screens/WelcomeScreen'
 
-const demoQuiz: Quiz = {
-  id: 'demo',
-  title: 'Cell Biology Final',
-  description: 'Mitosis, membranes, and everything your lecturer warned you about.',
-  status: 'OPEN',
-  currency: 'NIM',
-  entryAmount: 50,
-  durationSeconds: 300,
-  questionCount: 10,
-  participantCount: 4,
-  startsAt: null,
-  creatorId: 'creator',
+/** Blocks a route until a session exists; remembers where the user was going */
+function RequireSession({ children }: { children: ReactNode }) {
+  const { user } = useSession()
+  const location = useLocation()
+  if (!user) return <Navigate to="/" replace state={{ from: location }} />
+  return children
 }
 
-const demoParticipants: Participant[] = [
-  {
-    id: 'p1',
-    quizId: 'demo',
-    userId: 'u1',
-    displayName: 'Ada',
-    status: 'COMPLETED',
-    disconnectCount: 0,
-    correctAnswers: 9,
-    scorePercentage: 90,
-    rank: 1,
-    entryAmount: 50,
-  },
-  {
-    id: 'p2',
-    quizId: 'demo',
-    userId: 'u2',
-    displayName: 'Zainab',
-    status: 'ACTIVE',
-    disconnectCount: 1,
-    correctAnswers: 4,
-    scorePercentage: null,
-    rank: null,
-    entryAmount: 50,
-  },
-]
-
-const podiumRows: ResultRow[] = [
-  {
-    participantId: 'p1',
-    displayName: 'Ada',
-    correctAnswers: 9,
-    totalQuestions: 10,
-    scorePercentage: 90,
-    rank: 1,
-    entryAmount: 50,
-    payout: 77.5,
-    payoutKind: 'winner',
-  },
-  {
-    participantId: 'p2',
-    displayName: 'Zainab',
-    correctAnswers: 7,
-    totalQuestions: 10,
-    scorePercentage: 70,
-    rank: 2,
-    entryAmount: 50,
-    payout: 59.5,
-    payoutKind: 'winner',
-  },
-  {
-    participantId: 'p3',
-    displayName: 'Kofi',
-    correctAnswers: 6,
-    totalQuestions: 10,
-    scorePercentage: 60,
-    rank: 3,
-    entryAmount: 50,
-    payout: 53.5,
-    payoutKind: 'winner',
-  },
-]
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-card bg-white p-5 shadow-soft">
-      <h2 className="mb-4 text-sm font-bold tracking-wide text-ink-muted uppercase">{title}</h2>
-      {children}
-    </section>
-  )
-}
-
-function Gallery() {
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selected, setSelected] = useState<'A' | 'B' | 'C' | 'D'>('B')
-  const [demoUntil] = useState(() => new Date(Date.now() + 90_000))
-
-  return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-5 py-8">
-      <header className="text-center">
-        <h1 className="text-2xl">Component Gallery</h1>
-        <p className="text-sm text-ink-soft">Phase 1 eyeball route — replaced by the real app in Phase 2</p>
-      </header>
-
-      <Section title="StatusPill">
-        <div className="flex flex-wrap gap-2">
-          {(['OPEN', 'LIVE', 'ENDED', 'VALIDATING', 'FINALIZED', 'SETTLED', 'CANCELLED'] as const).map(
-            (s) => (
-              <StatusPill key={s} status={s} />
-            ),
-          )}
-        </div>
-      </Section>
-
-      <Section title="TimerPill + MeterBar">
-        <div className="flex items-center gap-3">
-          <TimerPill seconds={195} />
-          <TimerPill seconds={22} />
-          <TimerPill until={demoUntil} />
-        </div>
-        <div className="mt-4">
-          <MeterBar value={2} target={3} max={8} label="Confirmed commitments" />
-        </div>
-      </Section>
-
-      <Section title="Buttons">
-        <div className="flex flex-col gap-2">
-          <Button size="lg">Enter a quiz</Button>
-          <Button variant="secondary" size="lg">
-            Practice free
-          </Button>
-          <div className="flex gap-2">
-            <Button size="sm">Join</Button>
-            <Button size="sm" variant="danger">
-              Leave
-            </Button>
-            <Button size="sm" variant="ghost">
-              Details
-            </Button>
-            <Button size="sm" disabled>
-              Locked
-            </Button>
-          </div>
-          <Button variant="secondary" onClick={() => setModalOpen(true)}>
-            Open modal
-          </Button>
-        </div>
-      </Section>
-
-      <Section title="StepDots">
-        <StepDots steps={['Upload', 'Generate', 'Review']} current={1} />
-      </Section>
-
-      <Section title="QuizCard">
-        <QuizCard quiz={demoQuiz} />
-      </Section>
-
-      <Section title="OptionButton">
-        <div className="flex flex-col gap-2">
-          <OptionButton
-            optionKey="A"
-            text="Prophase"
-            selected={selected === 'A'}
-            onSelect={setSelected}
-          />
-          <OptionButton
-            optionKey="B"
-            text="Anaphase"
-            selected={selected === 'B'}
-            reveal="correct"
-            disabled
-            onSelect={() => {}}
-          />
-          <OptionButton
-            optionKey="C"
-            text="Interphase"
-            selected={selected === 'C'}
-            reveal="wrong"
-            disabled
-            onSelect={() => {}}
-          />
-          <OptionButton
-            optionKey="D"
-            text="Cytokinesis"
-            selected={selected === 'D'}
-            reveal="missed"
-            disabled
-            onSelect={() => {}}
-          />
-        </div>
-      </Section>
-
-      <Section title="Podium">
-        <div className="flex items-end gap-2">
-          <PodiumSlot place={2} row={podiumRows[1]} />
-          <PodiumSlot place={1} row={podiumRows[0]} />
-          <PodiumSlot place={3} row={podiumRows[2]} />
-        </div>
-      </Section>
-
-      <Section title="Participants">
-        <ul className="flex flex-col gap-2">
-          <ParticipantRow participant={demoParticipants[0]} isCreator />
-          <ParticipantRow participant={demoParticipants[1]} />
-        </ul>
-      </Section>
-
-      <Section title="MemoCard">
-        <MemoCard code="LK-7F3K" address="NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0" />
-      </Section>
-
-      <Section title="EmptyState">
-        <EmptyState
-          icon="🎯"
-          title="No quizzes yet"
-          description="Be the first — create a quiz from your study material and challenge your group."
-          action={<Button size="sm">Create a quiz</Button>}
-        />
-      </Section>
-
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Confirm commitment">
-        <p className="text-sm text-ink-soft">
-          You're committing 50 NIM to this quiz. Top 3 split the pool.
-        </p>
-        <div className="mt-4 flex gap-2">
-          <Button block onClick={() => setModalOpen(false)}>
-            Confirm
-          </Button>
-          <Button variant="secondary" onClick={() => setModalOpen(false)}>
-            Cancel
-          </Button>
-        </div>
-      </Modal>
-    </main>
-  )
+/** Welcome is only for users without a session */
+function RedirectIfSession({ children }: { children: ReactNode }) {
+  const { user } = useSession()
+  if (user) return <Navigate to="/home" replace />
+  return children
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Gallery />
-    </BrowserRouter>
+    <Router>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <RedirectIfSession>
+              <WelcomeScreen />
+            </RedirectIfSession>
+          }
+        />
+        <Route path="/dev/gallery" element={<DevGallery />} />
+        <Route
+          path="/home"
+          element={
+            <RequireSession>
+              <HomeScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/create"
+          element={
+            <RequireSession>
+              <CreateScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <RequireSession>
+              <ProfileScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/quiz/:quizId"
+          element={
+            <RequireSession>
+              <QuizDetailScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/quiz/:quizId/commit"
+          element={
+            <RequireSession>
+              <CommitScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/quiz/:quizId/lobby"
+          element={
+            <RequireSession>
+              <LobbyScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/quiz/:quizId/play"
+          element={
+            <RequireSession>
+              <QuizPlayScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/quiz/:quizId/submitted"
+          element={
+            <RequireSession>
+              <SubmittedScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/quiz/:quizId/results"
+          element={
+            <RequireSession>
+              <ResultsScreen />
+            </RequireSession>
+          }
+        />
+        <Route
+          path="/quiz/:quizId/review"
+          element={
+            <RequireSession>
+              <ReviewScreen />
+            </RequireSession>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Router>
   )
 }
