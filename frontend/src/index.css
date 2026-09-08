@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  /* Canvas — soft blue gradient base */
+  --color-canvas: #f4f7fe;
+  --color-canvas-deep: #eaf0ff;
+
+  /* Primary — calm blue family */
+  --color-primary: #4a7dff;
+  --color-primary-dark: #2e5bff;
+  --color-primary-deep: #1e3fbd;
+  --color-primary-soft: #dce7ff;
+  --color-primary-faint: #eef3ff;
+
+  /* Accent — coral/amber for timers, streaks, warnings */
+  --color-accent: #ff8a5c;
+  --color-accent-soft: #ffe6da;
+  --color-amber: #ffb020;
+  --color-amber-soft: #fff2d9;
+
+  /* Feedback */
+  --color-success: #2fbf71;
+  --color-success-soft: #dff5e9;
+  --color-danger: #ff5a5f;
+  --color-danger-soft: #ffe3e4;
+
+  /* Neutrals — navy-tinted text */
+  --color-ink: #1e2a4a;
+  --color-ink-soft: #4a5878;
+  --color-ink-muted: #8a96b3;
+  --color-line: #e3e9f7;
+
+  /* Fonts */
+  --font-display: "Nunito", ui-rounded, system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+
+  /* Radius */
+  --radius-card: 1.5rem;
+  --radius-pill: 9999px;
+
+  /* Shadows — blue-tinted soft */
+  --shadow-soft: 0 4px 16px rgba(74, 125, 255, 0.1);
+  --shadow-lift: 0 8px 24px rgba(30, 63, 189, 0.14);
+  --shadow-tap: 0 2px 8px rgba(30, 63, 189, 0.1);
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: linear-gradient(180deg, var(--color-canvas) 0%, var(--color-canvas-deep) 100%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* Hide scrollbar for horizontal chip rows */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
