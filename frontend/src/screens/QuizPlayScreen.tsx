@@ -1,12 +1,265 @@
-import { useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { api } from '@/api'
+import type { OptionKey, PlayerQuestion } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
-import { PlaceholderScreen } from '@/components/PlaceholderScreen'
+import { Button } from '@/components/Button'
+import { OptionButton } from '@/components/OptionButton'
+import { TimerPill } from '@/components/TimerPill'
+import { useSession } from '@/context/useSession'
+import { usePolling } from '@/hooks/usePolling'
+
+const REVEAL_MS = 900
+
+interface PlaySession {
+  participantId: string
+  questions: PlayerQuestion[]
+  startedAt: number
+  durationSeconds: number
+}
+
+const SESSION_KEY = (quizId: string) => `lokkin.play.${quizId}`
 
 export function QuizPlayScreen() {
-  const { quizId } = useParams()
+  const { quizId } = useParams<{ quizId: string }>()
+  const navigate = useNavigate()
+  const { user } = useSession()
+
+  const [session, setSession] = useState<PlaySession | null>(() => {
+    if (!quizId) return null
+    try {
+      const raw = sessionStorage.getItem(SESSION_KEY(quizId))
+      return raw ? (JSON.parse(raw) as PlaySession) : null
+    } catch {
+      return null
+    }
+  })
+  const [booting, setBooting] = useState(!session)
+  const [bootError, setBootError] = useState<string | null>(null)
+
+  const [index, setIndex] = useState(0)
+  const [selected, setSelected] = useState<OptionKey | null>(null)
+  const [reveal, setReveal] = useState<{ picked: OptionKey; correct: boolean } | null>(null)
+  const [answers, setAnswers] = useState<Record<string, { picked: OptionKey; correct: boolean }>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [finished, setFinished] = useState(false)
+  const submitLock = useRef(false)
+
+  // Poll quiz state — the server owns the clock
+  const { data: state } = usePolling(
+    () => (quizId ? api.getQuizState(quizId) : Promise.reject(new Error('no id'))),
+    { intervalMs: 5000, disabled: !quizId },
+  )
+
+  const deadline = useMemo(() => {
+    if (session) return session.startedAt + session.durationSeconds * 1000
+    if (state?.deadline) return state.deadline * 1000
+    return null
+  }, [session, state?.deadline])
+
+  // Boot the play session: join (idempotent) + load questions + start
+  useEffect(() => {
+    if (!quizId || !user || session) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const quiz = await api.getQuiz(quizId)
+        const { participantId } = await api.joinQuiz(quizId, user.id)
+        if (quiz.status !== 'LIVE') {
+          await api.startQuiz(quizId).catch(() => {})
+        }
+        const questions = await api.getQuestions(quizId)
+        if (cancelled) return
+        if (questions.length === 0) throw new Error('This quiz has no active questions')
+        const started: PlaySession = {
+          participantId,
+          questions,
+          startedAt: Date.now(),
+          durationSeconds: quiz.durationSeconds,
+        }
+        sessionStorage.setItem(SESSION_KEY(quizId), JSON.stringify(started))
+        setSession(started)
+        setBooting(false)
+      } catch (err) {
+        if (cancelled) return
+        setBootError(err instanceof Error ? err.message : 'Could not start the quiz')
+        setBooting(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [quizId, user, session])
+
+  const question = session?.questions[index] ?? null
+  const total = session?.questions.length ?? 0
+  const correctCount = Object.values(answers).filter((a) => a.correct).length
+
+  const confirmAnswer = useCallback(
+    async (key: OptionKey) => {
+      if (!session || !question || reveal || submitting || submitLock.current) return
+      submitLock.current = true
+      setSubmitting(true)
+      setSelected(key)
+      try {
+        const res = await api.submitAnswer(quizId!, {
+          participantId: session.participantId,
+          questionId: question.id,
+          selectedOption: key,
+        })
+        setReveal({ picked: key, correct: res.correct })
+        setAnswers((prev) => ({ ...prev, [question.id]: { picked: key, correct: res.correct } }))
+      } catch {
+        setReveal({ picked: key, correct: false })
+        setAnswers((prev) => ({ ...prev, [question.id]: { picked: key, correct: false } }))
+      } finally {
+        setSubmitting(false)
+        submitLock.current = false
+      }
+    },
+    [session, question, reveal, submitting, quizId],
+  )
+
+  const advance = useCallback(() => {
+    if (!session) return
+    if (index + 1 >= session.questions.length) {
+      setFinished(true)
+      sessionStorage.removeItem(SESSION_KEY(quizId!))
+    } else {
+      setIndex((i) => i + 1)
+      setSelected(null)
+      setReveal(null)
+    }
+  }, [session, index, quizId])
+
+  // auto-advance shortly after reveal
+  useEffect(() => {
+    if (!reveal) return
+    const t = setTimeout(() => advance(), REVEAL_MS)
+    return () => clearTimeout(t)
+  }, [reveal, advance])
+
+  const onExpire = useCallback(() => {
+    if (!finished && session) {
+      setFinished(true)
+      sessionStorage.removeItem(SESSION_KEY(quizId!))
+    }
+  }, [finished, session, quizId])
+
+  if (bootError) {
+    return (
+      <AppShell hideNav>
+        <div className="rounded-card bg-white p-8 text-center shadow-soft">
+          <p className="text-3xl" aria-hidden>⚠️</p>
+          <h1 className="mt-2 font-display text-lg font-extrabold text-ink">Can't enter the quiz</h1>
+          <p className="mt-1 text-sm text-ink-soft">{bootError}</p>
+          <Button className="mt-4" size="sm" onClick={() => navigate(quizId ? `/quiz/${quizId}` : '/home')}>
+            Back to quiz page
+          </Button>
+        </div>
+      </AppShell>
+    )
+  }
+
+  if (booting || !session || !question) {
+    return (
+      <AppShell hideNav>
+        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+          <div className="h-12 w-12 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
+          <p className="text-sm font-semibold text-ink-soft">Locking in the room…</p>
+        </div>
+      </AppShell>
+    )
+  }
+
+  if (finished) {
+    return (
+      <AppShell hideNav>
+        <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
+          <p className="text-5xl" aria-hidden>🏁</p>
+          <h1 className="font-display text-2xl font-black text-ink">Answers locked in</h1>
+          <p className="max-w-xs text-sm leading-relaxed text-ink-soft">
+            You answered {Object.keys(answers).length} of {total} questions — {correctCount} correct.
+            Results are calculated once everyone finishes.
+          </p>
+          <Button size="lg" onClick={() => navigate(quizId ? `/quiz/${quizId}/results` : '/home')}>
+            See results
+          </Button>
+        </div>
+      </AppShell>
+    )
+  }
+
   return (
     <AppShell hideNav>
-      <PlaceholderScreen name={`Quiz Play — ${quizId ?? ''}`} />
+      <div className="flex flex-col gap-5">
+        <header className="flex items-center justify-between">
+          <p className="font-display text-sm font-extrabold text-ink-muted">
+            Question {index + 1}
+            <span className="text-ink-muted/60"> / {total}</span>
+          </p>
+          {deadline && <TimerPill until={new Date(deadline)} onExpire={onExpire} />}
+        </header>
+
+        <div className="h-2 overflow-hidden rounded-pill bg-canvas-deep">
+          <div
+            className="h-full rounded-pill bg-primary transition-all duration-500"
+            style={{ width: `${((index + (reveal ? 1 : 0)) / total) * 100}%` }}
+          />
+        </div>
+
+        <section className="rounded-card bg-white p-6 shadow-soft">
+          <h2 className="font-display text-lg leading-snug font-extrabold text-ink">
+            {question.questionText}
+          </h2>
+          <div className="mt-5 flex flex-col gap-2.5">
+            {question.options.map((opt) => {
+              let optReveal: 'correct' | 'wrong' | 'missed' | undefined
+              if (reveal) {
+                if (opt.key === reveal.picked) {
+                  optReveal = reveal.correct ? 'correct' : 'wrong'
+                } else {
+                  optReveal = 'missed'
+                }
+              }
+              return (
+                <OptionButton
+                  key={opt.key}
+                  optionKey={opt.key}
+                  text={opt.text}
+                  selected={selected === opt.key}
+                  disabled={reveal !== null || submitting}
+                  reveal={optReveal}
+                  onSelect={(k) => {
+                    if (!reveal && !submitting) setSelected(k)
+                  }}
+                />
+              )
+            })}
+          </div>
+        </section>
+
+        {!reveal ? (
+          <Button
+            size="lg"
+            disabled={selected === null || submitting}
+            onClick={() => selected && void confirmAnswer(selected)}
+          >
+            {submitting ? 'Locking answer…' : selected ? 'Lock answer' : 'Pick an option'}
+          </Button>
+        ) : (
+          <p
+            className={`text-center text-sm font-bold ${reveal.correct ? 'text-success' : 'text-danger'}`}
+            role="status"
+          >
+            {reveal.correct ? 'Correct ✓' : 'Not quite ✗'}
+          </p>
+        )}
+
+        <p className="text-center text-[11px] leading-relaxed text-ink-muted">
+          One answer per question — locked the moment you confirm. No going back.
+        </p>
+      </div>
     </AppShell>
   )
 }

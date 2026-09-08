@@ -4,6 +4,7 @@ import type {
   CreateQuizRequest,
   CreateUserRequest,
   LokkinApi,
+  Participant,
   ParticipantStatus,
   PlayerQuestion,
   Question,
@@ -110,6 +111,11 @@ export function createRealApi(): LokkinApi {
         { method: 'POST' },
       )
       return res
+    },
+
+    async getParticipants(_quizId: string) {
+      // Backend endpoint arrives in Phase 3.6 (public quiz list + participants)
+      return [] as Participant[]
     },
 
     async getQuizState(quizId: string) {

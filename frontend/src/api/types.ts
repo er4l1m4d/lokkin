@@ -184,6 +184,7 @@ export interface LokkinApi {
   openQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
   startQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
   joinQuiz(quizId: string, userId: string): Promise<{ participantId: string; status: ParticipantStatus }>
+  getParticipants(quizId: string): Promise<Participant[]>
   getQuizState(quizId: string): Promise<QuizState>
   getQuestions(quizId: string): Promise<PlayerQuestion[]>
   submitAnswer(quizId: string, req: AnswerRequest): Promise<{ accepted: boolean; correct: boolean }>

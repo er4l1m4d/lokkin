@@ -462,6 +462,13 @@ export function createMockApi(): LokkinApi {
       return { participantId: participant.id, status: participant.status }
     },
 
+    async getParticipants(quizId: string) {
+      await delay()
+      const participants = store.participants.get(quizId)
+      if (!participants) throw new Error('Quiz not found')
+      return participants.map((p) => ({ ...p }))
+    },
+
     async getQuizState(quizId: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)

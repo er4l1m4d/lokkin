@@ -48,14 +48,15 @@
 - [x] **2.1 Router + shell** — BrowserRouter, all 11 routes + session gates (`RequireSession` / `RedirectIfSession`); `AppShell` (max-w-md, safe areas); `BottomNav` (Home/Create/Profile, active pill); `vercel.json` SPA rewrites; dev-only `/dev/gallery` for components.
 - [x] **2.2 Session context** — `SessionProvider` with lazy localStorage init (no restore flicker), `signIn`/`setMode`/`signOut`, display name + mode persisted.
 
-## Phase 3 — Core MVP Screens (+ browse/detail/play slice)
+## Phase 3 — Core MVP Screens (+ browse/detail/play slice) ✅ (3.6 backend pending)
 **Goal:** The demo-critical path works end-to-end. Slice: browse → detail → play wired to the real backend wherever endpoints exist.
 
-- [ ] **3.1 Welcome** — Logo, tagline "Prove what you know. Commit. Compete. Improve.", 3 mode cards (Demo/Practice/Commitment) with mode explanations, Enter CTA.
-- [ ] **3.2 Home/Browse** — Greeting, status filter chips (Open/Live/Validating/Settled), QuizCard list, empty state, FAB → Create.
-- [ ] **3.3 Quiz Detail** — Hero, description, source chip, stake, min-3 commitment meter, availability window, participant list, Join CTA → Commitment screen.
-- [ ] **3.4 Quiz Play** — Question #N, personal TimerPill (server-synced countdown), progress bar, 4 OptionButtons, one-shot confirm (no going back), disconnect banner (60s window, incidents x/3), auto-advance.
-- [ ] **3.5 Submitted/Waiting** — Locked score, "waiting for others" state, polling for quiz completion.
+- [x] **3.1 Welcome** — Logo, tagline, 3 mode cards (Demo/Practice/Commitment), display-name input, Enter CTA; session created via mock/real API.
+- [x] **3.2 Home/Browse** — Greeting + mode banner, status filter chips (All/Open/Live/Validating/Settled), sorted QuizCard list (joinable first, soonest start), skeleton loading, empty + error states, polling 6s.
+- [x] **3.3 Quiz Detail** — Hero card (stake/questions/duration stats), starts-in countdown, pot preview + min-3 MeterBar, player chips, creator-blind note, sticky CTA (Commit / Go to lobby / See results by status).
+- [x] **3.4 Quiz Play** — Idempotent join → auto-start → questions one at a time; server-clock TimerPill, progress bar, OptionButtons with reveal states (correct/wrong/missed), one-shot lock-in with double-submit guard, auto-advance, finish screen; play session persisted in sessionStorage (survives refresh mid-quiz).
+- [x] **3.5 Submitted/Waiting** — Sealed-answers state with room status polling; button to results when validation starts.
+- [x] **3.7 (added) Mock flow integration tests** — `flow.test.ts`: 6 tests covering the DEPLOY.md critical flows on the mock layer (create → join x4 → idempotent join → hidden correct answers → one-answer enforcement → auto-VALIDATING → conserved payouts). 10/10 tests total.
 - [ ] **3.6 Backend: public quiz list** — `GET /api/quizzes` (status filter, joinable first, paged); wire Home to it. Test, then commit.
 
 ## Phase 4 — Creation & Commitment Flow (+ join slice)
