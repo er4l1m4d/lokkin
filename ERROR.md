@@ -71,6 +71,18 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Cause:** Vite's react-ts template enables `erasableSyntaxOnly` (TS must stay erasable to plain JS) — constructor parameter properties are TS-only syntax.
 - **Fix:** Declare class fields explicitly and assign in the constructor body. **Rule: on this codebase, never use TS-only runtime syntax (parameter properties, enums) — only type-level annotations.**
 
+### E-019 — `npm run dev` from repo root: `Missing script: "dev"`
+- **When:** Phase 1, user running the app locally
+- **Error:** `npm error Missing script: "dev"` at `C:\...\lokkin`
+- **Cause:** Only `frontend/package.json` had scripts; the repo root had no package.json (backend-first repo origin).
+- **Fix:** Root `package.json` added with proxy scripts (`dev`, `build`, `lint`, `test`, `checks`, `api`) using `npm --prefix frontend run <script>`. **Rule: all dev commands run from the repo root — documented in README.**
+
+### E-019 — `npm run dev` from repo root: `Missing script: "dev"`
+- **When:** Phase 1, user running the app locally
+- **Error:** `npm error Missing script: "dev"` at repo root
+- **Cause:** Monorepo — the `dev` script lives in `frontend/package.json`; the repo root had no `package.json` at all.
+- **Fix:** Added a root `package.json` proxying all commands via `npm --prefix frontend run ...` (`dev`, `build`, `lint`, `test`, `checks`) plus `api` for uvicorn. **Rule: all documented commands run from the repo root — never require the user to cd into `frontend/`.**
+
 ### E-018 — Self-hosted runner died silently (child of the shell session)
 - **When:** Phase 1, after the tool session that started it ended
 - **Error:** Jobs stuck `queued` forever; API showed runner `status: offline`, no Runner process on the machine.
