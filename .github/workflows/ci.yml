@@ -22,6 +22,8 @@ jobs:
 
       - run: npm run lint
 
+      - run: npm run test
+
       # build = tsc -b (real typecheck) + vite build
       - run: npm run build
 

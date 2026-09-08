@@ -31,15 +31,16 @@
 - [x] **0.5.4 DEPLOY.md** — Deploy checklist, production smoke tests, rollback procedure, critical-flow list.
 - [x] **0.5.5 Commit & push** — Backend baseline + Phase 0 + Phase 0.5 committed and pushed to https://github.com/er4l1m4d/lokkin (public). CI green pending E-013 fix.
 
-## Phase 1 — Foundation (API layer + shared components)
+## Phase 1 — Foundation (API layer + shared components) ✅
 **Goal:** Everything screens are built from, so screen work is assembly only.
 
-- [ ] **1.1 Types** — Mirror backend models in `api/types.ts`: Quiz, Participant, Question, Answer, status enums (`DRAFT…SETTLED`), matching `backend/app/schemas.py`.
-- [ ] **1.2 API client** — Typed `api/client.ts` wrapping fetch: users, quizzes (create/list/get/publish/open), demo-start, start, state, answers, flags. Base URL from `VITE_API_URL`.
-- [ ] **1.3 Mock mode** — `api/mock.ts` implementing the same interface with in-memory fixtures (quiz list, participants, payout math). Toggle via `VITE_USE_MOCK=true`. Every screen testable without backend.
-- [ ] **1.4 Polling hook** — `hooks/usePolling.ts` (interval + pause when hidden) for quiz state since no WebSockets.
-- [ ] **1.5 Core components** — `StatusPill`, `TimerPill`, `MeterBar`, `EmptyState`, `Modal`, `StepDots`, `Button` variants. Demo route to eyeball them.
-- [ ] **1.6 Quiz components** — `QuizCard` (title, stake, players, countdown), `OptionButton` (idle/selected/correct/wrong states), `PodiumSlot`, `ParticipantRow`, `MemoCard` (code + copy).
+- [x] **1.1 Types** — `api/types.ts`: Quiz, Participant, Question, Answer, User, all status enums, request/response shapes, `LokkinApi` interface, `VALID_QUIZ_TRANSITIONS` mirroring `services.py`, `QUIZ_LIFECYCLE` for the status stepper.
+- [x] **1.2 API client** — `api/client.ts`: typed fetch wrapper for all existing endpoints (users, quizzes CRUD, publish/open/start, demo-start, state, answers) + JSON→domain mappers; `ApiError`. Base URL from `VITE_API_URL`.
+- [x] **1.3 Mock mode** — `api/mock.ts`: full in-memory implementation (seeded quizzes, state machine, one-answer enforcement, auto-lifecycle advance) + `computePayouts` implementing the locked economics (50/30/10, 80/20, no-show 50/50, 10% completion bonus, ties split, skipped allocations → bonus). Toggle: `VITE_USE_MOCK=true`.
+- [x] **1.4 Polling hook** — `hooks/usePolling.ts`: interval + pause-when-hidden + error swallowing.
+- [x] **1.5 Core components** — Button (4 variants × 3 sizes), StatusPill (11 statuses), TimerPill (countdown, warn state), MeterBar (target marker), EmptyState, Modal, StepDots. Component gallery route in App.tsx to eyeball them all.
+- [x] **1.6 Quiz components** — QuizCard, OptionButton (idle/selected/correct/wrong/missed), PodiumSlot (2-1-3 order, medals, heights), ParticipantRow (status dots), MemoCard (code + escrow address, copy buttons).
+- [x] **1.7 (added) Payout regression tests** — `payouts.test.ts` (vitest): 4 scenarios incl. tie competition ranking (1,1,3) and no-shows, every case asserts money conservation (E-017). `npm test` added to gates + CI.
 
 ## Phase 2 — App Shell & Navigation
 **Goal:** Mobile-first frame all screens live in.

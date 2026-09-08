@@ -59,6 +59,24 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 
 ## Process / environment
 
+### E-015 — vitest suite fails to parse: `Duplicated export 'computePayouts'`
+- **When:** Phase 1, first payout test run
+- **Error:** `RolldownError: Parse failure: Duplicated export 'computePayouts'` at mock.ts bottom
+- **Cause:** Function was declared `export function computePayouts` at the top **and** re-exported via `export { computePayouts }` at the bottom.
+- **Fix:** Remove the bottom re-export; keep one export site. **Rule: single export site per symbol.**
+
+### E-016 — `TS1294: This syntax is not allowed when 'erasableSyntaxOnly' is enabled`
+- **When:** Phase 1, first `tsc -b` after writing client.ts
+- **Error:** Parameter properties in constructors (`constructor(public status: number, ...)`) rejected.
+- **Cause:** Vite's react-ts template enables `erasableSyntaxOnly` (TS must stay erasable to plain JS) — constructor parameter properties are TS-only syntax.
+- **Fix:** Declare class fields explicitly and assign in the constructor body. **Rule: on this codebase, never use TS-only runtime syntax (parameter properties, enums) — only type-level annotations.**
+
+### E-017 — Payout math double-scaled the pool (logic bug, caught by conservation tests)
+- **When:** Phase 1, writing payout tests for mock.ts
+- **Symptom:** First implementation took `bonus = pool * 0.1`, then `pool *= 0.9`, then computed winner shares (50/30/10) **on the reduced pool** — allocations + bonus did not sum to the pool; 3 of 4 tests failed with a shortfall. Second pass also let skipped tie allocations vanish instead of flowing to the completion bonus.
+- **Cause:** Applying the 10% bonus extraction before the 50/30/10 split double-discounts; per locked rules, allocations are fractions of the **full** pool (0.5+0.3+0.1 = 0.9 to winners, 0.1 to bonus, skipped ranks → bonus).
+- **Fix:** Compute winner allocations from the full pool; skipped-rank allocations add to the bonus; every test asserts total distributed == total staked (conservation). Two of the initial failing tests were then my own expectation arithmetic (misclassifying rank-3 winners as losers) — implementation was conserving money correctly. **Lesson: write the conservation assertion first, then per-player expectations; a wrong expectation set is as revealing as a wrong implementation.**
+
 ### E-014 — CI backend job failed: pip `getaddrinfo failed` (transient DNS)
 - **When:** Phase 0.5, first self-hosted CI run
 - **Error:** `WARNING: Retrying ... connection broken by 'NewConnectionError': Failed to establish a new connection: [Errno 11001] getaddrinfo failed': /simple/fastapi/` → `ERROR: No matching distribution found for fastapi==0.116.1`

@@ -1,0 +1,191 @@
+// Domain types mirroring backend/app/models.py + sql/001_initial_schema.sql
+
+export type QuizStatus =
+  | 'DRAFT'
+  | 'PUBLISHED'
+  | 'OPEN'
+  | 'LIVE'
+  | 'ENDED'
+  | 'VALIDATING'
+  | 'FINALIZED'
+  | 'SETTLED'
+  | 'CANCELLED'
+  | 'REFUNDING'
+  | 'REFUNDED'
+
+export type ParticipantStatus =
+  | 'JOINED'
+  | 'ACTIVE'
+  | 'COMPLETED'
+  | 'TIMED_OUT'
+  | 'FORFEITED'
+  | 'DISQUALIFIED'
+
+export type QuestionStatus = 'DRAFT' | 'ACTIVE' | 'FLAGGED' | 'INVALID'
+
+export type OptionKey = 'A' | 'B' | 'C' | 'D'
+
+export type Currency = 'NIM'
+
+export type QuizMode = 'demo' | 'practice' | 'commitment'
+
+// Quiz state machine — must stay in sync with backend/app/services.py VALID_TRANSITIONS
+export const VALID_QUIZ_TRANSITIONS: Record<QuizStatus, readonly QuizStatus[]> = {
+  DRAFT: ['PUBLISHED', 'CANCELLED'],
+  PUBLISHED: ['OPEN', 'CANCELLED'],
+  OPEN: ['LIVE', 'CANCELLED', 'REFUNDING'],
+  LIVE: ['ENDED'],
+  ENDED: ['VALIDATING'],
+  VALIDATING: ['FINALIZED', 'REFUNDING'],
+  FINALIZED: ['SETTLED'],
+  SETTLED: [],
+  CANCELLED: ['REFUNDING'],
+  REFUNDING: ['REFUNDED'],
+  REFUNDED: [],
+}
+
+// The status ladder shown in the UI status stepper
+export const QUIZ_LIFECYCLE: readonly QuizStatus[] = [
+  'OPEN',
+  'LIVE',
+  'ENDED',
+  'VALIDATING',
+  'FINALIZED',
+  'SETTLED',
+]
+
+export interface User {
+  id: string
+  displayName: string
+  walletAddress: string | null
+}
+
+export interface Quiz {
+  id: string
+  title: string
+  description: string | null
+  status: QuizStatus
+  currency: Currency
+  entryAmount: number
+  durationSeconds: number
+  questionCount: number
+  participantCount: number
+  startsAt: string | null
+  creatorId: string
+}
+
+export interface Question {
+  id: string
+  quizId: string
+  position: number
+  questionText: string
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  correctOption: OptionKey
+  explanation: string | null
+  status: QuestionStatus
+}
+
+// Question as seen by a player — no correct answer leaked
+export interface PlayerQuestion {
+  id: string
+  position: number
+  questionText: string
+  options: ReadonlyArray<{ key: OptionKey; text: string }>
+}
+
+export interface Participant {
+  id: string
+  quizId: string
+  userId: string
+  displayName: string
+  status: ParticipantStatus
+  disconnectCount: number
+  correctAnswers: number
+  scorePercentage: number | null
+  rank: number | null
+  entryAmount: number
+}
+
+export interface QuizState {
+  status: QuizStatus
+  serverTime: string
+  deadline: number | null
+}
+
+// ---------- Request / response shapes (match backend JSON) ----------
+
+export interface CreateUserRequest {
+  displayName: string
+  walletAddress?: string | null
+}
+
+export interface CreateQuizRequest {
+  creatorId: string
+  title: string
+  description?: string
+  currency: Currency
+  entryAmount: number
+  durationSeconds: number
+  startsAt?: string | null
+}
+
+export interface CreateQuestionRequest {
+  position: number
+  questionText: string
+  optionA: string
+  optionB: string
+  optionC: string
+  optionD: string
+  correctOption: OptionKey
+}
+
+export interface AnswerRequest {
+  participantId: string
+  questionId: string
+  selectedOption: OptionKey
+}
+
+export interface QuizListFilters {
+  status?: QuizStatus | 'ALL'
+}
+
+export interface ResultRow {
+  participantId: string
+  displayName: string
+  correctAnswers: number
+  totalQuestions: number
+  scorePercentage: number
+  rank: number
+  entryAmount: number
+  payout: number
+  payoutKind: 'winner' | 'consolation' | 'refund' | 'bonus' | 'none'
+}
+
+export interface QuizResults {
+  quizId: string
+  status: QuizStatus
+  resultVersion: number
+  prizePool: number
+  rows: ResultRow[]
+}
+
+// ---------- API interface (implemented by both real client and mock) ----------
+
+export interface LokkinApi {
+  createUser(req: CreateUserRequest): Promise<User>
+  createQuiz(req: CreateQuizRequest): Promise<{ quizId: string; status: QuizStatus }>
+  addQuestion(quizId: string, req: CreateQuestionRequest): Promise<{ questionId: string; position: number }>
+  getQuiz(quizId: string): Promise<Quiz>
+  listQuizzes(filters?: QuizListFilters): Promise<Quiz[]>
+  publishQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
+  openQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
+  startQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
+  joinQuiz(quizId: string, userId: string): Promise<{ participantId: string; status: ParticipantStatus }>
+  getQuizState(quizId: string): Promise<QuizState>
+  getQuestions(quizId: string): Promise<PlayerQuestion[]>
+  submitAnswer(quizId: string, req: AnswerRequest): Promise<{ accepted: boolean; correct: boolean }>
+  getResults(quizId: string): Promise<QuizResults>
+}
