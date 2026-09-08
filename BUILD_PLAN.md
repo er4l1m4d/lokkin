@@ -26,11 +26,10 @@
 ## Phase 0.5 — Safety Net (Git + CI + logs)
 **Goal:** The solo-dev safety system, day one: version control, CI, error log, deploy checklist.
 
-- [ ] **0.5.1 Git repo** — `git init -b main`, root `.gitignore` (deps, dist, env, logs, zip, private planning docs); `git status` clean of junk.
-- [ ] **0.5.2 ERROR.md** — Every error hit so far logged with cause + fix (10 entries).
-- [ ] **0.5.3 CI workflow** — `.github/workflows/ci.yml`: frontend (npm ci → lint → build) + backend (pip install → compileall). Green on first push.
-- [ ] **0.5.4 DEPLOY.md** — Deploy checklist, production smoke tests, rollback procedure, critical-flow list.
-- [ ] **0.5.5 Commit & push** — Backend baseline + Phase 0 + Phase 0.5 commits pushed to GitHub; CI green.
+- [x] **0.5.1 Git repo** — `git init -b main`, root `.gitignore` (deps, dist, env, logs, zip, private planning docs); `git status` clean of junk.- [x] **0.5.2 ERROR.md** — Every error hit so far logged with cause + fix (13 entries; see E-013 for the CI block diagnosis).
+- [x] **0.5.3 CI workflow** — `.github/workflows/ci.yml`: frontend (npm ci → lint → build) + backend (pip install → compileall). **Blocked from going green by account-level Actions restriction (E-013) — fix = add payment method to GitHub account, then re-push. Local gates remain mandatory meanwhile.**
+- [x] **0.5.4 DEPLOY.md** — Deploy checklist, production smoke tests, rollback procedure, critical-flow list.
+- [x] **0.5.5 Commit & push** — Backend baseline + Phase 0 + Phase 0.5 committed and pushed to https://github.com/er4l1m4d/lokkin (public). CI green pending E-013 fix.
 
 ## Phase 1 — Foundation (API layer + shared components)
 **Goal:** Everything screens are built from, so screen work is assembly only.

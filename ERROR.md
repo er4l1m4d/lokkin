@@ -59,6 +59,25 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 
 ## Process / environment
 
+### E-013 — GitHub Actions runs fail instantly, no runner assigned (account-level restriction)
+- **When:** Phase 0.5, first CI runs on the new repo
+- **Error:** Every run: `startup_failure` (private) / `failure` after 3s (public) · jobs created but `runner_id: 0`, `runner_name: ""`, zero steps, no logs, "This workflow run cannot be retried".
+- **Diagnosis path (ruled out in order):** workflow YAML invalid? — valid (js-yaml + GitHub content API, no BOM, LF) · file encoding? — clean · invalid triggers/actions? — even a minimal `echo` hello-world workflow failed identically · repo visibility? — made repo public, same failure · repo Actions permissions? — enabled, `allowed_actions: all` · platform outage? — status page all operational.
+- **Cause:** GitHub's anti-abuse restriction on free accounts with **no payment method on file** — Actions compute is blocked (even for public repos / standard free runners) until the account is "established".
+- **Fix:** Add a payment method to the GitHub account (Settings → Billing and plans → Payment methods). Public-repo `ubuntu-latest` minutes cost $0 — the card is never charged. Restriction lifts immediately; re-push to confirm green CI. Do NOT burn deadline days waiting — local gates (lint + build) stay mandatory meanwhile. *(Pending user action.)*
+- **Related:** E-011 (needed `workflow` scope first, solved), E-012 (refspec form for partial push).
+
+### E-011 — GitHub push rejected: OAuth token missing `workflow` scope
+- **When:** Phase 0.5, first push containing `.github/workflows/ci.yml`
+- **Error:** `! [remote rejected] HEAD -> main (refusing to allow an OAuth App to create or update workflow '.github/workflows/ci.yml' without 'workflow' scope)`
+- **Cause:** gh CLI token had scopes `gist, read:org, repo` — pushing workflow files requires the `workflow` scope.
+- **Fix:** `gh auth refresh -h github.com -s workflow` (device-code flow in browser). Meanwhile, pushed workflow-free commits with `git push origin <sha>:refs/heads/main` so progress wasn't blocked.
+
+### E-012 — Git push refspec error on partial push
+- **Error:** `The destination you provided is not a full refname (i.e., starting with "refs/")`
+- **Cause:** Pushing a raw commit SHA to a remote branch needs a fully-qualified refspec; `sha:main` is ambiguous when the remote branch doesn't exist yet.
+- **Fix:** Use the full refspec: `git push origin <sha>:refs/heads/main`.
+
 ### E-008 — Start-Process "npm" didn't launch dev server
 - **Error:** No node process / nothing listening on :5173 after `Start-Process -FilePath "npm" -ArgumentList "run","dev"`.
 - **Cause:** On Windows `npm` is `npm.cmd`; Start-Process with the bare name fails silently.
