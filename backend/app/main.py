@@ -1,18 +1,51 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from decimal import Decimal
 from uuid import UUID
-from fastapi import Depends, FastAPI, HTTPException, status
+
+from fastapi import Depends, FastAPI, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from .db import get_db
-from .models import Answer, Participant, Question, Quiz, QuizEvent, User
-from .schemas import AnswerRequest, CreateQuestionRequest, CreateQuizRequest, CreateUserRequest, FlagRequest
-from .services import DomainError, submit_answer, transition_quiz
 
-app = FastAPI(title="Lokkin Core API", version="0.1.0")
+from .db import get_db, init_db
+from .models import Answer, Participant, Question, Quiz, User
+from .schemas import (
+    AnswerRequest,
+    CreateQuestionRequest,
+    CreateQuizRequest,
+    CreateUserRequest,
+    JoinRequest,
+)
+from .services import (
+    DomainError,
+    add_participant,
+    as_aware,
+    compute_payouts,
+    log_event,
+    maybe_advance,
+    quiz_deadline,
+    submit_answer,
+    transition_quiz,
+    utcnow,
+)
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    await init_db()
+    yield
+
+
+app = FastAPI(title="Lokkin Core API", version="0.2.0", lifespan=lifespan)
+
 
 @app.get("/health")
 async def health():
     return {"ok": True}
+
+
+# ---------- users ----------
+
 
 @app.post("/api/users", status_code=status.HTTP_201_CREATED)
 async def create_user(req: CreateUserRequest, db: AsyncSession = Depends(get_db)):
@@ -25,6 +58,42 @@ async def create_user(req: CreateUserRequest, db: AsyncSession = Depends(get_db)
         await db.rollback()
         raise HTTPException(409, "User could not be created") from exc
     return {"id": str(user.id), "displayName": user.display_name}
+
+
+@app.get("/api/users/{user_id}/history")
+async def user_history(user_id: UUID, db: AsyncSession = Depends(get_db)):
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    entries = []
+    rows = await db.execute(
+        select(Participant, Quiz).join(Quiz, Participant.quiz_id == Quiz.id).where(Participant.user_id == user_id)
+    )
+    for participant, quiz in rows.all():
+        if quiz.status not in ("VALIDATING", "FINALIZED", "SETTLED"):
+            continue
+        participants = (await db.execute(
+            select(Participant).where(Participant.quiz_id == quiz.id)
+        )).scalars().all()
+        payout_rows, _ = compute_payouts(participants, quiz.question_count, quiz.entry_amount)
+        mine = next((r for r in payout_rows if r["participant_id"] == participant.id), None)
+        entries.append({
+            "quizId": str(quiz.id),
+            "title": quiz.title,
+            "status": quiz.status,
+            "rank": mine["rank"] if mine and mine["payout_kind"] != "refund" else None,
+            "correctAnswers": participant.correct_answers,
+            "questionCount": quiz.question_count,
+            "payout": float(mine["payout"]) if mine else 0.0,
+            "entryAmount": float(quiz.entry_amount),
+            "payoutKind": mine["payout_kind"] if mine else "none",
+        })
+    return entries
+
+
+# ---------- quizzes ----------
+
 
 @app.post("/api/quizzes", status_code=status.HTTP_201_CREATED)
 async def create_quiz(req: CreateQuizRequest, db: AsyncSession = Depends(get_db)):
@@ -40,6 +109,7 @@ async def create_quiz(req: CreateQuizRequest, db: AsyncSession = Depends(get_db)
         entry_amount=req.entry_amount,
         duration_seconds=req.duration_seconds,
         question_count=0,
+        min_participants=req.min_participants,
         starts_at=req.starts_at,
         result_version=0,
     )
@@ -47,6 +117,7 @@ async def create_quiz(req: CreateQuizRequest, db: AsyncSession = Depends(get_db)
     await db.commit()
     await db.refresh(quiz)
     return {"quizId": str(quiz.id), "status": quiz.status}
+
 
 @app.post("/api/quizzes/{quiz_id}/questions", status_code=status.HTTP_201_CREATED)
 async def add_question(quiz_id: UUID, req: CreateQuestionRequest, db: AsyncSession = Depends(get_db)):
@@ -64,6 +135,7 @@ async def add_question(quiz_id: UUID, req: CreateQuestionRequest, db: AsyncSessi
         option_c=req.option_c,
         option_d=req.option_d,
         correct_option=req.correct_option,
+        explanation=req.explanation,
         status="ACTIVE",
     )
     db.add(q)
@@ -72,13 +144,13 @@ async def add_question(quiz_id: UUID, req: CreateQuestionRequest, db: AsyncSessi
     await db.refresh(q)
     return {"questionId": str(q.id), "position": q.position}
 
-@app.get("/api/quizzes/{quiz_id}")
-async def get_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
-    quiz = await db.get(Quiz, quiz_id)
-    if not quiz:
-        raise HTTPException(404, "Quiz not found")
-    result = await db.execute(select(func.count(Participant.id)).where(Participant.quiz_id == quiz.id))
-    participant_count = result.scalar_one()
+
+async def quiz_participant_count(db: AsyncSession, quiz_id: UUID) -> int:
+    result = await db.execute(select(func.count(Participant.id)).where(Participant.quiz_id == quiz_id))
+    return result.scalar_one()
+
+
+def quiz_json(quiz: Quiz, participant_count: int) -> dict:
     return {
         "id": str(quiz.id),
         "title": quiz.title,
@@ -88,9 +160,63 @@ async def get_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
         "entryAmount": str(quiz.entry_amount),
         "durationSeconds": quiz.duration_seconds,
         "questionCount": quiz.question_count,
+        "minParticipants": quiz.min_participants,
         "participantCount": participant_count,
-        "startsAt": quiz.starts_at,
+        "startsAt": as_aware(quiz.starts_at).isoformat() if quiz.starts_at else None,
+        "creatorId": str(quiz.creator_id),
     }
+
+
+STATUS_WEIGHT = {
+    "OPEN": 0,
+    "LIVE": 1,
+    "ENDED": 2,
+    "VALIDATING": 2,
+    "FINALIZED": 2,
+    "SETTLED": 3,
+}
+
+
+@app.get("/api/quizzes")
+async def list_quizzes(
+    status_filter: str | None = Query(default=None, alias="status"),
+    limit: int = Query(default=50, le=200),
+    db: AsyncSession = Depends(get_db),
+):
+    quizzes = (await db.execute(select(Quiz))).scalars().all()
+    for quiz in quizzes:
+        if quiz.status not in ("SETTLED", "REFUNDED"):
+            await maybe_advance(db, quiz)
+    # re-read after possible transitions
+    quizzes = (await db.execute(select(Quiz))).scalars().all()
+
+    visible = [q for q in quizzes if q.status not in ("DRAFT", "PUBLISHED")]
+    if status_filter:
+        visible = [q for q in visible if q.status == status_filter]
+
+    counts: dict[UUID, int] = {}
+    rows = await db.execute(
+        select(Participant.quiz_id, func.count(Participant.id)).group_by(Participant.quiz_id)
+    )
+    for quiz_id, count in rows.all():
+        counts[quiz_id] = count
+
+    visible.sort(key=lambda q: (
+        STATUS_WEIGHT.get(q.status, 4),
+        as_aware(q.starts_at).timestamp() if q.starts_at else float("inf"),
+    ))
+    return [quiz_json(q, counts.get(q.id, 0)) for q in visible[:limit]]
+
+
+@app.get("/api/quizzes/{quiz_id}")
+async def get_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
+    quiz = await db.get(Quiz, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    await maybe_advance(db, quiz)
+    await db.refresh(quiz)
+    return quiz_json(quiz, await quiz_participant_count(db, quiz.id))
+
 
 @app.post("/api/quizzes/{quiz_id}/publish")
 async def publish_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
@@ -103,12 +229,19 @@ async def publish_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
         raise HTTPException(400, "Quiz must contain at least one question")
     try:
         await transition_quiz(db, quiz, "PUBLISHED")
-        quiz.published_at = datetime.now(timezone.utc)
+        quiz.published_at = utcnow()
         await db.commit()
     except DomainError as exc:
         await db.rollback()
         raise HTTPException(409, str(exc)) from exc
+
+    # The creator plays blind, but is always a participant (min includes creator)
+    creator = await db.get(User, quiz.creator_id)
+    if creator:
+        await add_participant(db, quiz, creator.id)
+        await db.commit()
     return {"quizId": str(quiz.id), "status": quiz.status}
+
 
 @app.post("/api/quizzes/{quiz_id}/open")
 async def open_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
@@ -123,46 +256,149 @@ async def open_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
         raise HTTPException(409, str(exc)) from exc
     return {"quizId": str(quiz.id), "status": quiz.status}
 
+
+@app.post("/api/quizzes/{quiz_id}/start")
+async def start_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
+    """Creator-triggered early start. Otherwise the room goes LIVE automatically
+    at starts_at once quorum is met."""
+    quiz = await db.get(Quiz, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    if quiz.status not in ("PUBLISHED", "OPEN"):
+        raise HTTPException(409, f"Quiz cannot start from status {quiz.status}")
+    try:
+        await transition_quiz(db, quiz, "LIVE")
+        participants = (await db.execute(
+            select(Participant).where(Participant.quiz_id == quiz.id)
+        )).scalars().all()
+        for p in participants:
+            if p.status == "JOINED":
+                p.status = "ACTIVE"
+        await log_event(db, quiz.id, "QUIZ_LIVE")
+        await db.commit()
+    except DomainError as exc:
+        await db.rollback()
+        raise HTTPException(409, str(exc)) from exc
+    return {"quizId": str(quiz.id), "status": quiz.status, "startedAt": as_aware(quiz.started_at).isoformat() if quiz.started_at else None}
+
+
+@app.post("/api/quizzes/{quiz_id}/join")
+async def join_quiz(quiz_id: UUID, req: JoinRequest, db: AsyncSession = Depends(get_db)):
+    quiz = await db.get(Quiz, quiz_id)
+    user = await db.get(User, req.user_id)
+    if not quiz or not user:
+        raise HTTPException(404, "Quiz or user not found")
+    if quiz.status != "OPEN":
+        raise HTTPException(409, f"Quiz is not open for commitments (status: {quiz.status})")
+    participant = await add_participant(db, quiz, user.id)
+    await db.commit()
+    return {"participantId": str(participant.id), "status": participant.status}
+
+
 @app.post("/api/quizzes/{quiz_id}/demo-start")
 async def demo_start(quiz_id: UUID, user_id: UUID, db: AsyncSession = Depends(get_db)):
-    """Create a non-financial participant for the demo quiz flow."""
+    """Legacy non-financial join (kept for the original demo sequence)."""
     quiz = await db.get(Quiz, quiz_id)
     user = await db.get(User, user_id)
     if not quiz or not user:
         raise HTTPException(404, "Quiz or user not found")
     if quiz.status not in {"PUBLISHED", "OPEN", "LIVE"}:
         raise HTTPException(409, "Quiz is not available")
-    existing = await db.execute(select(Participant).where(Participant.quiz_id == quiz.id, Participant.user_id == user.id))
-    participant = existing.scalar_one_or_none()
-    if participant is None:
-        participant = Participant(quiz_id=quiz.id, user_id=user.id, status="JOINED", disconnect_count=0)
-        db.add(participant)
-        db.add(QuizEvent(quiz_id=quiz.id, participant_id=None, event_type="QUIZ_JOINED", event_timestamp=datetime.now(timezone.utc), metadata={"user_id": str(user.id)}))
-        await db.commit()
-        await db.refresh(participant)
+    participant = await add_participant(db, quiz, user.id)
+    if quiz.status == "LIVE" and participant.status == "JOINED":
+        participant.status = "ACTIVE"
+    await db.commit()
     return {"participantId": str(participant.id), "status": participant.status}
 
-@app.post("/api/quizzes/{quiz_id}/start")
-async def start_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
+
+@app.get("/api/quizzes/{quiz_id}/participants")
+async def get_participants(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
         raise HTTPException(404, "Quiz not found")
-    try:
-        await transition_quiz(db, quiz, "LIVE")
-        await db.commit()
-    except DomainError as exc:
-        await db.rollback()
-        raise HTTPException(409, str(exc)) from exc
-    return {"quizId": str(quiz.id), "status": quiz.status, "startedAt": quiz.started_at}
+    rows = await db.execute(
+        select(Participant, User).join(User, Participant.user_id == User.id).where(Participant.quiz_id == quiz.id)
+    )
+    return [
+        {
+            "id": str(p.id),
+            "quizId": str(p.quiz_id),
+            "userId": str(p.user_id),
+            "displayName": u.display_name,
+            "status": p.status,
+            "disconnectCount": p.disconnect_count,
+            "correctAnswers": p.correct_answers,
+            "scorePercentage": float(p.score_percentage) if p.score_percentage is not None else None,
+            "rank": p.rank,
+            "entryAmount": float(quiz.entry_amount),
+        }
+        for p, u in rows.all()
+    ]
+
 
 @app.get("/api/quizzes/{quiz_id}/state")
-async def quiz_state(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
+async def quiz_state(quiz_id: UUID, user_id: UUID | None = None, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
         raise HTTPException(404, "Quiz not found")
-    now = datetime.now(timezone.utc)
-    deadline = quiz.started_at.timestamp() + quiz.duration_seconds if quiz.started_at else None
-    return {"status": quiz.status, "serverTime": now, "deadline": deadline}
+    await maybe_advance(db, quiz)
+    await db.refresh(quiz)
+
+    deadline = quiz_deadline(quiz)
+    participant_status = None
+    if user_id:
+        row = await db.execute(
+            select(Participant).where(Participant.quiz_id == quiz.id, Participant.user_id == user_id)
+        )
+        participant = row.scalar_one_or_none()
+        participant_status = participant.status if participant else None
+
+    return {
+        "status": quiz.status,
+        "serverTime": utcnow().isoformat(),
+        "deadline": deadline.timestamp() if deadline else None,
+        "participantStatus": participant_status,
+    }
+
+
+@app.get("/api/quizzes/{quiz_id}/questions")
+async def get_questions(quiz_id: UUID, user_id: UUID | None = None, db: AsyncSession = Depends(get_db)):
+    """Player view — never leaks correct answers. Marks the caller ACTIVE on entry."""
+    quiz = await db.get(Quiz, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    if quiz.status != "LIVE":
+        raise HTTPException(409, "Questions are sealed until the room is live")
+
+    if user_id:
+        row = await db.execute(
+            select(Participant).where(Participant.quiz_id == quiz.id, Participant.user_id == user_id)
+        )
+        participant = row.scalar_one_or_none()
+        if participant is None:
+            raise HTTPException(403, "You are not part of this quiz")
+        if participant.status == "JOINED":
+            participant.status = "ACTIVE"
+            await db.commit()
+
+    questions = (await db.execute(
+        select(Question).where(Question.quiz_id == quiz.id, Question.status == "ACTIVE").order_by(Question.position)
+    )).scalars().all()
+    return [
+        {
+            "id": str(q.id),
+            "position": q.position,
+            "questionText": q.question_text,
+            "options": [
+                {"key": "A", "text": q.option_a},
+                {"key": "B", "text": q.option_b},
+                {"key": "C", "text": q.option_c},
+                {"key": "D", "text": q.option_d},
+            ],
+        }
+        for q in questions
+    ]
+
 
 @app.post("/api/quizzes/{quiz_id}/answers")
 async def answer_question(quiz_id: UUID, req: AnswerRequest, db: AsyncSession = Depends(get_db)):
@@ -176,3 +412,89 @@ async def answer_question(quiz_id: UUID, req: AnswerRequest, db: AsyncSession = 
         await db.rollback()
         raise HTTPException(409, str(exc)) from exc
     return {"accepted": True, "correct": answer.is_correct}
+
+
+@app.get("/api/quizzes/{quiz_id}/results")
+async def get_results(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
+    quiz = await db.get(Quiz, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    await maybe_advance(db, quiz)
+    await db.refresh(quiz)
+    if quiz.status not in ("VALIDATING", "FINALIZED", "SETTLED"):
+        raise HTTPException(409, "Results are not available yet")
+
+    rows_raw = await db.execute(
+        select(Participant, User).join(User, Participant.user_id == User.id).where(Participant.quiz_id == quiz.id)
+    )
+    participants = [(p, u) for p, u in rows_raw.all()]
+    payout_rows, winners_take = compute_payouts([p for p, _ in participants], quiz.question_count, quiz.entry_amount)
+    names = {p.id: u.display_name for p, u in participants}
+
+    result_rows = []
+    for r in payout_rows:
+        pct = r["correct_answers"] / quiz.question_count * 100 if quiz.question_count else 0
+        result_rows.append({
+            "participantId": str(r["participant_id"]),
+            "displayName": names.get(r["participant_id"], "Unknown"),
+            "correctAnswers": r["correct_answers"],
+            "totalQuestions": quiz.question_count,
+            "scorePercentage": round(pct, 2),
+            "rank": r["rank"],
+            "entryAmount": float(r["entry_amount"]),
+            "payout": float(round(r["payout"], 8)),
+            "payoutKind": r["payout_kind"],
+        })
+
+    return {
+        "quizId": str(quiz.id),
+        "status": quiz.status,
+        "resultVersion": quiz.result_version,
+        "prizePool": float(round(winners_take, 8)),
+        "rows": result_rows,
+    }
+
+
+@app.get("/api/quizzes/{quiz_id}/review")
+async def get_review(quiz_id: UUID, user_id: UUID, db: AsyncSession = Depends(get_db)):
+    quiz = await db.get(Quiz, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    await maybe_advance(db, quiz)
+    await db.refresh(quiz)
+    if quiz.status not in ("VALIDATING", "FINALIZED", "SETTLED"):
+        raise HTTPException(409, "Review unlocks when the quiz ends")
+
+    participant = (await db.execute(
+        select(Participant).where(Participant.quiz_id == quiz.id, Participant.user_id == user_id)
+    )).scalar_one_or_none()
+
+    questions = (await db.execute(
+        select(Question).where(Question.quiz_id == quiz.id, Question.status == "ACTIVE").order_by(Question.position)
+    )).scalars().all()
+
+    my_answers: dict[UUID, Answer] = {}
+    if participant:
+        answer_rows = await db.execute(
+            select(Answer).where(Answer.participant_id == participant.id)
+        )
+        my_answers = {a.question_id: a for a in answer_rows.scalars().all()}
+
+    return [
+        {
+            "id": str(q.id),
+            "position": q.position,
+            "questionText": q.question_text,
+            "options": [
+                {"key": "A", "text": q.option_a},
+                {"key": "B", "text": q.option_b},
+                {"key": "C", "text": q.option_c},
+                {"key": "D", "text": q.option_d},
+            ],
+            "correctOption": q.correct_option,
+            "explanation": q.explanation,
+            "myAnswer": my_answers[q.id].selected_option if q.id in my_answers else None,
+            "wasCorrect": (my_answers[q.id].selected_option == q.correct_option) if q.id in my_answers else None,
+        }
+        for q in questions
+    ]

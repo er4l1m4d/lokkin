@@ -48,7 +48,10 @@ export function QuizPlayScreen() {
 
   // Poll quiz state — the server owns the clock
   const { data: state } = usePolling(
-    () => (quizId ? api.getQuizState(quizId) : Promise.reject(new Error('no id'))),
+    () =>
+      quizId
+        ? api.getQuizState(quizId, user?.id)
+        : Promise.reject(new Error('no id')),
     { intervalMs: 5000, disabled: !quizId },
   )
 
@@ -66,10 +69,12 @@ export function QuizPlayScreen() {
       try {
         const quiz = await api.getQuiz(quizId)
         const { participantId } = await api.joinQuiz(quizId, user.id)
-        if (quiz.status !== 'LIVE') {
+        // Only the creator may start the room early; otherwise it goes LIVE
+        // automatically at starts_at once quorum is met.
+        if (quiz.status !== 'LIVE' && quiz.creatorId === user.id) {
           await api.startQuiz(quizId).catch(() => {})
         }
-        const questions = await api.getQuestions(quizId)
+        const questions = await api.getQuestions(quizId, user.id)
         if (cancelled) return
         if (questions.length === 0) throw new Error('This quiz has no active questions')
         const started: PlaySession = {

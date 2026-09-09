@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS quizzes (
   entry_amount NUMERIC(30,12) NOT NULL CHECK (entry_amount >= 0),
   duration_seconds INTEGER NOT NULL CHECK (duration_seconds > 0),
   question_count INTEGER NOT NULL DEFAULT 0 CHECK (question_count >= 0),
+  min_participants INTEGER NOT NULL DEFAULT 3 CHECK (min_participants > 0),
   starts_at TIMESTAMPTZ,
   join_deadline TIMESTAMPTZ,
   published_at TIMESTAMPTZ,

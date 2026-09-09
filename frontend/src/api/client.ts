@@ -8,7 +8,6 @@ import type {
   Participant,
   ParticipantStatus,
   PlayerQuestion,
-  Question,
   Quiz,
   QuizListFilters,
   QuizResults,
@@ -41,20 +40,6 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-function questionToPlayer(q: Question): PlayerQuestion {
-  return {
-    id: q.id,
-    position: q.position,
-    questionText: q.questionText,
-    options: [
-      { key: 'A' as const, text: q.optionA },
-      { key: 'B' as const, text: q.optionB },
-      { key: 'C' as const, text: q.optionC },
-      { key: 'D' as const, text: q.optionD },
-    ],
-  }
-}
-
 export function createRealApi(): LokkinApi {
   return {
     async createUser(req: CreateUserRequest) {
@@ -67,7 +52,16 @@ export function createRealApi(): LokkinApi {
     async createQuiz(req: CreateQuizRequest) {
       return request<{ quizId: string; status: QuizStatus }>('/api/quizzes', {
         method: 'POST',
-        body: JSON.stringify(req),
+        body: JSON.stringify({
+          creatorId: req.creatorId,
+          title: req.title,
+          description: req.description ?? null,
+          currency: req.currency,
+          entryAmount: req.entryAmount,
+          durationSeconds: req.durationSeconds,
+          startsAt: req.startsAt ?? null,
+          minParticipants: req.minParticipants ?? 3,
+        }),
       })
     },
 
@@ -118,25 +112,24 @@ export function createRealApi(): LokkinApi {
     },
 
     async joinQuiz(quizId: string, userId: string) {
-      const res = await request<{ participantId: string; status: ParticipantStatus }>(
-        `/api/quizzes/${quizId}/demo-start?user_id=${encodeURIComponent(userId)}`,
-        { method: 'POST' },
+      return request<{ participantId: string; status: ParticipantStatus }>(
+        `/api/quizzes/${quizId}/join`,
+        { method: 'POST', body: JSON.stringify({ userId }) },
       )
-      return res
     },
 
-    async getParticipants(_quizId: string) {
-      // Backend endpoint arrives in Phase 3.6 (public quiz list + participants)
-      return [] as Participant[]
+    async getParticipants(quizId: string) {
+      return request<Participant[]>(`/api/quizzes/${quizId}/participants`)
     },
 
-    async getQuizState(quizId: string) {
-      return request<QuizState>(`/api/quizzes/${quizId}/state`)
+    async getQuizState(quizId: string, userId?: string) {
+      const q = userId ? `?user_id=${encodeURIComponent(userId)}` : ''
+      return request<QuizState>(`/api/quizzes/${quizId}/state${q}`)
     },
 
-    async getQuestions(quizId: string) {
-      const questions = await request<QuestionJson[]>(`/api/quizzes/${quizId}/questions`)
-      return questions.map(toQuestion).map(questionToPlayer)
+    async getQuestions(quizId: string, userId?: string) {
+      const q = userId ? `?user_id=${encodeURIComponent(userId)}` : ''
+      return request<PlayerQuestion[]>(`/api/quizzes/${quizId}/questions${q}`)
     },
 
     async submitAnswer(quizId: string, req: AnswerRequest) {
@@ -150,14 +143,14 @@ export function createRealApi(): LokkinApi {
       return request<QuizResults>(`/api/quizzes/${quizId}/results`)
     },
 
-    async getReview(_quizId: string, _userId: string) {
-      // Backend endpoints land in the Phase 6 slices (results + review)
-      return [] as ReviewQuestion[]
+    async getReview(quizId: string, userId: string) {
+      return request<ReviewQuestion[]>(
+        `/api/quizzes/${quizId}/review?user_id=${encodeURIComponent(userId)}`,
+      )
     },
 
-    async getMyHistory(_userId: string) {
-      // Backend endpoint lands in the Phase 6 slice (user history)
-      return [] as HistoryEntry[]
+    async getMyHistory(userId: string) {
+      return request<HistoryEntry[]>(`/api/users/${userId}/history`)
     },
   }
 }
@@ -179,23 +172,10 @@ interface QuizJson {
   entryAmount: string
   durationSeconds: number
   questionCount: number
+  minParticipants?: number
   participantCount: number
   startsAt: string | null
   creatorId?: string
-}
-
-interface QuestionJson {
-  id: string
-  quizId: string
-  position: number
-  questionText: string
-  optionA: string
-  optionB: string
-  optionC: string
-  optionD: string
-  correctOption: string
-  explanation?: string | null
-  status: string
 }
 
 // ---------- mappers (JSON -> domain) ----------
@@ -214,24 +194,9 @@ function toQuiz(q: QuizJson): Quiz {
     entryAmount: Number(q.entryAmount),
     durationSeconds: q.durationSeconds,
     questionCount: q.questionCount,
+    minParticipants: q.minParticipants ?? 3,
     participantCount: q.participantCount,
     startsAt: q.startsAt,
     creatorId: q.creatorId ?? '',
-  }
-}
-
-function toQuestion(q: QuestionJson): Question {
-  return {
-    id: q.id,
-    quizId: q.quizId,
-    position: q.position,
-    questionText: q.questionText,
-    optionA: q.optionA,
-    optionB: q.optionB,
-    optionC: q.optionC,
-    optionD: q.optionD,
-    correctOption: q.correctOption as Question['correctOption'],
-    explanation: q.explanation ?? null,
-    status: q.status as Question['status'],
   }
 }

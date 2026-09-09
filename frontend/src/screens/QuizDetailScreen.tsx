@@ -62,7 +62,7 @@ export function QuizDetailScreen() {
   }
 
   const isCreator = quiz.creatorId === user?.id
-  const minRequired = 3
+  const minRequired = quiz.minParticipants ?? 3
   const confirmed = participants.length
 
   return (

@@ -89,6 +89,24 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Cause:** The installed skill directory contains the UI/UX guide and data references but not the optional searchable CLI script described by the supplied instructions.
 - **Fix:** Continued with the available inspiration screenshots, the persisted `design-system/MASTER.md`, the installed Impeccable product/polish references, and direct source audits. **Rule: missing optional design tooling must not block a scoped UI refinement; record the limitation and use the available design evidence.**
 
+### E-022 — SQLAlchemy declarative reserves the attribute name `metadata`
+- **When:** Phase 6, first import of the rewritten models
+- **Error:** `sqlalchemy.exc.InvalidRequestError: Attribute name 'metadata' is reserved when using the Declarative API`
+- **Cause:** The baseline `QuizEvent.metadata` column mapping was a latent import-time bug — `compileall` (the only backend gate until now) checks syntax, never imports, so it never fired.
+- **Fix:** Python attribute renamed to `meta` while keeping the DB column name: `mapped_column("metadata", JSON)`. **Rule: the backend gate must import the app, not just compile it — the new pytest step (CI) imports `backend.app.main`, closing the gap.**
+
+### E-023 — Frontend/backend payload casing mismatch (latent since baseline)
+- **When:** Phase 6, first pytest run
+- **Error:** `422 Field required: body.display_name` — frontend sends `displayName`
+- **Cause:** Request schemas used snake_case while every response and the whole frontend use camelCase; the two sides had never actually talked.
+- **Fix:** Pydantic `CamelModel` base with `alias_generator=to_camel, populate_by_name=True` — all request schemas accept both casings. **Rule: wire-level contracts get exercised by tests before declaring integration done.**
+
+### E-024 — Smoke-script got 405 from a POST route
+- **When:** Phase 6, first live smoke run
+- **Error:** `405 Method Not Allowed` on `/demo-start`
+- **Cause:** The script called the endpoint without `method: 'POST'` — a GET against a POST-only route returns 405 (route exists, method doesn't).
+- **Fix:** Added the method. Also noted: PowerShell mangles JS template literals inside `node -e "..."` one-liners — prefer the edit tool for code containing backticks (see the CreateScreen patch attempt).
+
 ### E-021 — Final UI commit command used unsupported PowerShell `&&`
 - **When:** UI/UX polish phase, final commit/push
 - **Error:** `The token '&&' is not a valid statement separator in this version.`

@@ -56,8 +56,8 @@
 - [x] **3.3 Quiz Detail** — Hero card (stake/questions/duration stats), starts-in countdown, pot preview + min-3 MeterBar, player chips, creator-blind note, sticky CTA (Commit / Go to lobby / See results by status).
 - [x] **3.4 Quiz Play** — Idempotent join → auto-start → questions one at a time; server-clock TimerPill, progress bar, OptionButtons with reveal states (correct/wrong/missed), one-shot lock-in with double-submit guard, auto-advance, finish screen; play session persisted in sessionStorage (survives refresh mid-quiz).
 - [x] **3.5 Submitted/Waiting** — Sealed-answers state with room status polling; button to results when validation starts.
+- [x] **3.6 Backend: public quiz list** — `GET /api/quizzes` (status filter, joinable-first sort, participant counts, minParticipants); wired Home to it. Tested.
 - [x] **3.7 (added) Mock flow integration tests** — `flow.test.ts`: 6 tests covering the DEPLOY.md critical flows on the mock layer (create → join x4 → idempotent join → hidden correct answers → one-answer enforcement → auto-VALIDATING → conserved payouts). 10/10 tests total.
-- [ ] **3.6 Backend: public quiz list** — `GET /api/quizzes` (status filter, joinable first, paged); wire Home to it. Test, then commit.
 
 ## Phase 4 — Creation & Commitment Flow (+ join slice) ✅ (4.6 backend pending)
 **Goal:** Users can create quizzes and join with stakes (mock payments).
@@ -68,7 +68,7 @@
 - [x] **4.4 Commitment (mock)** — Stake summary + payout rules recap, confirming spinner, instant-CONFIRMED mock tx → join → MemoCard with `LK-XXXX` code + escrow address → lobby CTA.
 - [x] **4.5 Lobby** — SVG countdown ring to `startsAt`, quorum MeterBar (min 3) with success/warning states, participants list (host badge, creator-plays-blind note), auto-detects LIVE → "Enter the quiz", closed rooms → results link.
 - [x] **4.7 (added) Generator tests** — `generator.test.ts`: 6 tests (count, cloze shape, unique options/answers, thin-material rejection, blank draft, memo format).
-- [ ] **4.6 Backend: join endpoint** — `POST /api/quizzes/{id}/join` (user + amount → PENDING participant; mock mode auto-confirms tx); wire Commitment + Lobby to it. Test, then commit.
+- [x] **4.6 Backend: join endpoint** — `POST /api/quizzes/{id}/join` (OPEN-only, idempotent, mock-instant CONFIRMED transaction ledger rows); publish auto-joins the creator as a participant (`CREATOR_COMMITMENT`) per the "min includes creator" rule; `GET .../participants` joined with display names. Tested.
 
 ## Phase 5 — Results & Post-Quiz (+ results slice) ✅ (5.4 backend pending)
 **Goal:** Full lifecycle visible: validate → finalize → payout.
@@ -77,7 +77,7 @@
 - [x] **5.2 Review** — Per-question cards: options with reveal states (correct ✓, your wrong pick ✗, missed dimmed), "You picked B — the answer was A" line, METHOD-style cream "Why" explanation card; sealed-until-validated gate; summary header with score + %.
 - [x] **5.3 Profile** — Avatar + name + wallet chip, stat cards (quizzes / podiums / net NIM), mode switcher (demo/practice/commitment) with explanations, history list (title, score, medal/#rank, net NIM colored, status pill) linking to results, sign-out.
 - [x] **5.5 (added) Review + history tests** — flow.test.ts extended to 8 tests: review reveals correct answers + player answers (with a missed-question case), history returns rank/payout/entry. API: `getReview` + `getMyHistory` in interface (mock real, client stubs until Phase 6).
-- [ ] **5.4 Backend: results + payout plan** — `GET /api/quizzes/{id}/results` (competition ranking 1,1,3; ties split; payout math per locked rules); wire Results to it. Test, then commit.
+- [x] **5.4 Backend: results + payout plan** — `GET /api/quizzes/{id}/results` (competition ranking 1,1,3; exact locked payout economics in `compute_payouts`, Decimal-based, money-conservation asserted in tests; ranks + score percentages persisted at FINALIZE). Wired Results to it.
 
 ## Phase 5.5 — UI/UX Quality Pass ✅
 **Goal:** Bring the implemented app in line with the inspiration references and the UI/UX quality rules before deeper backend work.
@@ -89,13 +89,15 @@
 - [x] **5.5.5 Screen polish** — Improved Welcome hierarchy, Home orientation/CTA, quiz-card affordance, status/timer readability, participant state text, editor controls, result/review surfaces, and loading/empty states.
 - [x] **5.5.6 Quality verification** — Detector clean; lint, 18 tests, and production build pass. Commit and push this phase before starting backend integration.
 
-## Phase 6 — Lifecycle & Timer Authority
-**Goal:** Server owns the clock and the state machine; critical flows are regression-protected.
+## Phase 6 — Lifecycle & Backend Integration ✅
+**Goal:** The real FastAPI owns the clock and the state machine; critical flows are regression-protected.
 
-- [ ] **6.1 Full state machine** — ENDED → VALIDATING → FINALIZED → SETTLED transitions + auto-advance (window close, all submitted, dispute window expiry).
-- [ ] **6.2 Timer authority** — Server-owned personal timers (start on join, pause on disconnect, 60s window, 3-strike forfeit) driven by `/state` polling.
-- [ ] **6.3 Critical-flow e2e suite** — The 5 flows in `DEPLOY.md`, automated (Vitest + API tests); CI runs them on every push.
-- [ ] **6.4 3-profile manual run** — create → 3 joins → play → validate → settle → payout math correct. Fix all bugs found.
+- [x] **6.0 (added) Portable backend** — Models on portable types (`Uuid`/`JSON`), SQLite (aiosqlite) as zero-setup dev/test DB with Postgres `DATABASE_URL` for production; `init_db()` on startup; `min_participants` + lifecycle timestamps added to schema/SQL; `explanation` stored.
+- [x] **6.1 Full state machine** — `maybe_advance` (one transition per poll, so steppers visibly walk): auto-LIVE at `starts_at` when quorum met, auto-CANCEL→REFUNDING→REFUNDED under quorum (mock refund ledger), LIVE→ENDED when all terminal, ENDED→VALIDATING, dispute window (`DISPUTE_WINDOW_SECONDS`, default 300) →FINALIZE (persists ranks/scores) →SETTLED.
+- [x] **6.2 Timer authority (shipped scope)** — Server-owned deadline from `quiz.started_at`, enforced in `submit_answer` (+10s grace, "Time is up"), auto-TIMED_OUT on expiry via polling, `/state?user_id=` returns participant status. Disconnect-pause/60s-window/3-strike deferred to Phase 7 hardening (needs session endpoints).
+- [x] **6.3 Critical-flow e2e suite** — `backend/tests/test_api.py` (pytest + httpx ASGI, in-memory SQLite): 7 tests incl. full 4-player flow with exact payout assertions (110.5/106.5/102.5/80.5 of 400 staked), questions never leak answers, underquorum auto-cancel, auto-LIVE, deadline enforcement, review/history. CI backend job now installs dev deps + runs pytest.
+- [x] **6.4 3-profile run** — `scripts/e2e-smoke.mjs` runs the full 3-user loop against a live server (health → users → create → commit x3 → LIVE → play → SETTLED → conserved payouts → review → history). **PASSED** against local uvicorn; frontend wired to real endpoints (`VITE_USE_MOCK=false`).
+- [x] **6.5 (added) Frontend wiring** — Real client endpoints for list/join/participants/questions/results/review/history; camelCase payload fix (E-023); creator-only early start; `/questions` marks callers ACTIVE; practice mode = minParticipants 1 + "start now" (default 0 min); Detail/Lobby quorum from `quiz.minParticipants`.
 
 ## Phase 7 — Nimiq Integration (real mode)
 **Goal:** Real NIM commitments + payouts for scoring points.

@@ -28,7 +28,7 @@ jobs:
       - run: npm run build
 
   backend:
-    name: Backend (install + compile check)
+    name: Backend (install + tests + compile check)
     runs-on: [self-hosted, lokkin-pc]
     defaults:
       run:
@@ -36,6 +36,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: python -m pip install -r requirements.txt
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt
 
       - run: python -m compileall app
+
+      # Critical-flow suite (DEPLOY.md). Runs from repo root so the `backend`
+      # package imports resolve; config lives in backend/pytest.ini.
+      - name: Backend tests
+        working-directory: ..
+        run: python -m pytest backend/tests -q

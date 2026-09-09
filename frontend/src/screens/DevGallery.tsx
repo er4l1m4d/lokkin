@@ -23,6 +23,7 @@ const demoQuiz: Quiz = {
   entryAmount: 50,
   durationSeconds: 300,
   questionCount: 10,
+  minParticipants: 3,
   participantCount: 4,
   startsAt: null,
   creatorId: 'creator',

@@ -1,23 +1,25 @@
 from datetime import datetime
 from decimal import Decimal
-from uuid import UUID
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
+from uuid import UUID, uuid4
+from sqlalchemy import Boolean, DateTime, Integer, JSON, Numeric, String, Text, Uuid
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
 
 class Base(DeclarativeBase):
     pass
 
+
 class User(Base):
     __tablename__ = "users"
-    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     wallet_address: Mapped[str | None] = mapped_column(Text, unique=True)
     display_name: Mapped[str] = mapped_column(Text)
 
+
 class Quiz(Base):
     __tablename__ = "quizzes"
-    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
-    creator_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"))
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    creator_id: Mapped[UUID] = mapped_column(Uuid)
     title: Mapped[str] = mapped_column(Text)
     description: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String)
@@ -25,24 +27,32 @@ class Quiz(Base):
     entry_amount: Mapped[Decimal] = mapped_column(Numeric(30, 12))
     duration_seconds: Mapped[int] = mapped_column(Integer)
     question_count: Mapped[int] = mapped_column(Integer)
+    min_participants: Mapped[int] = mapped_column(Integer, default=3)
     starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    join_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    result_version: Mapped[int] = mapped_column(Integer)
+    finalized_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    settled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    result_version: Mapped[int] = mapped_column(Integer, default=0)
+
 
 class Participant(Base):
     __tablename__ = "participants"
-    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
-    quiz_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("quizzes.id"))
-    user_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("users.id"))
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    quiz_id: Mapped[UUID] = mapped_column(Uuid)
+    user_id: Mapped[UUID] = mapped_column(Uuid)
     status: Mapped[str] = mapped_column(String)
-    disconnect_count: Mapped[int] = mapped_column(Integer)
+    disconnect_count: Mapped[int] = mapped_column(Integer, default=0)
+    correct_answers: Mapped[int] = mapped_column(Integer, default=0)
+    score_percentage: Mapped[Decimal | None] = mapped_column(Numeric(8, 5))
+    rank: Mapped[int | None] = mapped_column(Integer)
+
 
 class Question(Base):
     __tablename__ = "questions"
-    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
-    quiz_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("quizzes.id"))
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    quiz_id: Mapped[UUID] = mapped_column(Uuid)
     position: Mapped[int] = mapped_column(Integer)
     question_text: Mapped[str] = mapped_column(Text)
     option_a: Mapped[str] = mapped_column(Text)
@@ -50,22 +60,41 @@ class Question(Base):
     option_c: Mapped[str] = mapped_column(Text)
     option_d: Mapped[str] = mapped_column(Text)
     correct_option: Mapped[str] = mapped_column(String(1))
+    explanation: Mapped[str | None] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String)
+
 
 class Answer(Base):
     __tablename__ = "answers"
-    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
-    participant_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("participants.id"))
-    question_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("questions.id"))
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    participant_id: Mapped[UUID] = mapped_column(Uuid)
+    question_id: Mapped[UUID] = mapped_column(Uuid)
     selected_option: Mapped[str] = mapped_column(String(1))
     is_correct: Mapped[bool] = mapped_column(Boolean)
     answered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
 
+
+class Transaction(Base):
+    __tablename__ = "transactions"
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    quiz_id: Mapped[UUID | None] = mapped_column(Uuid)
+    user_id: Mapped[UUID] = mapped_column(Uuid)
+    type: Mapped[str] = mapped_column(String)
+    currency: Mapped[str] = mapped_column(String)
+    amount: Mapped[Decimal] = mapped_column(Numeric(30, 12))
+    wallet_address: Mapped[str | None] = mapped_column(Text)
+    blockchain_tx_hash: Mapped[str | None] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String, default="PENDING")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class QuizEvent(Base):
     __tablename__ = "quiz_events"
-    id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), primary_key=True)
-    quiz_id: Mapped[UUID] = mapped_column(PGUUID(as_uuid=True), ForeignKey("quizzes.id"))
-    participant_id: Mapped[UUID | None] = mapped_column(PGUUID(as_uuid=True), ForeignKey("participants.id"))
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
+    quiz_id: Mapped[UUID] = mapped_column(Uuid)
+    participant_id: Mapped[UUID | None] = mapped_column(Uuid)
     event_type: Mapped[str] = mapped_column(Text)
     event_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
-    metadata: Mapped[dict | None] = mapped_column(JSONB)
+    # 'metadata' is reserved by SQLAlchemy declarative — attribute vs column name
+    meta: Mapped[dict | None] = mapped_column("metadata", JSON)

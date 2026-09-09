@@ -192,6 +192,7 @@ function seedStore(): MockStore {
         entryAmount: 50,
         durationSeconds: 300,
         questionCount: 2,
+        minParticipants: 3,
         startsAt: minutesFromNow(30),
         creatorId: creators[0].id,
       },
@@ -236,6 +237,7 @@ function seedStore(): MockStore {
         entryAmount: 100,
         durationSeconds: 300,
         questionCount: 1,
+        minParticipants: 3,
         startsAt: minutesFromNow(90),
         creatorId: creators[1].id,
       },
@@ -267,6 +269,7 @@ function seedStore(): MockStore {
         entryAmount: 25,
         durationSeconds: 420,
         questionCount: 2,
+        minParticipants: 3,
         startsAt: minutesFromNow(-1440),
         creatorId: creators[0].id,
       },
@@ -383,6 +386,7 @@ export function createMockApi(): LokkinApi {
         entryAmount: req.entryAmount,
         durationSeconds: req.durationSeconds,
         questionCount: 0,
+        minParticipants: req.minParticipants ?? 3,
         participantCount: 0,
         startsAt: req.startsAt ?? null,
         creatorId: req.creatorId,
@@ -498,7 +502,7 @@ export function createMockApi(): LokkinApi {
       return participants.map((p) => ({ ...p }))
     },
 
-    async getQuizState(quizId: string) {
+    async getQuizState(quizId: string, _userId?: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
       if (!quiz) throw new Error('Quiz not found')
@@ -510,7 +514,7 @@ export function createMockApi(): LokkinApi {
       }
     },
 
-    async getQuestions(quizId: string) {
+    async getQuestions(quizId: string, _userId?: string) {
       await delay()
       const questions = store.questions.get(quizId) ?? []
       return questions

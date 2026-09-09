@@ -17,22 +17,25 @@ Other commands (all from repo root): `npm run lint`, `npm run test`, `npm run bu
 
 ## Backend
 
-1. Create PostgreSQL database `lokkin`.
-2. Apply `sql/001_initial_schema.sql`.
-3. Set `DATABASE_URL`, for example:
-
-```bash
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/lokkin
-```
-
-4. Install dependencies and run:
+Dev runs on zero-setup SQLite by default (file `backend/lokkin.db`); production sets `DATABASE_URL` to Postgres (Render + Neon).
 
 ```bash
 python -m venv .venv
 . .venv/bin/activate  # Windows: .venv\\Scripts\\activate
-pip install -r backend/requirements.txt
+pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 npm run api           # uvicorn on http://localhost:8000
 ```
+
+Env knobs: `DISPUTE_WINDOW_SECONDS` (default 300, set lower for demos), `PAYMENTS_MODE` (`mock` instant-confirms commitments; `real` lands with the Nimiq slice).
+
+```bash
+python -m pytest backend/tests -q    # critical-flow suite
+node scripts/e2e-smoke.mjs           # 3-user run against a live server
+```
+
+To point the frontend at the real backend, set `VITE_USE_MOCK=false` in `frontend/.env`.
+
+Production Postgres: create database `lokkin`, apply `sql/001_initial_schema.sql`, set `DATABASE_URL=postgresql+asyncpg://...`.
 
 ## What is included
 

@@ -4,15 +4,17 @@ import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { StatusPill } from '@/components/StatusPill'
+import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
 import type { QuizState } from '@/api/types'
 
 export function SubmittedScreen() {
   const { quizId } = useParams<{ quizId: string }>()
   const navigate = useNavigate()
+  const { user } = useSession()
 
   const { data: state } = usePolling<QuizState>(
-    () => (quizId ? api.getQuizState(quizId) : Promise.reject(new Error('no id'))),
+    () => (quizId ? api.getQuizState(quizId, user?.id) : Promise.reject(new Error('no id'))),
     { intervalMs: 4000 },
   )
 

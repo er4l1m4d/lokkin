@@ -10,8 +10,6 @@ import { ParticipantRow } from '@/components/ParticipantRow'
 import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
 
-const MIN_REQUIRED = 3
-
 interface LobbyData {
   quiz: Quiz
   participants: Participant[]
@@ -43,6 +41,7 @@ export function LobbyScreen() {
   const quiz = data?.quiz
   const participants = useMemo(() => data?.participants ?? [], [data])
   const confirmed = participants.length
+  const minRequired = quiz?.minParticipants ?? 3
   const isCreator = quiz?.creatorId === user?.id
 
   if (!quiz) {
@@ -66,7 +65,7 @@ export function LobbyScreen() {
   const seconds = Math.floor((remainingMs % 60_000) / 1000)
   const countdownText = `${minutes}:${seconds.toString().padStart(2, '0')}`
 
-  const readyToStart = confirmed >= MIN_REQUIRED
+  const readyToStart = confirmed >= minRequired
   const roomClosed = ['VALIDATING', 'ENDED', 'FINALIZED', 'SETTLED'].includes(quiz.status)
 
   return (
@@ -110,8 +109,8 @@ export function LobbyScreen() {
         <section className="rounded-card bg-surface p-5 shadow-soft">
           <MeterBar
             value={confirmed}
-            target={MIN_REQUIRED}
-            max={Math.max(MIN_REQUIRED, confirmed + 2)}
+            target={minRequired}
+            max={Math.max(minRequired, confirmed + 2)}
             label="Confirmed commitments"
           />
           {readyToStart ? (
@@ -120,9 +119,9 @@ export function LobbyScreen() {
             </p>
           ) : (
             <p className="mt-3 rounded-card bg-amber-soft px-4 py-2.5 text-xs leading-relaxed text-ink">
-              Needs {MIN_REQUIRED - confirmed} more{' '}
-              {MIN_REQUIRED - confirmed === 1 ? 'player' : 'players'}. If the room opens with
-              fewer than {MIN_REQUIRED}, everyone is auto-refunded in full.
+              Needs {minRequired - confirmed} more{' '}
+              {minRequired - confirmed === 1 ? 'player' : 'players'}. If the room opens with
+              fewer than {minRequired}, everyone is auto-refunded in full.
             </p>
           )}
         </section>

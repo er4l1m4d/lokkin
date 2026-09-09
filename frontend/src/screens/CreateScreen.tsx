@@ -19,13 +19,13 @@ type Step = 'upload' | 'generating' | 'review'
 const QUESTION_COUNTS = [5, 10, 15, 20] as const
 const DURATIONS_MIN = [1, 3, 5, 10, 15] as const
 const STAKES = [10, 25, 50, 100, 250] as const
-const START_DELAYS_MIN = [15, 30, 60] as const
+const START_DELAYS_MIN = [0, 15, 30, 60] as const
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export function CreateScreen() {
   const navigate = useNavigate()
-  const { user } = useSession()
+  const { user, mode } = useSession()
 
   const [step, setStep] = useState<Step>('upload')
   const [genMessage, setGenMessage] = useState('')
@@ -39,7 +39,7 @@ export function CreateScreen() {
   const [questionCount, setQuestionCount] = useState<number>(10)
   const [durationMin, setDurationMin] = useState<number>(5)
   const [stake, setStake] = useState<number>(25)
-  const [startDelay, setStartDelay] = useState<number>(30)
+  const [startDelay, setStartDelay] = useState<number>(mode === 'practice' ? 0 : 30)
 
   const [drafts, setDrafts] = useState<DraftQuestion[]>([])
   const [publishing, setPublishing] = useState(false)
@@ -108,6 +108,7 @@ export function CreateScreen() {
         description: description.trim() || undefined,
         currency: 'NIM',
         entryAmount: stake,
+        minParticipants: mode === 'practice' ? 1 : 3,
         durationSeconds: durationMin * 60,
         startsAt: new Date(Date.now() + startDelay * 60_000).toISOString(),
       })
@@ -296,7 +297,7 @@ export function CreateScreen() {
                 options={START_DELAYS_MIN}
                 value={startDelay}
                 onChange={setStartDelay}
-                format={(v) => `${v} min`}
+                format={(v) => (v === 0 ? 'Now' : `${v} min`)}
                 last
               />
             </div>
@@ -346,7 +347,11 @@ export function CreateScreen() {
 
             <div className="sticky bottom-24 flex flex-col gap-2">
               <Button size="lg" onClick={() => void publish()} disabled={publishing}>
-                {publishing ? 'Publishing…' : `Publish — opens in ${startDelay} min`}
+                {publishing
+                  ? 'Publishing…'
+                  : startDelay === 0
+                    ? 'Publish — starts immediately'
+                    : `Publish — opens in ${startDelay} min`}
               </Button>
               <Button variant="ghost" size="sm" onClick={() => setStep('upload')} disabled={publishing}>
                 Back to material

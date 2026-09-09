@@ -16,6 +16,10 @@ venv/
 # Logs
 *.log
 
+# Local databases
+*.db
+*.sqlite3
+
 # Private planning docs — this repo goes public for the competition
 lokkin-conversation.md
 FireShot*.pdf

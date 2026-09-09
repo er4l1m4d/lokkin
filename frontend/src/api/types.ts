@@ -69,6 +69,7 @@ export interface Quiz {
   entryAmount: number
   durationSeconds: number
   questionCount: number
+  minParticipants: number
   participantCount: number
   startsAt: string | null
   creatorId: string
@@ -130,6 +131,7 @@ export interface CreateQuizRequest {
   entryAmount: number
   durationSeconds: number
   startsAt?: string | null
+  minParticipants?: number
 }
 
 export interface CreateQuestionRequest {
@@ -212,8 +214,8 @@ export interface LokkinApi {
   startQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
   joinQuiz(quizId: string, userId: string): Promise<{ participantId: string; status: ParticipantStatus }>
   getParticipants(quizId: string): Promise<Participant[]>
-  getQuizState(quizId: string): Promise<QuizState>
-  getQuestions(quizId: string): Promise<PlayerQuestion[]>
+  getQuizState(quizId: string, userId?: string): Promise<QuizState>
+  getQuestions(quizId: string, userId?: string): Promise<PlayerQuestion[]>
   submitAnswer(quizId: string, req: AnswerRequest): Promise<{ accepted: boolean; correct: boolean }>
   getResults(quizId: string): Promise<QuizResults>
   getReview(quizId: string, userId: string): Promise<ReviewQuestion[]>
