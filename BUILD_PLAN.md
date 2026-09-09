@@ -99,13 +99,14 @@
 - [x] **6.4 3-profile run** — `scripts/e2e-smoke.mjs` runs the full 3-user loop against a live server (health → users → create → commit x3 → LIVE → play → SETTLED → conserved payouts → review → history). **PASSED** against local uvicorn; frontend wired to real endpoints (`VITE_USE_MOCK=false`).
 - [x] **6.5 (added) Frontend wiring** — Real client endpoints for list/join/participants/questions/results/review/history; camelCase payload fix (E-023); creator-only early start; `/questions` marks callers ACTIVE; practice mode = minParticipants 1 + "start now" (default 0 min); Detail/Lobby quorum from `quiz.minParticipants`.
 
-## Phase 7 — Nimiq Integration (real mode)
+## Phase 7 — Nimiq Integration (real mode) ✅
 **Goal:** Real NIM commitments + payouts for scoring points.
 
-- [ ] **7.1 Mini App SDK** — Install `@nimiq/mini-app-sdk`, `init()`, wallet link, `requestDeviceIdentifier` (anti-cheat device id).
-- [ ] **7.2 Real commitment flow** — Join → memo `LK-XXXX` → `sendBasicTransactionWithData(escrow, memo)` → verify tx on-chain → CONFIRMED state.
-- [ ] **7.3 Settlement sidecar** — `/settlement` Node service: escrow wallet from env, payout plan executor (top-3 + bonus + refunds), SETTLED transition.
-- [ ] **7.4 Feature flag** — `PAYMENTS_MODE=mock|real` end-to-end; both paths testable.
+- [x] **7.1 Mini App SDK** — `@nimiq/mini-app-sdk` installed; `src/lib/nimiq.ts` wraps `init()` (graceful null outside Nimiq Pay), `listAccounts`, `sendBasicTransactionWithData` (feeless NIM + LK-memo, lunas conversion), `requestDeviceIdentifier` (anti-cheat, stored on user via wallet link). Profile screen links the wallet through the real provider; CommitScreen probes availability and degrades to manual send + tx-hash verification.
+- [x] **7.2 Real commitment flow** — Join (real mode) → participant PENDING + unique `LK-XXXX` memo + PENDING transaction row → wallet sends escrow tx with memo → `POST /commitments/verify` looks it up via `getTransactionByHash` on the Nim RPC node and validates recipient/value/memo/sender (sender must equal the linked wallet) → JOINED + CONFIRMED tx. Quorum counts confirmed players only; PENDING never counts, never refunds (never paid). `GET /config` exposes paymentsMode + escrow address; fake-chain pytest covers the whole path incl. rejections and settlement.
+- [x] **7.3 Settlement sidecar** — `settlement/` Node service using `@nimiq/core`: restores escrow keypair from `ESCROW_PRIVATE_KEY`, polls `GET /api/settlement/queue` (token-guarded), builds feeless `TransactionBuilder.newBasicWithData` payouts ("LK-PAYOUT" memo), broadcasts via `sendRawTransaction`, reports hashes via `POST /api/settlement/complete` → backend records PAYOUT transactions + flips SETTLED. `npm run new-key` generates the escrow keypair (verified against the real library). `DRY_RUN=true` runs the loop without a node. FINALIZED→SETTLED is sidecar-gated in real mode (mock still auto-settles).
+- [x] **7.4 Feature flag** — `PAYMENTS_MODE=mock|real` end-to-end: backend env → `/api/config` → frontend CommitScreen flow selection. Mock = instant confirm (default, demo-safe); real = memo + wallet send + on-chain verification + sidecar settlement. Both paths testable (mock via smoke, real via fake-chain pytest).
+- [x] **7.5 (added) Tests + smoke** — `test_real_mode.py` (7 tests): pending/memo join, underquorum with PENDING, wrong-amount/recipient/memo/unknown-hash rejections, sender-mismatch with linked wallet, full 4-player real flow with exact tie-aware payouts + sidecar queue/complete, token guards. 14/14 backend + 18/18 frontend green; live smoke PASSED (config + commitment status checks added).
 
 ## Phase 8 — Polish & Competition Prep
 **Goal:** Ship-ready submission.

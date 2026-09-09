@@ -1,10 +1,13 @@
 import os
+import secrets
+import string
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .chain import LUNAS_PER_NIM, escrow_address, payments_mode
 from .models import Answer, Participant, Question, Quiz, QuizEvent, Transaction
 
 VALID_TRANSITIONS = {
@@ -27,13 +30,22 @@ ANSWER_GRACE_SECONDS = 10
 # Dispute window between ENDED and FINALIZED (env-tunable for demos)
 DISPUTE_WINDOW_SECONDS = int(os.getenv("DISPUTE_WINDOW_SECONDS", "300"))
 
-PAYMENTS_MODE = os.getenv("PAYMENTS_MODE", "mock")
+PAYMENTS_MODE = payments_mode()
 
 TOP_3_SPLIT = (Decimal("0.5"), Decimal("0.3"), Decimal("0.1"))
+
+# Statuses that count toward the quorum (payment confirmed)
+CONFIRMED_STATUSES = {"JOINED", "ACTIVE", "COMPLETED", "TIMED_OUT"}
+
+MEMO_ALPHABET = string.ascii_uppercase + "23456789"  # no 0/O/1/I — unambiguous
 
 
 class DomainError(Exception):
     pass
+
+
+def generate_memo_code() -> str:
+    return "LK-" + "".join(secrets.choice(MEMO_ALPHABET) for _ in range(4))
 
 
 def utcnow() -> datetime:
@@ -68,7 +80,8 @@ async def log_event(db: AsyncSession, quiz_id: UUID, event_type: str, participan
 
 
 async def add_participant(db: AsyncSession, quiz: Quiz, user_id: UUID, tx_type: str = "ENTRY_COMMITMENT") -> Participant:
-    """Idempotent join + mock-payments transaction record."""
+    """Idempotent join. Mock payments: instantly confirmed (JOINED).
+    Real payments: PENDING until the on-chain transaction is verified."""
     existing = await db.execute(
         select(Participant).where(Participant.quiz_id == quiz.id, Participant.user_id == user_id)
     )
@@ -76,15 +89,17 @@ async def add_participant(db: AsyncSession, quiz: Quiz, user_id: UUID, tx_type: 
     if participant is not None:
         return participant
 
+    instant = PAYMENTS_MODE == "mock"
     participant = Participant(
         quiz_id=quiz.id,
         user_id=user_id,
-        status="JOINED",
+        status="JOINED" if instant else "PENDING",
+        memo_code=generate_memo_code(),
         disconnect_count=0,
         correct_answers=0,
     )
     db.add(participant)
-    await log_event(db, quiz.id, "QUIZ_JOINED", metadata={"user_id": str(user_id)})
+    await log_event(db, quiz.id, "QUIZ_JOINED", metadata={"user_id": str(user_id), "mode": PAYMENTS_MODE})
 
     tx = Transaction(
         quiz_id=quiz.id,
@@ -92,13 +107,81 @@ async def add_participant(db: AsyncSession, quiz: Quiz, user_id: UUID, tx_type: 
         type=tx_type,
         currency=quiz.currency,
         amount=quiz.entry_amount,
-        status="CONFIRMED" if PAYMENTS_MODE == "mock" else "PENDING",
+        status="CONFIRMED" if instant else "PENDING",
         created_at=utcnow(),
-        confirmed_at=utcnow() if PAYMENTS_MODE == "mock" else None,
+        confirmed_at=utcnow() if instant else None,
     )
     db.add(tx)
     await db.flush()
     return participant
+
+
+def _memo_in_data(data_hex: str | None, memo: str) -> bool:
+    """Nimiq tx data is hex-encoded bytes; accept hex or raw contains."""
+    if not data_hex:
+        return False
+    if memo in data_hex:
+        return True
+    try:
+        return memo.encode("utf-8").hex() in data_hex
+    except ValueError:
+        return False
+
+
+async def verify_commitment(
+    db: AsyncSession,
+    quiz: Quiz,
+    participant: Participant,
+    tx_ref: str,
+    chain,
+    sender_wallet: str | None,
+) -> tuple[bool, str]:
+    """Check the on-chain transaction referenced by tx_ref:
+    recipient == escrow, value == entry, memo matches, sender matches when known.
+    Returns (ok, detail)."""
+    if participant.status != "PENDING":
+        return True, "already confirmed"
+
+    info = await chain.get_transaction(tx_ref)
+    if info is None:
+        return False, "Transaction not found on chain yet — it may still be pending. Try again shortly."
+
+    # included in a block?
+    if not info.get("blockNumber"):
+        return False, "Transaction not yet included in a block. Try again shortly."
+
+    def norm(addr: str | None) -> str:
+        return (addr or "").replace(" ", "").upper()
+
+    expected_escrow = escrow_address()
+    if expected_escrow and norm(info.get("to")) != norm(expected_escrow):
+        return False, "Transaction recipient does not match the escrow address."
+
+    expected_luna = int(Decimal(str(quiz.entry_amount)) * LUNAS_PER_NIM)
+    if int(info.get("value") or 0) != expected_luna:
+        return False, f"Transaction value {info.get('value')} luna does not match the {expected_luna} luna commitment."
+
+    data = info.get("recipientData") or info.get("senderData") or ""
+    if not _memo_in_data(data, participant.memo_code or ""):
+        return False, "Transaction memo does not match your commitment code."
+
+    if sender_wallet and norm(info.get("from")) != norm(sender_wallet):
+        return False, "Transaction was sent from a different wallet than your linked one."
+
+    participant.status = "JOINED"
+    for row in (await db.execute(
+        select(Transaction).where(
+            Transaction.quiz_id == quiz.id,
+            Transaction.user_id == participant.user_id,
+            Transaction.type.in_(("ENTRY_COMMITMENT", "CREATOR_COMMITMENT")),
+        )
+    )).scalars().all():
+        row.status = "CONFIRMED"
+        row.blockchain_tx_hash = tx_ref
+        row.confirmed_at = utcnow()
+    await log_event(db, quiz.id, "COMMITMENT_CONFIRMED", participant.id, {"tx_ref": str(tx_ref)})
+    await db.flush()
+    return True, "confirmed"
 
 
 async def refund_all(db: AsyncSession, quiz: Quiz, participants: list[Participant]) -> None:
@@ -130,6 +213,7 @@ async def maybe_advance(db: AsyncSession, quiz: Quiz) -> None:
     participants = (await db.execute(
         select(Participant).where(Participant.quiz_id == quiz.id)
     )).scalars().all()
+    confirmed = [p for p in participants if p.status in CONFIRMED_STATUSES]
 
     if quiz.status == "OPEN":
         starts_at = as_aware(quiz.starts_at)
@@ -137,16 +221,17 @@ async def maybe_advance(db: AsyncSession, quiz: Quiz) -> None:
             return
         if now < starts_at:
             return
-        if len(participants) >= (quiz.min_participants or 3):
+        if len(confirmed) >= (quiz.min_participants or 3):
             await transition_quiz(db, quiz, "LIVE")
-            for p in participants:
+            for p in confirmed:
                 if p.status == "JOINED":
                     p.status = "ACTIVE"
             await log_event(db, quiz.id, "QUIZ_LIVE")
         else:
-            # Under quorum at window close: nullify + refund everyone
+            # Under quorum at window close: nullify + refund confirmed players.
+            # PENDING players never paid, so nothing to refund for them.
             await transition_quiz(db, quiz, "CANCELLED")
-            await log_event(db, quiz.id, "QUIZ_CANCELLED_UNDERQUORUM", metadata={"participants": len(participants)})
+            await log_event(db, quiz.id, "QUIZ_CANCELLED_UNDERQUORUM", metadata={"confirmed": len(confirmed), "pending": len(participants) - len(confirmed)})
         await db.commit()
         return
 
@@ -156,7 +241,7 @@ async def maybe_advance(db: AsyncSession, quiz: Quiz) -> None:
         return
 
     if quiz.status == "REFUNDING":
-        await refund_all(db, quiz, participants)
+        await refund_all(db, quiz, confirmed)
         await transition_quiz(db, quiz, "REFUNDED")
         await db.commit()
         return
@@ -167,7 +252,7 @@ async def maybe_advance(db: AsyncSession, quiz: Quiz) -> None:
         for p in participants:
             if p.status == "ACTIVE" and deadline and now > deadline + timedelta(seconds=ANSWER_GRACE_SECONDS):
                 p.status = "TIMED_OUT"
-            if p.status in ("JOINED", "ACTIVE"):
+            if p.status in ("JOINED", "PENDING", "ACTIVE"):
                 all_done = False
         if all_done and participants:
             await transition_quiz(db, quiz, "ENDED")
@@ -190,10 +275,12 @@ async def maybe_advance(db: AsyncSession, quiz: Quiz) -> None:
         return
 
     if quiz.status == "FINALIZED":
-        # Mock payments: payouts "sent" instantly. Real settlement: Phase 7 sidecar.
-        await transition_quiz(db, quiz, "SETTLED")
-        await log_event(db, quiz.id, "QUIZ_SETTLED")
-        await db.commit()
+        # Mock payments: payouts are ledger-instant. Real mode: the settlement
+        # sidecar broadcasts the payout plan and calls /api/settlement/complete.
+        if PAYMENTS_MODE == "mock":
+            await transition_quiz(db, quiz, "SETTLED")
+            await log_event(db, quiz.id, "QUIZ_SETTLED")
+            await db.commit()
         return
 
 
@@ -203,10 +290,12 @@ def compute_payouts(participants: list[Participant], question_count: int, entry_
     - Non-winning finishers: 80% back, 20% -> pool
     - No-shows: 50% back, 50% -> pool
     - 10% of pool + skipped rank allocations -> completion bonus among completers
+    - PENDING (never paid) participants are excluded entirely
     """
     stake = Decimal(str(entry_amount))
-    finished = [p for p in participants if p.status in ("COMPLETED", "TIMED_OUT")]
-    no_shows = [p for p in participants if p.status == "JOINED"]
+    paid_players = [p for p in participants if p.status != "PENDING"]
+    finished = [p for p in paid_players if p.status in ("COMPLETED", "TIMED_OUT")]
+    no_shows = [p for p in paid_players if p.status == "JOINED"]
     ranked = sorted(
         [p for p in finished if p.status == "COMPLETED"],
         key=lambda p: (-p.correct_answers, str(p.id)),
@@ -307,6 +396,8 @@ async def submit_answer(db: AsyncSession, quiz: Quiz, req_participant: UUID, que
         raise DomainError("Participant is not part of this quiz")
     if quiz.status != "LIVE":
         raise DomainError("Quiz is not live")
+    if participant.status == "PENDING":
+        raise DomainError("Your commitment is not confirmed yet")
     if participant.status in {"FORFEITED", "DISQUALIFIED", "TIMED_OUT", "COMPLETED"}:
         raise DomainError("Participant cannot submit answers in current state")
 

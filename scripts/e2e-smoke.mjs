@@ -27,10 +27,12 @@ async function waitForStatus(quizId, target, maxPolls = 20) {
 async function main() {
   console.log(`Lokkin e2e smoke against ${BASE}`)
 
-  // health
+  // health + config
   const health = await api('/health')
   if (!health.ok) throw new Error('health check failed')
-  log('health ok')
+  const config = await api('/api/config')
+  if (!['mock', 'real'].includes(config.paymentsMode)) throw new Error('bad paymentsMode')
+  log(`health ok · payments mode: ${config.paymentsMode}`)
 
   // 3 profiles
   const [ada, bode, chidi] = await Promise.all(
@@ -75,9 +77,12 @@ async function main() {
   if (!entry || entry.participantCount !== 1) throw new Error('list/participantCount mismatch')
   log('public list ok, creator counted')
 
-  // two more commit -> quorum
+  // two more commit -> quorum (join now returns memo + escrow info)
   for (const u of [bode, chidi]) {
-    await api(`/api/quizzes/${quizId}/join`, { method: 'POST', body: JSON.stringify({ userId: u.id }) })
+    const joined = await api(`/api/quizzes/${quizId}/join`, { method: 'POST', body: JSON.stringify({ userId: u.id }) })
+    if (!joined.memoCode || !joined.memoCode.startsWith('LK-')) throw new Error('join missing memoCode')
+    const status = await api(`/api/quizzes/${quizId}/commitments/${joined.participantId}`)
+    if (status.status !== 'JOINED') throw new Error('mock commitment not confirmed')
   }
   log('3 commitments confirmed (mock payments)')
 

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '@/api'
 import type { HistoryEntry, QuizMode } from '@/api/types'
@@ -9,6 +9,7 @@ import { Icon } from '@/components/Icon'
 import { StatusPill } from '@/components/StatusPill'
 import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
+import { getDeviceIdentifier, listWallets } from '@/lib/nimiq'
 
 const MODES: ReadonlyArray<{ id: QuizMode; label: string }> = [
   { id: 'demo', label: 'Demo' },
@@ -19,6 +20,9 @@ const MODES: ReadonlyArray<{ id: QuizMode; label: string }> = [
 export function ProfileScreen() {
   const navigate = useNavigate()
   const { user, mode, setMode, signOut } = useSession()
+  const [wallet, setWallet] = useState(user?.walletAddress ?? null)
+  const [linking, setLinking] = useState(false)
+  const [linkError, setLinkError] = useState<string | null>(null)
 
   const { data: history } = usePolling<HistoryEntry[]>(
     () => (user ? api.getMyHistory(user.id) : Promise.resolve([])),
@@ -32,6 +36,26 @@ export function ProfileScreen() {
     const net = entries.reduce((sum, e) => sum + (e.payout - e.entryAmount), 0)
     return { played, podiums, net }
   }, [history])
+
+  const linkWallet = async () => {
+    if (!user) return
+    setLinking(true)
+    setLinkError(null)
+    try {
+      const accounts = await listWallets()
+      if (accounts.length === 0) {
+        setLinkError('No account found in your wallet. Open Lokkin inside Nimiq Pay to link one.')
+        return
+      }
+      const deviceId = await getDeviceIdentifier('Quiz anti-cheat: one identity per device')
+      const res = await api.linkWallet(user.id, accounts[0], deviceId ?? undefined)
+      setWallet(res.walletAddress)
+    } catch (err) {
+      setLinkError(err instanceof Error ? err.message : 'Could not link the wallet.')
+    } finally {
+      setLinking(false)
+    }
+  }
 
   if (!user) return null
 
@@ -51,9 +75,9 @@ export function ProfileScreen() {
             </h1>
             <span className="mt-1 inline-flex items-center gap-1.5 rounded-pill bg-canvas-deep px-3 py-1 text-[11px] font-bold text-ink-soft">
               <Icon name="wallet" size={14} />
-              {user.walletAddress
-                ? `${user.walletAddress.slice(0, 8)}…`
-                : 'No wallet — links with Nimiq in real mode'}
+              {wallet
+                ? `${wallet.slice(0, 10)}…${wallet.slice(-4)}`
+                : 'No wallet — link one below'}
             </span>
           </div>
         </header>
@@ -66,6 +90,37 @@ export function ProfileScreen() {
             value={`${stats.net >= 0 ? '+' : ''}${stats.net.toFixed(2)}`}
             tone={stats.net > 0 ? 'positive' : stats.net < 0 ? 'negative' : 'neutral'}
           />
+        </section>
+
+        <section className="rounded-card bg-surface p-5 shadow-soft">
+          <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
+            Nimiq wallet
+          </h2>
+          {wallet ? (
+            <div className="mt-3 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-pill bg-success-soft text-success" aria-hidden>
+                <Icon name="check" size={20} strokeWidth={2.2} />
+              </span>
+              <code className="min-w-0 flex-1 truncate rounded-card bg-canvas px-3 py-2.5 text-xs text-ink">
+                {wallet}
+              </code>
+            </div>
+          ) : (
+            <>
+              <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                Link your wallet to send real commitments and receive payouts. On-chain
+                verification proves every payment comes from your address.
+              </p>
+              {linkError && (
+                <p className="mt-2 rounded-card bg-danger-soft px-3.5 py-2 text-xs font-semibold text-danger" role="alert">
+                  {linkError}
+                </p>
+              )}
+              <Button className="mt-3" onClick={() => void linkWallet()} disabled={linking}>
+                {linking ? 'Linking…' : 'Link Nimiq wallet'}
+              </Button>
+            </>
+          )}
         </section>
 
         <section className="rounded-card bg-surface p-5 shadow-soft">

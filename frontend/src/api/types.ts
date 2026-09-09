@@ -14,6 +14,7 @@ export type QuizStatus =
   | 'REFUNDED'
 
 export type ParticipantStatus =
+  | 'PENDING'
   | 'JOINED'
   | 'ACTIVE'
   | 'COMPLETED'
@@ -103,6 +104,7 @@ export interface Participant {
   userId: string
   displayName: string
   status: ParticipantStatus
+  memoCode?: string | null
   disconnectCount: number
   correctAnswers: number
   scorePercentage: number | null
@@ -114,6 +116,40 @@ export interface QuizState {
   status: QuizStatus
   serverTime: string
   deadline: number | null
+  participantStatus: ParticipantStatus | null
+}
+
+// ---------- payments / wallet ----------
+
+export interface AppConfig {
+  paymentsMode: 'mock' | 'real'
+  escrowAddress: string | null
+  minParticipantsDefault: number
+}
+
+export interface JoinResult {
+  participantId: string
+  status: ParticipantStatus
+  paymentsMode: 'mock' | 'real'
+  memoCode: string | null
+  escrowAddress: string | null
+  entryAmount: number
+}
+
+export interface CommitmentStatus {
+  participantId: string
+  status: ParticipantStatus
+  memoCode: string | null
+  escrowAddress: string | null
+  entryAmount: number | null
+  txHash: string | null
+}
+
+export interface VerifyCommitmentResult {
+  verified: boolean
+  status: ParticipantStatus
+  detail: string
+  memoCode: string | null
 }
 
 // ---------- Request / response shapes (match backend JSON) ----------
@@ -204,7 +240,9 @@ export interface HistoryEntry {
 // ---------- API interface (implemented by both real client and mock) ----------
 
 export interface LokkinApi {
+  getConfig(): Promise<AppConfig>
   createUser(req: CreateUserRequest): Promise<User>
+  linkWallet(userId: string, walletAddress: string, deviceId?: string): Promise<{ id: string; walletAddress: string | null; deviceId: string | null }>
   createQuiz(req: CreateQuizRequest): Promise<{ quizId: string; status: QuizStatus }>
   addQuestion(quizId: string, req: CreateQuestionRequest): Promise<{ questionId: string; position: number }>
   getQuiz(quizId: string): Promise<Quiz>
@@ -212,7 +250,9 @@ export interface LokkinApi {
   publishQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
   openQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
   startQuiz(quizId: string): Promise<{ quizId: string; status: QuizStatus }>
-  joinQuiz(quizId: string, userId: string): Promise<{ participantId: string; status: ParticipantStatus }>
+  joinQuiz(quizId: string, userId: string): Promise<JoinResult>
+  verifyCommitment(quizId: string, participantId: string, txRef: string): Promise<VerifyCommitmentResult>
+  getCommitment(quizId: string, participantId: string): Promise<CommitmentStatus>
   getParticipants(quizId: string): Promise<Participant[]>
   getQuizState(quizId: string, userId?: string): Promise<QuizState>
   getQuestions(quizId: string, userId?: string): Promise<PlayerQuestion[]>

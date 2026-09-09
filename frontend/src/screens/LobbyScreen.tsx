@@ -40,7 +40,7 @@ export function LobbyScreen() {
 
   const quiz = data?.quiz
   const participants = useMemo(() => data?.participants ?? [], [data])
-  const confirmed = participants.length
+  const confirmed = participants.filter((p) => p.status !== 'PENDING').length
   const minRequired = quiz?.minParticipants ?? 3
   const isCreator = quiz?.creatorId === user?.id
 

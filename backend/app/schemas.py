@@ -41,6 +41,27 @@ class JoinRequest(CamelModel):
     user_id: UUID
 
 
+class VerifyCommitmentRequest(CamelModel):
+    participant_id: UUID
+    """Transaction hash (or serialized tx reference) returned by the wallet"""
+    tx_ref: str = Field(min_length=8, max_length=1024)
+
+
+class WalletLinkRequest(CamelModel):
+    wallet_address: str = Field(min_length=20, max_length=48)
+    device_id: str | None = Field(default=None, max_length=64)
+
+
+class SettlementPayout(CamelModel):
+    participant_id: UUID
+    tx_hash: str = Field(min_length=8, max_length=256)
+
+
+class SettlementCompleteRequest(CamelModel):
+    quiz_id: UUID
+    payouts: list[SettlementPayout]
+
+
 class AnswerRequest(CamelModel):
     participant_id: UUID
     question_id: UUID

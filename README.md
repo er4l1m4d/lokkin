@@ -26,10 +26,44 @@ pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 npm run api           # uvicorn on http://localhost:8000
 ```
 
-Env knobs: `DISPUTE_WINDOW_SECONDS` (default 300, set lower for demos), `PAYMENTS_MODE` (`mock` instant-confirms commitments; `real` lands with the Nimiq slice).
+Env knobs: `DISPUTE_WINDOW_SECONDS` (default 300, set lower for demos), `PAYMENTS_MODE` (`mock` instant-confirms commitments; `real` activates on-chain verification), `ESCROW_ADDRESS`, `NIMIQ_RPC_URL`, `SETTLEMENT_TOKEN`.
+
+## Real payments mode (Nimiq)
+
+`PAYMENTS_MODE=real` turns Lokkin into a real-stakes competition:
+
+1. Players join → receive a unique `LK-XXXX` memo code.
+2. They send their stake from their Nimiq Pay wallet to the escrow address **with the memo as transaction data** (feeless). The mini-app SDK's `sendBasicTransactionWithData` does this in one tap inside Nimiq Pay.
+3. The backend verifies the transaction on-chain (recipient, value, memo, sender) and confirms the commitment. Quorum counts confirmed players only.
+4. After FINALIZED, the settlement sidecar pays out from escrow and the quiz settles.
+
+Activate it:
 
 ```bash
-python -m pytest backend/tests -q    # critical-flow suite
+# 1. escrow wallet (once)
+cd settlement && npm install && npm run new-key   # prints address + private key
+
+# 2. backend env
+PAYMENTS_MODE=real
+ESCROW_ADDRESS=NQ.. (from step 1)
+NIMIQ_RPC_URL=https://your-nimiq-node/rpc
+SETTLEMENT_TOKEN=<shared secret>
+
+# 3. settlement sidecar env
+ESCROW_PRIVATE_KEY=<from step 1>
+API_URL=http://localhost:8000
+SETTLEMENT_TOKEN=<same as backend>
+NIMIQ_RPC_URL=<same as backend>
+DRY_RUN=false
+
+# 4. fund the escrow address with NIM, then
+cd settlement && npm start
+```
+
+`DRY_RUN=true` exercises the full loop without a node or funds (simulated hashes). Mock mode remains the default and needs none of this.
+
+```bash
+python -m pytest backend/tests -q    # critical-flow suite (mock + real mode with fake chain)
 node scripts/e2e-smoke.mjs           # 3-user run against a live server
 ```
 

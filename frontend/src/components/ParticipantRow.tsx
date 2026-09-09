@@ -1,6 +1,7 @@
 import type { Participant, ParticipantStatus } from '@/api/types'
 
 const STATUS_DOTS: Record<ParticipantStatus, string> = {
+  PENDING: 'bg-amber',
   JOINED: 'bg-ink-muted',
   ACTIVE: 'bg-danger',
   COMPLETED: 'bg-success',

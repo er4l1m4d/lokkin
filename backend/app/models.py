@@ -14,6 +14,8 @@ class User(Base):
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     wallet_address: Mapped[str | None] = mapped_column(Text, unique=True)
     display_name: Mapped[str] = mapped_column(Text)
+    # Pseudonymous per-device handle from the Nimiq Pay mini-app SDK (anti-cheat)
+    device_id: Mapped[str | None] = mapped_column(Text)
 
 
 class Quiz(Base):
@@ -42,7 +44,11 @@ class Participant(Base):
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     quiz_id: Mapped[UUID] = mapped_column(Uuid)
     user_id: Mapped[UUID] = mapped_column(Uuid)
+    # PENDING = joined, awaiting on-chain payment confirmation
+    # JOINED = commitment confirmed
     status: Mapped[str] = mapped_column(String)
+    # Unique memo code binding the on-chain payment to this participant (real mode)
+    memo_code: Mapped[str | None] = mapped_column(String(12))
     disconnect_count: Mapped[int] = mapped_column(Integer, default=0)
     correct_answers: Mapped[int] = mapped_column(Integer, default=0)
     score_percentage: Mapped[Decimal | None] = mapped_column(Numeric(8, 5))

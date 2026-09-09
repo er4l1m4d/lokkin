@@ -33,6 +33,7 @@ export function QuizDetailScreen() {
 
   const quiz = data?.quiz
   const participants = useMemo(() => data?.participants ?? [], [data])
+  const confirmed = participants.filter((p) => p.status !== 'PENDING').length
   const joined = useMemo(
     () => participants.some((p) => p.displayName === user?.displayName),
     [participants, user?.displayName],
@@ -63,7 +64,6 @@ export function QuizDetailScreen() {
 
   const isCreator = quiz.creatorId === user?.id
   const minRequired = quiz.minParticipants ?? 3
-  const confirmed = participants.length
 
   return (
     <AppShell>

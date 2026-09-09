@@ -1,8 +1,11 @@
 import type {
   AnswerRequest,
+  AppConfig,
+  CommitmentStatus,
   CreateQuestionRequest,
   CreateQuizRequest,
   CreateUserRequest,
+  JoinResult,
   LokkinApi,
   OptionKey,
   Participant,
@@ -13,8 +16,10 @@ import type {
   QuizStatus,
   ResultRow,
   User,
+  VerifyCommitmentResult,
 } from './types'
 import { VALID_QUIZ_TRANSITIONS } from './types'
+import { generateMemoCode } from '@/lib/generator'
 
 // ---------- payout rules (locked product decisions) ----------
 // Top 3: 100% entry back + pool split 50/30/10
@@ -368,6 +373,14 @@ function maybeAdvanceLifecycle(quiz: Quiz) {
 
 export function createMockApi(): LokkinApi {
   return {
+    async getConfig(): Promise<AppConfig> {
+      return {
+        paymentsMode: 'mock',
+        escrowAddress: 'NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0',
+        minParticipantsDefault: 3,
+      }
+    },
+
     async createUser(req: CreateUserRequest) {
       await delay()
       const user: User = { id: uid(), displayName: req.displayName, walletAddress: req.walletAddress ?? null }
@@ -468,20 +481,30 @@ export function createMockApi(): LokkinApi {
       return { quizId, status: quiz.status }
     },
 
-    async joinQuiz(quizId: string, userId: string) {
+    async joinQuiz(quizId: string, userId: string): Promise<JoinResult> {
       await delay()
       const quiz = store.quizzes.get(quizId)
       const user = store.users.get(userId)
       if (!quiz || !user) throw new Error('Quiz or user not found')
       const participants = store.participants.get(quizId) ?? []
       const existing = participants.find((p) => p.userId === userId)
-      if (existing) return { participantId: existing.id, status: existing.status }
+      if (existing) {
+        return {
+          participantId: existing.id,
+          status: existing.status,
+          paymentsMode: 'mock',
+          memoCode: existing.memoCode ?? null,
+          escrowAddress: 'NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0',
+          entryAmount: quiz.entryAmount,
+        }
+      }
       const participant: Participant = {
         id: uid(),
         quizId,
         userId,
         displayName: user.displayName,
         status: 'JOINED',
+        memoCode: generateMemoCode(),
         disconnectCount: 0,
         correctAnswers: 0,
         scorePercentage: null,
@@ -492,7 +515,49 @@ export function createMockApi(): LokkinApi {
       store.participants.set(quizId, participants)
       quiz.participantCount = participants.length
       // mock payments: tx instantly CONFIRMED
-      return { participantId: participant.id, status: participant.status }
+      return {
+        participantId: participant.id,
+        status: participant.status,
+        paymentsMode: 'mock',
+        memoCode: participant.memoCode ?? null,
+        escrowAddress: 'NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0',
+        entryAmount: quiz.entryAmount,
+      }
+    },
+
+    async linkWallet(userId: string, walletAddress: string, deviceId?: string) {
+      await delay()
+      const user = store.users.get(userId)
+      if (!user) throw new Error('User not found')
+      user.walletAddress = walletAddress
+      return { id: userId, walletAddress, deviceId: deviceId ?? null }
+    },
+
+    async verifyCommitment(quizId: string, participantId: string): Promise<VerifyCommitmentResult> {
+      await delay()
+      const participant = (store.participants.get(quizId) ?? []).find((p) => p.id === participantId)
+      if (!participant) throw new Error('Participant not found')
+      return {
+        verified: true,
+        status: participant.status === 'PENDING' ? 'JOINED' : participant.status,
+        detail: 'Mock payments mode — instantly confirmed',
+        memoCode: participant.memoCode ?? null,
+      }
+    },
+
+    async getCommitment(quizId: string, participantId: string): Promise<CommitmentStatus> {
+      await delay()
+      const quiz = store.quizzes.get(quizId)
+      const participant = (store.participants.get(quizId) ?? []).find((p) => p.id === participantId)
+      if (!quiz || !participant) throw new Error('Not found')
+      return {
+        participantId,
+        status: participant.status,
+        memoCode: participant.memoCode ?? null,
+        escrowAddress: 'NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0',
+        entryAmount: quiz.entryAmount,
+        txHash: 'mock-tx',
+      }
     },
 
     async getParticipants(quizId: string) {
@@ -502,15 +567,19 @@ export function createMockApi(): LokkinApi {
       return participants.map((p) => ({ ...p }))
     },
 
-    async getQuizState(quizId: string, _userId?: string) {
+    async getQuizState(quizId: string, userId?: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
       if (!quiz) throw new Error('Quiz not found')
       maybeAdvanceLifecycle(quiz)
+      const mine = userId
+        ? (store.participants.get(quizId) ?? []).find((p) => p.userId === userId)
+        : undefined
       return {
         status: quiz.status,
         serverTime: new Date().toISOString(),
         deadline: quiz.status === 'LIVE' ? Date.now() / 1000 + quiz.durationSeconds : null,
+        participantStatus: mine?.status ?? null,
       }
     },
 

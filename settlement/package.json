@@ -1,0 +1,14 @@
+{
+  "name": "lokkin-settlement",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Lokkin escrow settlement sidecar — pays out finalized quizzes on Nimiq",
+  "scripts": {
+    "start": "node index.mjs",
+    "new-key": "node generate-key.mjs"
+  },
+  "dependencies": {
+    "@nimiq/core": "^2.21.0"
+  }
+}

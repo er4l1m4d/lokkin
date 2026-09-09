@@ -9,7 +9,7 @@ EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
   CREATE TYPE participant_status AS ENUM (
-    'JOINED','ACTIVE','COMPLETED','TIMED_OUT','FORFEITED','DISQUALIFIED'
+    'PENDING','JOINED','ACTIVE','COMPLETED','TIMED_OUT','FORFEITED','DISQUALIFIED'
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS users (
   wallet_address TEXT UNIQUE,
   display_name TEXT NOT NULL,
   avatar_url TEXT,
+  device_id TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -110,6 +111,7 @@ CREATE TABLE IF NOT EXISTS participants (
   quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id),
   status participant_status NOT NULL DEFAULT 'JOINED',
+  memo_code TEXT,
   joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   started_at TIMESTAMPTZ,
   completed_at TIMESTAMPTZ,
@@ -118,7 +120,8 @@ CREATE TABLE IF NOT EXISTS participants (
   valid_questions INTEGER,
   score_percentage NUMERIC(8,5),
   rank INTEGER,
-  UNIQUE (quiz_id, user_id)
+  UNIQUE (quiz_id, user_id),
+  UNIQUE (quiz_id, memo_code)
 );
 
 CREATE TABLE IF NOT EXISTS answers (

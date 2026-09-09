@@ -101,6 +101,12 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Cause:** Request schemas used snake_case while every response and the whole frontend use camelCase; the two sides had never actually talked.
 - **Fix:** Pydantic `CamelModel` base with `alias_generator=to_camel, populate_by_name=True` — all request schemas accept both casings. **Rule: wire-level contracts get exercised by tests before declaring integration done.**
 
+### E-026 — `create_all` does not ALTER existing SQLite dev DBs (new columns)
+- **When:** Phase 7, smoke run after adding `users.device_id` / `participants.memo_code`
+- **Error:** `POST /api/users → 409 "User could not be created"` (root cause: `no such column` on insert, swallowed by the generic 409)
+- **Cause:** `init_db()` uses `Base.metadata.create_all` — it creates *missing tables* but never migrates *existing* ones, so the Phase 6 dev DB lacked the new columns.
+- **Fix (dev):** delete `backend/lokkin.db` and restart — smoke data only. Production is unaffected (fresh Postgres applies `sql/001_initial_schema.sql`). **Rule: after model changes, reset the dev SQLite file; if a 409 swallows a DB error, check uvicorn.log for the real cause before guessing.**
+
 ### E-025 — CI pytest step: `file or directory not found: backend/tests`
 - **When:** Phase 6, first CI run of the backend test suite
 - **Error:** pytest exit 1, "file or directory not found: backend/tests"

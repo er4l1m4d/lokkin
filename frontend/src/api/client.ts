@@ -1,12 +1,14 @@
 import type {
   AnswerRequest,
+  AppConfig,
+  CommitmentStatus,
   CreateQuestionRequest,
   CreateQuizRequest,
   CreateUserRequest,
   HistoryEntry,
+  JoinResult,
   LokkinApi,
   Participant,
-  ParticipantStatus,
   PlayerQuestion,
   Quiz,
   QuizListFilters,
@@ -14,6 +16,7 @@ import type {
   QuizState,
   QuizStatus,
   ReviewQuestion,
+  VerifyCommitmentResult,
 } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -42,11 +45,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function createRealApi(): LokkinApi {
   return {
+    async getConfig() {
+      return request<AppConfig>('/api/config')
+    },
+
     async createUser(req: CreateUserRequest) {
       return request<UserJson>('/api/users', {
         method: 'POST',
         body: JSON.stringify(req),
       }).then(toUser)
+    },
+
+    async linkWallet(userId: string, walletAddress: string, deviceId?: string) {
+      return request<{ id: string; walletAddress: string | null; deviceId: string | null }>(
+        `/api/users/${userId}/wallet`,
+        { method: 'POST', body: JSON.stringify({ walletAddress, deviceId }) },
+      )
     },
 
     async createQuiz(req: CreateQuizRequest) {
@@ -112,10 +126,21 @@ export function createRealApi(): LokkinApi {
     },
 
     async joinQuiz(quizId: string, userId: string) {
-      return request<{ participantId: string; status: ParticipantStatus }>(
-        `/api/quizzes/${quizId}/join`,
-        { method: 'POST', body: JSON.stringify({ userId }) },
-      )
+      return request<JoinResult>(`/api/quizzes/${quizId}/join`, {
+        method: 'POST',
+        body: JSON.stringify({ userId }),
+      })
+    },
+
+    async verifyCommitment(quizId: string, participantId: string, txRef: string) {
+      return request<VerifyCommitmentResult>(`/api/quizzes/${quizId}/commitments/verify`, {
+        method: 'POST',
+        body: JSON.stringify({ participantId, txRef }),
+      })
+    },
+
+    async getCommitment(quizId: string, participantId: string) {
+      return request<CommitmentStatus>(`/api/quizzes/${quizId}/commitments/${participantId}`)
     },
 
     async getParticipants(quizId: string) {

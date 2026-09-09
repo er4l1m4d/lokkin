@@ -1,60 +1,105 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '@/api'
-import type { Quiz } from '@/api/types'
+import type { AppConfig, JoinResult } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { Icon } from '@/components/Icon'
 import { MemoCard } from '@/components/MemoCard'
 import { useSession } from '@/context/useSession'
-import { generateMemoCode } from '@/lib/generator'
+import { isWalletAvailable, sendCommitment } from '@/lib/nimiq'
 
-type Stage = 'summary' | 'confirming' | 'confirmed'
-
-const MOCK_ESCROW = 'NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0'
+type Stage = 'summary' | 'confirming' | 'send' | 'verifying' | 'confirmed'
 
 export function CommitScreen() {
   const { quizId } = useParams<{ quizId: string }>()
   const navigate = useNavigate()
   const { user } = useSession()
 
-  const [quiz, setQuiz] = useState<Quiz | null>(null)
+  const [entry, setEntry] = useState<number | null>(null)
+  const [title, setTitle] = useState('')
   const [stage, setStage] = useState<Stage>('summary')
-  const [memo] = useState(() => generateMemoCode())
+  const [join, setJoin] = useState<JoinResult | null>(null)
+  const [config, setConfig] = useState<AppConfig | null>(null)
+  const [walletAvailable, setWalletAvailable] = useState<boolean | null>(null)
+  const [pastedHash, setPastedHash] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [detail, setDetail] = useState<string | null>(null)
 
   useEffect(() => {
     if (!quizId) return
     let cancelled = false
-    api
-      .getQuiz(quizId)
-      .then((q) => {
-        if (!cancelled) setQuiz(q)
-      })
-      .catch(() => {
-        if (!cancelled) setError('Quiz not found')
-      })
+    void api.getConfig().then((c) => {
+      if (!cancelled) setConfig(c)
+    })
+    void api.getQuiz(quizId).then((quiz) => {
+      if (!cancelled) {
+        setEntry(quiz.entryAmount)
+        setTitle(quiz.title)
+      }
+    }).catch(() => {
+      if (!cancelled) setError('Quiz not found')
+    })
     return () => {
       cancelled = true
     }
   }, [quizId])
 
-  const confirm = async () => {
+  // wallet availability probe (non-blocking; null = still checking)
+  useEffect(() => {
+    void isWalletAvailable().then(setWalletAvailable)
+  }, [])
+
+  const confirm = useCallback(async () => {
     if (!quizId || !user) return
     setStage('confirming')
     setError(null)
     try {
-      // mock payments mode: transaction instantly CONFIRMED
-      await new Promise((r) => setTimeout(r, 1400))
-      await api.joinQuiz(quizId, user.id)
-      setStage('confirmed')
+      const result = await api.joinQuiz(quizId, user.id)
+      setJoin(result)
+      if (result.status === 'JOINED') {
+        setStage('confirmed') // mock mode: instantly confirmed
+      } else {
+        setStage('send')
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Commitment failed — try again')
       setStage('summary')
     }
-  }
+  }, [quizId, user])
 
-  if (error && !quiz) {
+  const submitTxRef = useCallback(async (txRef: string) => {
+    if (!quizId || !join) return
+    setStage('verifying')
+    setError(null)
+    setDetail(null)
+    try {
+      const res = await api.verifyCommitment(quizId, join.participantId, txRef)
+      if (res.verified) {
+        setStage('confirmed')
+      } else {
+        setDetail(res.detail)
+        setStage('send')
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Verification failed — try again')
+      setStage('send')
+    }
+  }, [quizId, join])
+
+  const payFromWallet = useCallback(async () => {
+    if (!join || !join.escrowAddress || !entry) return
+    setDetail(null)
+    setError(null)
+    const res = await sendCommitment(join.escrowAddress, entry, join.memoCode ?? '')
+    if ('txRef' in res) {
+      await submitTxRef(res.txRef)
+    } else {
+      setError(res.error)
+    }
+  }, [join, entry, submitTxRef])
+
+  if (error && entry === null) {
     return (
       <AppShell>
         <div className="rounded-card bg-surface p-8 text-center shadow-soft">
@@ -69,20 +114,22 @@ export function CommitScreen() {
     )
   }
 
-  if (!quiz) {
+  if (entry === null) {
     return (
       <AppShell>
-          <div className="h-64 animate-pulse rounded-card bg-surface-muted" />
+        <div className="h-64 animate-pulse rounded-card bg-surface-muted" />
       </AppShell>
     )
   }
+
+  const realMode = config?.paymentsMode === 'real'
 
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
         <header>
           <h1 className="font-display text-2xl font-black text-ink">Lock in your stake</h1>
-          <p className="mt-1 text-sm text-ink-soft">{quiz.title}</p>
+          <p className="mt-1 text-sm text-ink-soft">{title}</p>
         </header>
 
         {error && (
@@ -98,11 +145,15 @@ export function CommitScreen() {
                 You're committing
               </p>
               <p className="mt-2 font-display text-4xl font-black text-primary-dark">
-                {quiz.entryAmount} NIM
+                {entry} NIM
               </p>
-              <p className="mt-1 text-xs text-ink-muted">
-                {quiz.questionCount} questions · {Math.round(quiz.durationSeconds / 60)} min
-              </p>
+              {realMode ? (
+                <p className="mt-1 text-xs font-semibold text-ink-soft">
+                  Real NIM · sent from your Nimiq wallet · feeless
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-ink-muted">Play money — instantly confirmed</p>
+              )}
             </section>
 
             <section className="rounded-card bg-surface p-5 shadow-soft">
@@ -116,13 +167,13 @@ export function CommitScreen() {
                 <PayoutRow icon="clock" text="No-show — 50% back, 50% to the pool. Locking in means showing up" />
               </ul>
               <p className="mt-4 rounded-card bg-amber-soft px-3.5 py-2.5 text-xs leading-relaxed text-ink">
-                Needs at least 3 commitments to run — otherwise everyone is auto-refunded in
-                full.
+                Needs at least 3 confirmed commitments to run — otherwise everyone is
+                auto-refunded in full.
               </p>
             </section>
 
             <Button size="lg" onClick={() => void confirm()}>
-              Commit {quiz.entryAmount} NIM
+              Commit {entry} NIM
             </Button>
             <Button variant="ghost" size="sm" onClick={() => navigate(`/quiz/${quizId}`)}>
               Not yet
@@ -134,10 +185,73 @@ export function CommitScreen() {
           <section className="flex min-h-[40vh] flex-col items-center justify-center gap-4 rounded-card bg-surface p-8 shadow-soft">
             <div className="h-14 w-14 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
             <p className="font-display text-base font-extrabold text-ink">
-              Confirming transaction…
+              {realMode ? 'Reserving your spot…' : 'Confirming transaction…'}
             </p>
-            <p className="text-xs text-ink-muted">Mock payments mode — instant confirmation</p>
+            <p className="text-xs text-ink-muted">
+              {realMode ? 'Generating your commitment code' : 'Mock payments mode — instant confirmation'}
+            </p>
           </section>
+        )}
+
+        {(stage === 'send' || stage === 'verifying') && join && (
+          <>
+            {detail && (
+              <p className="rounded-card bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
+                {detail}
+              </p>
+            )}
+            <MemoCard code={join.memoCode ?? ''} address={join.escrowAddress ?? ''} />
+
+            {stage === 'verifying' ? (
+              <section className="flex flex-col items-center gap-3 rounded-card bg-surface p-8 text-center shadow-soft">
+                <div className="h-12 w-12 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
+                <p className="font-display text-base font-extrabold text-ink">
+                  Verifying on-chain…
+                </p>
+                <p className="text-xs text-ink-muted">
+                  This page keeps checking — you can also come back later.
+                </p>
+              </section>
+            ) : (
+              <>
+                <Button
+                  size="lg"
+                  onClick={() => void payFromWallet()}
+                  disabled={walletAvailable === false}
+                >
+                  {walletAvailable === false
+                    ? 'No wallet — send manually below'
+                    : `Send ${entry} NIM from your wallet`}
+                </Button>
+
+                {walletAvailable === false && (
+                  <section className="rounded-card bg-surface p-5 shadow-soft">
+                    <p className="text-sm font-bold text-ink">Sent it manually?</p>
+                    <p className="mt-1 text-xs leading-relaxed text-ink-soft">
+                      Send exactly {entry} NIM to the escrow address with your memo code above,
+                      then paste the transaction hash here to confirm.
+                    </p>
+                    <div className="mt-3 flex flex-col gap-2">
+                      <input
+                        type="text"
+                        value={pastedHash}
+                        onChange={(e) => setPastedHash(e.target.value)}
+                        placeholder="Transaction hash"
+                        aria-label="Transaction hash"
+                        className="min-h-12 w-full rounded-card border-2 border-line bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted focus:border-primary"
+                      />
+                      <Button
+                        disabled={pastedHash.trim().length < 8}
+                        onClick={() => void submitTxRef(pastedHash.trim())}
+                      >
+                        Verify transaction
+                      </Button>
+                    </div>
+                  </section>
+                )}
+              </>
+            )}
+          </>
         )}
 
         {stage === 'confirmed' && (
@@ -148,11 +262,11 @@ export function CommitScreen() {
               </span>
               <h2 className="font-display text-xl font-black text-ink">You're in</h2>
               <p className="text-sm text-ink-soft">
-                {quiz.entryAmount} NIM committed and confirmed.
+                {entry} NIM committed and {realMode ? 'confirmed on-chain' : 'confirmed'}.
               </p>
             </section>
 
-            <MemoCard code={memo} address={MOCK_ESCROW} />
+            {join?.memoCode && <MemoCard code={join.memoCode} address={join.escrowAddress ?? ''} />}
 
             <Button size="lg" onClick={() => navigate(`/quiz/${quizId}/lobby`)}>
               Go to the lobby

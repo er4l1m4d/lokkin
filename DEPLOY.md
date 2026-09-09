@@ -18,6 +18,18 @@ Solo-dev safety system. Every deployment follows this file. Every deploy maps to
 - **SECURITY (public repo):** the workflow must NEVER run on `pull_request` — fork PRs would execute untrusted code on this PC. Push to `main` and `workflow_dispatch` only. If the restriction (E-013) lifts and we move back to hosted runners, re-adding `pull_request` is safe.
 - **Upgrading to hosted runners later:** change `runs-on:` back to `ubuntu-latest`, remove the runner (`.\config.cmd remove --token <token>`), delete the Startup .bat.
 
+## Real-payments mode activation (Nimiq)
+
+- [ ] `cd settlement && npm i && npm run new-key` — generated escrow keypair, private key stored securely
+- [ ] Backend env: `PAYMENTS_MODE=real`, `ESCROW_ADDRESS`, `NIMIQ_RPC_URL` (Nimiq JSON-RPC node), `SETTLEMENT_TOKEN`
+- [ ] Sidecar env: `ESCROW_PRIVATE_KEY`, `API_URL`, `SETTLEMENT_TOKEN`, `NIMIQ_RPC_URL`, `DRY_RUN=false`
+- [ ] Escrow address funded with enough NIM for expected payouts
+- [ ] Mini app served over HTTPS and reachable in Nimiq Pay (`nimiqpay://miniapp?url=...` or `https://nimpay.app/miniapps/open/...`)
+- [ ] One real commitment verified end-to-end (memo visible in wallet tx, participant JOINED)
+- [ ] One real payout received by a test wallet (sidecar log shows the tx hash)
+- [ ] RPC method-name caveat checked: backend/sidecar try positional then named JSON-RPC params; if the node rejects, adjust `rpc()` in `settlement/index.mjs` and `RpcChainClient` in `backend/app/chain.py`
+- [ ] Wallet link + device identifier tested from inside Nimiq Pay
+
 ## Workflow (per feature slice)
 
 ```

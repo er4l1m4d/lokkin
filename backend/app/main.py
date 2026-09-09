@@ -3,18 +3,22 @@ from datetime import datetime, timezone
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, HTTPException, Query, status
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from .chain import create_chain_client, escrow_address, payments_mode, rpc_url
 from .db import get_db, init_db
-from .models import Answer, Participant, Question, Quiz, User
+from .models import Answer, Participant, Question, Quiz, Transaction, User
 from .schemas import (
     AnswerRequest,
     CreateQuestionRequest,
     CreateQuizRequest,
     CreateUserRequest,
     JoinRequest,
+    VerifyCommitmentRequest,
+    WalletLinkRequest,
+    SettlementCompleteRequest,
 )
 from .services import (
     DomainError,
@@ -27,21 +31,43 @@ from .services import (
     submit_answer,
     transition_quiz,
     utcnow,
+    verify_commitment,
 )
+import os
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(app: FastAPI):
     await init_db()
+    app.state.chain = create_chain_client()
     yield
 
 
-app = FastAPI(title="Lokkin Core API", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="Lokkin Core API", version="0.3.0", lifespan=lifespan)
+
+
+def chain_for(request: Request):
+    chain = getattr(request.app.state, "chain", None)
+    return chain if chain is not None else create_chain_client()
+
+
+def settlement_token_ok(request: Request) -> bool:
+    expected = os.getenv("SETTLEMENT_TOKEN", "dev-settlement-token")
+    return request.headers.get("x-settlement-token") == expected
 
 
 @app.get("/health")
 async def health():
     return {"ok": True}
+
+
+@app.get("/api/config")
+async def get_config():
+    return {
+        "paymentsMode": payments_mode(),
+        "escrowAddress": escrow_address(),
+        "minParticipantsDefault": 3,
+    }
 
 
 # ---------- users ----------
@@ -57,7 +83,22 @@ async def create_user(req: CreateUserRequest, db: AsyncSession = Depends(get_db)
     except Exception as exc:
         await db.rollback()
         raise HTTPException(409, "User could not be created") from exc
-    return {"id": str(user.id), "displayName": user.display_name}
+    return {"id": str(user.id), "displayName": user.display_name, "walletAddress": user.wallet_address}
+
+
+@app.post("/api/users/{user_id}/wallet")
+async def link_wallet(user_id: UUID, req: WalletLinkRequest, db: AsyncSession = Depends(get_db)):
+    """Links the wallet chosen in Nimiq Pay (mini-app SDK listAccounts).
+    Real ownership proof happens on-chain: commitment verification requires
+    the payment to be sent FROM this address."""
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(404, "User not found")
+    user.wallet_address = req.wallet_address.strip()
+    if req.device_id:
+        user.device_id = req.device_id.strip()
+    await db.commit()
+    return {"id": str(user.id), "walletAddress": user.wallet_address, "deviceId": user.device_id}
 
 
 @app.get("/api/users/{user_id}/history")
@@ -292,7 +333,62 @@ async def join_quiz(quiz_id: UUID, req: JoinRequest, db: AsyncSession = Depends(
         raise HTTPException(409, f"Quiz is not open for commitments (status: {quiz.status})")
     participant = await add_participant(db, quiz, user.id)
     await db.commit()
-    return {"participantId": str(participant.id), "status": participant.status}
+    return {
+        "participantId": str(participant.id),
+        "status": participant.status,
+        "paymentsMode": payments_mode(),
+        "memoCode": participant.memo_code,
+        "escrowAddress": escrow_address(),
+        "entryAmount": float(quiz.entry_amount),
+    }
+
+
+@app.post("/api/quizzes/{quiz_id}/commitments/verify")
+async def verify_quiz_commitment(
+    quiz_id: UUID,
+    req: VerifyCommitmentRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    quiz = await db.get(Quiz, quiz_id)
+    participant = await db.get(Participant, req.participant_id)
+    if not quiz or not participant or participant.quiz_id != quiz.id:
+        raise HTTPException(404, "Quiz or participant not found")
+    user = await db.get(User, participant.user_id)
+    ok, detail = await verify_commitment(
+        db, quiz, participant, req.tx_ref, chain_for(request),
+        user.wallet_address if user else None,
+    )
+    await db.commit()
+    return {
+        "verified": ok,
+        "status": participant.status,
+        "detail": detail,
+        "memoCode": participant.memo_code,
+    }
+
+
+@app.get("/api/quizzes/{quiz_id}/commitments/{participant_id}")
+async def commitment_status(quiz_id: UUID, participant_id: UUID, db: AsyncSession = Depends(get_db)):
+    participant = await db.get(Participant, participant_id)
+    if not participant or participant.quiz_id != quiz_id:
+        raise HTTPException(404, "Participant not found")
+    quiz = await db.get(Quiz, quiz_id)
+    tx = (await db.execute(
+        select(Transaction).where(
+            Transaction.quiz_id == quiz_id,
+            Transaction.user_id == participant.user_id,
+            Transaction.type.in_(("ENTRY_COMMITMENT", "CREATOR_COMMITMENT")),
+        ).order_by(Transaction.created_at.desc())
+    )).scalars().first()
+    return {
+        "participantId": str(participant.id),
+        "status": participant.status,
+        "memoCode": participant.memo_code,
+        "escrowAddress": escrow_address(),
+        "entryAmount": float(quiz.entry_amount) if quiz else None,
+        "txHash": tx.blockchain_tx_hash if tx else None,
+    }
 
 
 @app.post("/api/quizzes/{quiz_id}/demo-start")
@@ -377,6 +473,8 @@ async def get_questions(quiz_id: UUID, user_id: UUID | None = None, db: AsyncSes
         participant = row.scalar_one_or_none()
         if participant is None:
             raise HTTPException(403, "You are not part of this quiz")
+        if participant.status == "PENDING":
+            raise HTTPException(403, "Your commitment is not confirmed yet")
         if participant.status == "JOINED":
             participant.status = "ACTIVE"
             await db.commit()
@@ -498,3 +596,87 @@ async def get_review(quiz_id: UUID, user_id: UUID, db: AsyncSession = Depends(ge
         }
         for q in questions
     ]
+
+
+# ---------- settlement sidecar API (guarded by X-Settlement-Token) ----------
+
+
+@app.get("/api/settlement/queue")
+async def settlement_queue(request: Request, db: AsyncSession = Depends(get_db)):
+    """Quizzes that are FINALIZED and awaiting payout broadcast.
+    The settlement sidecar polls this, pays out from the escrow wallet,
+    then reports back via /api/settlement/complete."""
+    if not settlement_token_ok(request):
+        raise HTTPException(401, "Invalid settlement token")
+
+    quizzes = (await db.execute(select(Quiz).where(Quiz.status == "FINALIZED"))).scalars().all()
+    queue = []
+    for quiz in quizzes:
+        rows = await db.execute(
+            select(Participant, User).join(User, Participant.user_id == User.id).where(Participant.quiz_id == quiz.id)
+        )
+        participants = [(p, u) for p, u in rows.all()]
+        payout_rows, winners_take = compute_payouts([p for p, _ in participants], quiz.question_count, quiz.entry_amount)
+        users = {p.id: u for p, u in participants}
+        payouts = [
+            {
+                "participantId": str(r["participant_id"]),
+                "displayName": users.get(r["participant_id"]).display_name if users.get(r["participant_id"]) else "Unknown",
+                "walletAddress": users.get(r["participant_id"]).wallet_address if users.get(r["participant_id"]) else None,
+                "amountNim": float(round(r["payout"], 5)),
+                "amountLuna": int(Decimal(str(r["payout"])) * 100_000),
+                "kind": r["payout_kind"],
+            }
+            for r in payout_rows
+            if r["payout"] > 0
+        ]
+        queue.append({
+            "quizId": str(quiz.id),
+            "title": quiz.title,
+            "currency": quiz.currency,
+            "prizePool": float(round(winners_take, 5)),
+            "resultVersion": quiz.result_version,
+            "payouts": payouts,
+        })
+    return {"paymentsMode": payments_mode(), "escrowAddress": escrow_address(), "rpcUrl": rpc_url(), "quizzes": queue}
+
+
+@app.post("/api/settlement/complete")
+async def settlement_complete(req: SettlementCompleteRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    """The sidecar reports broadcast payouts; quiz flips FINALIZED -> SETTLED."""
+    if not settlement_token_ok(request):
+        raise HTTPException(401, "Invalid settlement token")
+
+    quiz = await db.get(Quiz, req.quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz not found")
+    if quiz.status not in ("FINALIZED", "SETTLED"):
+        raise HTTPException(409, f"Quiz is not awaiting settlement (status: {quiz.status})")
+
+    by_participant = {p.participant_id: p.tx_hash for p in req.payouts}
+    participants = (await db.execute(
+        select(Participant).where(Participant.quiz_id == quiz.id)
+    )).scalars().all()
+    user_by_participant = {p.id: p.user_id for p in participants}
+    payout_rows, _ = compute_payouts(participants, quiz.question_count, quiz.entry_amount)
+    for r in payout_rows:
+        tx_hash = by_participant.get(r["participant_id"])
+        if not tx_hash:
+            continue
+        db.add(Transaction(
+            quiz_id=quiz.id,
+            user_id=user_by_participant.get(r["participant_id"]),
+            type="PAYOUT",
+            currency=quiz.currency,
+            amount=r["payout"],
+            status="CONFIRMED",
+            blockchain_tx_hash=tx_hash,
+            created_at=utcnow(),
+            confirmed_at=utcnow(),
+        ))
+
+    if quiz.status == "FINALIZED":
+        await transition_quiz(db, quiz, "SETTLED")
+        await log_event(db, quiz.id, "QUIZ_SETTLED", metadata={"payouts": len(req.payouts)})
+    await db.commit()
+    return {"quizId": str(quiz.id), "status": quiz.status, "recorded": len(req.payouts)}
