@@ -140,6 +140,7 @@ export interface CreateQuestionRequest {
   optionC: string
   optionD: string
   correctOption: OptionKey
+  explanation?: string | null
 }
 
 export interface AnswerRequest {
@@ -172,6 +173,32 @@ export interface QuizResults {
   rows: ResultRow[]
 }
 
+// ---------- Review & history ----------
+
+/** A question as seen in post-quiz review — correct answer + your answer revealed */
+export interface ReviewQuestion {
+  id: string
+  position: number
+  questionText: string
+  options: ReadonlyArray<{ key: OptionKey; text: string }>
+  correctOption: OptionKey
+  explanation: string | null
+  myAnswer: OptionKey | null
+  wasCorrect: boolean | null
+}
+
+export interface HistoryEntry {
+  quizId: string
+  title: string
+  status: QuizStatus
+  rank: number | null
+  correctAnswers: number
+  questionCount: number
+  payout: number
+  entryAmount: number
+  payoutKind: ResultRow['payoutKind']
+}
+
 // ---------- API interface (implemented by both real client and mock) ----------
 
 export interface LokkinApi {
@@ -189,4 +216,6 @@ export interface LokkinApi {
   getQuestions(quizId: string): Promise<PlayerQuestion[]>
   submitAnswer(quizId: string, req: AnswerRequest): Promise<{ accepted: boolean; correct: boolean }>
   getResults(quizId: string): Promise<QuizResults>
+  getReview(quizId: string, userId: string): Promise<ReviewQuestion[]>
+  getMyHistory(userId: string): Promise<HistoryEntry[]>
 }

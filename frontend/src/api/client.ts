@@ -3,6 +3,7 @@ import type {
   CreateQuestionRequest,
   CreateQuizRequest,
   CreateUserRequest,
+  HistoryEntry,
   LokkinApi,
   Participant,
   ParticipantStatus,
@@ -13,6 +14,7 @@ import type {
   QuizResults,
   QuizState,
   QuizStatus,
+  ReviewQuestion,
 } from './types'
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -72,7 +74,17 @@ export function createRealApi(): LokkinApi {
     async addQuestion(quizId: string, req: CreateQuestionRequest) {
       return request<{ questionId: string; position: number }>(`/api/quizzes/${quizId}/questions`, {
         method: 'POST',
-        body: JSON.stringify(req),
+        body: JSON.stringify({
+          position: req.position,
+          questionText: req.questionText,
+          optionA: req.optionA,
+          optionB: req.optionB,
+          optionC: req.optionC,
+          optionD: req.optionD,
+          correctOption: req.correctOption,
+          // backend ignores extra fields until the Phase 6 slice adds it
+          explanation: req.explanation ?? null,
+        }),
       })
     },
 
@@ -136,6 +148,16 @@ export function createRealApi(): LokkinApi {
 
     async getResults(quizId: string) {
       return request<QuizResults>(`/api/quizzes/${quizId}/results`)
+    },
+
+    async getReview(_quizId: string, _userId: string) {
+      // Backend endpoints land in the Phase 6 slices (results + review)
+      return [] as ReviewQuestion[]
+    },
+
+    async getMyHistory(_userId: string) {
+      // Backend endpoint lands in the Phase 6 slice (user history)
+      return [] as HistoryEntry[]
     },
   }
 }

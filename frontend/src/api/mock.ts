@@ -150,6 +150,7 @@ interface MockStore {
   questions: Map<string, Question[]>
   participants: Map<string, Participant[]>
   answers: Map<string, AnswerRequest[]>
+  statusChangedAt: Map<string, number>
 }
 
 function uid(): string {
@@ -167,6 +168,7 @@ function seedStore(): MockStore {
     questions: new Map(),
     participants: new Map(),
     answers: new Map(),
+    statusChangedAt: new Map(),
   }
 
   const creators = [
@@ -335,6 +337,32 @@ function assertTransition(from: QuizStatus, to: QuizStatus) {
   }
 }
 
+function setQuizStatus(quiz: Quiz, to: QuizStatus) {
+  assertTransition(quiz.status, to)
+  quiz.status = to
+  store.statusChangedAt.set(quiz.id, Date.now())
+}
+
+// Demo pacing: VALIDATING ~15s -> FINALIZED ~15s -> SETTLED (mimics dispute window)
+const VALIDATING_HOLD_MS = 15_000
+const FINALIZED_HOLD_MS = 15_000
+
+function maybeAdvanceLifecycle(quiz: Quiz) {
+  if (quiz.status !== 'VALIDATING' && quiz.status !== 'FINALIZED') return
+  const since = store.statusChangedAt.get(quiz.id)
+  if (since === undefined) {
+    store.statusChangedAt.set(quiz.id, Date.now())
+    return
+  }
+  if (quiz.status === 'VALIDATING' && Date.now() - since >= VALIDATING_HOLD_MS) {
+    quiz.status = 'FINALIZED'
+    store.statusChangedAt.set(quiz.id, Date.now())
+  } else if (quiz.status === 'FINALIZED' && Date.now() - since >= FINALIZED_HOLD_MS) {
+    quiz.status = 'SETTLED'
+    store.statusChangedAt.set(quiz.id, Date.now())
+  }
+}
+
 export function createMockApi(): LokkinApi {
   return {
     async createUser(req: CreateUserRequest) {
@@ -380,7 +408,7 @@ export function createMockApi(): LokkinApi {
         optionC: req.optionC,
         optionD: req.optionD,
         correctOption: req.correctOption,
-        explanation: null,
+        explanation: req.explanation ?? null,
         status: 'ACTIVE',
       }
       questions.push(question)
@@ -392,6 +420,7 @@ export function createMockApi(): LokkinApi {
       await delay()
       const quiz = store.quizzes.get(quizId)
       if (!quiz) throw new Error('Quiz not found')
+      maybeAdvanceLifecycle(quiz)
       return { ...quiz, participantCount: store.participants.get(quizId)?.length ?? 0 }
     },
 
@@ -399,7 +428,10 @@ export function createMockApi(): LokkinApi {
       await delay()
       const all = [...store.quizzes.values()]
         .filter((q) => q.status !== 'DRAFT' && q.status !== 'PUBLISHED')
-        .map((q) => ({ ...q, participantCount: store.participants.get(q.id)?.length ?? 0 }))
+        .map((q) => {
+          maybeAdvanceLifecycle(q)
+          return { ...q, participantCount: store.participants.get(q.id)?.length ?? 0 }
+        })
       if (!filters?.status || filters.status === 'ALL') return all
       return all.filter((q) => q.status === filters.status)
     },
@@ -408,8 +440,7 @@ export function createMockApi(): LokkinApi {
       await delay()
       const quiz = store.quizzes.get(quizId)
       if (!quiz) throw new Error('Quiz not found')
-      assertTransition(quiz.status, 'PUBLISHED')
-      quiz.status = 'PUBLISHED'
+      setQuizStatus(quiz, 'PUBLISHED')
       return { quizId, status: quiz.status }
     },
 
@@ -417,8 +448,7 @@ export function createMockApi(): LokkinApi {
       await delay()
       const quiz = store.quizzes.get(quizId)
       if (!quiz) throw new Error('Quiz not found')
-      assertTransition(quiz.status, 'OPEN')
-      quiz.status = 'OPEN'
+      setQuizStatus(quiz, 'OPEN')
       return { quizId, status: quiz.status }
     },
 
@@ -426,8 +456,7 @@ export function createMockApi(): LokkinApi {
       await delay()
       const quiz = store.quizzes.get(quizId)
       if (!quiz) throw new Error('Quiz not found')
-      assertTransition(quiz.status, 'LIVE')
-      quiz.status = 'LIVE'
+      setQuizStatus(quiz, 'LIVE')
       const participants = store.participants.get(quizId) ?? []
       for (const p of participants) {
         if (p.status === 'JOINED') p.status = 'ACTIVE'
@@ -473,6 +502,7 @@ export function createMockApi(): LokkinApi {
       await delay()
       const quiz = store.quizzes.get(quizId)
       if (!quiz) throw new Error('Quiz not found')
+      maybeAdvanceLifecycle(quiz)
       return {
         status: quiz.status,
         serverTime: new Date().toISOString(),
@@ -527,12 +557,10 @@ export function createMockApi(): LokkinApi {
       if (myAnswers.length >= quiz.questionCount) {
         participant.status = 'COMPLETED'
         participant.scorePercentage = quiz.questionCount > 0 ? (participant.correctAnswers / quiz.questionCount) * 100 : 0
-        // everyone done -> advance lifecycle for demo purposes
+        // everyone done -> walk the legal lifecycle: LIVE -> ENDED -> VALIDATING
         if (participants.every((p) => p.status !== 'ACTIVE')) {
-          quiz.status = 'VALIDATING'
-          for (const p of participants) {
-            if (p.status === 'COMPLETED') continue
-          }
+          setQuizStatus(quiz, 'ENDED')
+          setQuizStatus(quiz, 'VALIDATING')
         }
       }
       return { accepted: true, correct }
@@ -542,6 +570,7 @@ export function createMockApi(): LokkinApi {
       await delay()
       const quiz = store.quizzes.get(quizId)
       if (!quiz) throw new Error('Quiz not found')
+      maybeAdvanceLifecycle(quiz)
       const participants = store.participants.get(quizId) ?? []
 
       if (quiz.status === 'SETTLED' || quiz.status === 'FINALIZED' || quiz.status === 'VALIDATING') {
@@ -555,6 +584,69 @@ export function createMockApi(): LokkinApi {
         }
       }
       throw new Error('Results are not available yet')
+    },
+
+    async getReview(quizId: string, userId: string) {
+      await delay()
+      const quiz = store.quizzes.get(quizId)
+      if (!quiz) throw new Error('Quiz not found')
+      maybeAdvanceLifecycle(quiz)
+      if (quiz.status !== 'VALIDATING' && quiz.status !== 'FINALIZED' && quiz.status !== 'SETTLED') {
+        throw new Error('Review unlocks when the quiz ends')
+      }
+      const participant = (store.participants.get(quizId) ?? []).find((p) => p.userId === userId)
+      const questions = store.questions.get(quizId) ?? []
+      const answers = store.answers.get(quizId) ?? []
+
+      return questions
+        .filter((q) => q.status === 'ACTIVE')
+        .sort((a, b) => a.position - b.position)
+        .map((q) => {
+          const mine = participant
+            ? answers.find((a) => a.participantId === participant.id && a.questionId === q.id)
+            : undefined
+          return {
+            id: q.id,
+            position: q.position,
+            questionText: q.questionText,
+            options: [
+              { key: 'A' as const, text: q.optionA },
+              { key: 'B' as const, text: q.optionB },
+              { key: 'C' as const, text: q.optionC },
+              { key: 'D' as const, text: q.optionD },
+            ],
+            correctOption: q.correctOption,
+            explanation: q.explanation,
+            myAnswer: mine?.selectedOption ?? null,
+            wasCorrect: mine ? mine.selectedOption === q.correctOption : null,
+          }
+        })
+    },
+
+    async getMyHistory(userId: string) {
+      await delay()
+      const entries = []
+      for (const quiz of [...store.quizzes.values()].reverse()) {
+        maybeAdvanceLifecycle(quiz)
+        if (!['VALIDATING', 'ENDED', 'FINALIZED', 'SETTLED'].includes(quiz.status)) continue
+        const participants = store.participants.get(quiz.id) ?? []
+        const me = participants.find((p) => p.userId === userId)
+        if (!me) continue
+        const { rows } = computePayouts(participants, quiz.questionCount)
+        const myRow = rows.find((r) => r.participantId === me.id)
+        entries.push({
+          quizId: quiz.id,
+          title: quiz.title,
+          status: quiz.status,
+          rank: myRow?.rank ?? null,
+          correctAnswers: me.correctAnswers,
+          questionCount: quiz.questionCount,
+          payout: myRow?.payout ?? 0,
+          entryAmount: me.entryAmount,
+          payoutKind: myRow?.payoutKind ?? 'none',
+        })
+      }
+      return entries
     },
   }
 }

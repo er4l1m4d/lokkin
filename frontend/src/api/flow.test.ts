@@ -8,6 +8,7 @@ describe('mock API: full quiz flow', () => {
   let quizId = ''
   let questionIds: string[] = []
   let participantIds: string[] = []
+  let playerUserIds: string[] = []
 
   beforeAll(async () => {
     const creator = await api.createUser({ displayName: 'Ada' })
@@ -48,6 +49,7 @@ describe('mock API: full quiz flow', () => {
   it('three users join; participant counts reflect it', async () => {
     for (const name of ['Ada', 'Bode', 'Chidi']) {
       const u = await api.createUser({ displayName: name })
+      playerUserIds.push(u.id)
       const { participantId } = await api.joinQuiz(quizId, u.id)
       participantIds.push(participantId)
     }
@@ -133,5 +135,31 @@ describe('mock API: full quiz flow', () => {
     const totalPaid = results.rows.reduce((s, r) => s + r.payout, 0)
     const totalStaked = 4 * 100 // 4 participants x 100 NIM
     expect(totalPaid).toBeCloseTo(totalStaked, 6)
+  })
+
+  it('review reveals correct answers + my answers once validated', async () => {
+    const review = await api.getReview(quizId, playerUserIds[0])
+    expect(review).toHaveLength(3)
+    expect(review[0].myAnswer).toBe('C')
+    expect(review[0].wasCorrect).toBe(true)
+    expect(review[0].correctOption).toBe('C')
+    expect(review[1].correctOption).toBe('A')
+
+    // player 2 got one wrong: that question shows myAnswer != correctOption
+    const p2Review = await api.getReview(quizId, playerUserIds[1])
+    const missed = p2Review.find((q) => q.wasCorrect === false)
+    expect(missed).toBeDefined()
+    expect(missed!.myAnswer).not.toBe(missed!.correctOption)
+  })
+
+  it('history shows my entry with rank and payout', async () => {
+    const history = await api.getMyHistory(playerUserIds[0])
+    expect(history).toHaveLength(1)
+    const entry = history[0]
+    expect(entry.quizId).toBe(quizId)
+    expect(entry.rank).toBe(1)
+    expect(entry.payoutKind).toBe('winner')
+    expect(entry.correctAnswers).toBe(3)
+    expect(['VALIDATING', 'FINALIZED', 'SETTLED']).toContain(entry.status)
   })
 })

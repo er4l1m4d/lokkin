@@ -70,12 +70,13 @@
 - [x] **4.7 (added) Generator tests** — `generator.test.ts`: 6 tests (count, cloze shape, unique options/answers, thin-material rejection, blank draft, memo format).
 - [ ] **4.6 Backend: join endpoint** — `POST /api/quizzes/{id}/join` (user + amount → PENDING participant; mock mode auto-confirms tx); wire Commitment + Lobby to it. Test, then commit.
 
-## Phase 5 — Results & Post-Quiz (+ results slice)
+## Phase 5 — Results & Post-Quiz (+ results slice) ✅ (5.4 backend pending)
 **Goal:** Full lifecycle visible: validate → finalize → payout.
 
-- [ ] **5.1 Results** — Podium top 3 (50/30/10 + pool), full ranking rows, payout breakdown per rule (80% back, 20% pool; no-show 50%), tie badges (split allocations), status stepper VALIDATING→FINALIZED→SETTLED with polling.
-- [ ] **5.2 Review** — Per-question cards: your answer vs correct, "Why this is missed" explainer (METHOD-style, cream card).
-- [ ] **5.3 Profile** — Name, wallet chip, stats (quizzes, wins, NIM won), history list with progress rings + statuses.
+- [x] **5.1 Results** — Personal result banner (rank, score, NIM back/won/lost), podium top 3 with pool split note, full ranking rows (medals, correct counts, tie badges, payout + kind labels, "you" highlight), status stepper VALIDATING→FINALIZED→SETTLED with 5s polling; waiting state while LIVE. Mock auto-advances the lifecycle (~15s per stage) to demo the dispute window.
+- [x] **5.2 Review** — Per-question cards: options with reveal states (correct ✓, your wrong pick ✗, missed dimmed), "You picked B — the answer was A" line, METHOD-style cream "Why" explanation card; sealed-until-validated gate; summary header with score + %.
+- [x] **5.3 Profile** — Avatar + name + wallet chip, stat cards (quizzes / podiums / net NIM), mode switcher (demo/practice/commitment) with explanations, history list (title, score, medal/#rank, net NIM colored, status pill) linking to results, sign-out.
+- [x] **5.5 (added) Review + history tests** — flow.test.ts extended to 8 tests: review reveals correct answers + player answers (with a missed-question case), history returns rank/payout/entry. API: `getReview` + `getMyHistory` in interface (mock real, client stubs until Phase 6).
 - [ ] **5.4 Backend: results + payout plan** — `GET /api/quizzes/{id}/results` (competition ranking 1,1,3; ties split; payout math per locked rules); wire Results to it. Test, then commit.
 
 ## Phase 6 — Lifecycle & Timer Authority
