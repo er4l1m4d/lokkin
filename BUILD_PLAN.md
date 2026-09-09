@@ -79,6 +79,16 @@
 - [x] **5.5 (added) Review + history tests** — flow.test.ts extended to 8 tests: review reveals correct answers + player answers (with a missed-question case), history returns rank/payout/entry. API: `getReview` + `getMyHistory` in interface (mock real, client stubs until Phase 6).
 - [ ] **5.4 Backend: results + payout plan** — `GET /api/quizzes/{id}/results` (competition ranking 1,1,3; ties split; payout math per locked rules); wire Results to it. Test, then commit.
 
+## Phase 5.5 — UI/UX Quality Pass ✅
+**Goal:** Bring the implemented app in line with the inspiration references and the UI/UX quality rules before deeper backend work.
+
+- [x] **5.5.1 Visual system** — Persisted `design-system/MASTER.md`; refined the existing soft-blue direction into a restrained, contrast-safe OKLCH token system with compact 16px surfaces and consistent elevation.
+- [x] **5.5.2 Icon language** — Added a shared stroke-based SVG `Icon` component and replaced structural emoji across navigation, states, payout explanations, results, and forms.
+- [x] **5.5.3 Responsive shell** — Expanded the app frame for desktop, retained a readable content column, reserved fixed navigation space, added safe-area support, and added a skip link.
+- [x] **5.5.4 Interaction quality** — Added visible focus rings, route-change focus, 44px controls, semantic form sizing, modal close/focus trap/Escape behavior, touch manipulation, and reduced-motion support.
+- [x] **5.5.5 Screen polish** — Improved Welcome hierarchy, Home orientation/CTA, quiz-card affordance, status/timer readability, participant state text, editor controls, result/review surfaces, and loading/empty states.
+- [x] **5.5.6 Quality verification** — Detector clean; lint, 18 tests, and production build pass. Commit and push this phase before starting backend integration.
+
 ## Phase 6 — Lifecycle & Timer Authority
 **Goal:** Server owns the clock and the state machine; critical flows are regression-protected.
 

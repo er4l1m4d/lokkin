@@ -4,6 +4,7 @@ import type { Quiz, QuizResults, ResultRow, QuizStatus } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
+import { Icon } from '@/components/Icon'
 import { PodiumSlot } from '@/components/PodiumSlot'
 import { StatusPill } from '@/components/StatusPill'
 import { useSession } from '@/context/useSession'
@@ -47,7 +48,7 @@ export function ResultsScreen() {
     return (
       <AppShell>
         <EmptyState
-          icon="🤷"
+          icon={<Icon name="alert" size={28} />}
           title="Quiz not found"
           description="It may have been removed."
           action={
@@ -65,9 +66,9 @@ export function ResultsScreen() {
     return (
       <AppShell>
         <div className="flex flex-col gap-3">
-          <div className="h-28 animate-pulse rounded-card bg-white/70" />
-          <div className="h-56 animate-pulse rounded-card bg-white/70" />
-          <div className="h-40 animate-pulse rounded-card bg-white/70" />
+          <div className="h-28 animate-pulse rounded-card bg-surface-muted" />
+          <div className="h-56 animate-pulse rounded-card bg-surface-muted" />
+          <div className="h-40 animate-pulse rounded-card bg-surface-muted" />
         </div>
       </AppShell>
     )
@@ -94,8 +95,10 @@ export function ResultsScreen() {
         <StatusStepper current={quiz.status} />
 
         {results === null ? (
-          <section className="flex flex-col items-center gap-3 rounded-card bg-white p-8 text-center shadow-soft">
-            <div className="h-12 w-12 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
+          <section className="flex flex-col items-center gap-3 rounded-card bg-surface p-8 text-center shadow-soft">
+            <div className="flex h-12 w-12 items-center justify-center rounded-pill bg-primary-faint text-primary-dark" aria-hidden>
+              <Icon name="refresh" size={22} className="animate-spin" />
+            </div>
             <h2 className="font-display text-lg font-extrabold text-ink">
               {quiz.status === 'LIVE' ? 'Still in play…' : 'Calculating results…'}
             </h2>
@@ -107,9 +110,9 @@ export function ResultsScreen() {
         ) : (
           <>
             {myRow && (
-              <section
+                <section
                 className={`rounded-card p-5 text-center shadow-soft ${
-                  myRow.payoutKind === 'winner' ? 'bg-primary-faint' : 'bg-white'
+                  myRow.payoutKind === 'winner' ? 'bg-primary-faint' : 'bg-surface'
                 }`}
                 aria-label="Your result"
               >
@@ -140,7 +143,7 @@ export function ResultsScreen() {
               </section>
             )}
 
-            <section className="rounded-card bg-white p-5 shadow-soft">
+            <section className="rounded-card bg-surface p-5 shadow-soft">
               <div className="flex items-center justify-between">
                 <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
                   The podium
@@ -159,7 +162,7 @@ export function ResultsScreen() {
               </p>
             </section>
 
-            <section className="rounded-card bg-white p-5 shadow-soft">
+            <section className="rounded-card bg-surface p-5 shadow-soft">
               <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
                 Full ranking
               </h2>
@@ -175,7 +178,7 @@ export function ResultsScreen() {
                       }`}
                     >
                       <span className="w-8 font-display text-sm font-black text-ink-muted">
-                        {row.rank <= 3 ? ['🥇', '🥈', '🥉'][row.rank - 1] : `#${row.rank}`}
+                        {row.rank <= 3 ? <Icon name="trophy" size={18} /> : `#${row.rank}`}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-display text-sm font-bold text-ink">
@@ -224,7 +227,7 @@ export function ResultsScreen() {
 function StatusStepper({ current }: { current: QuizStatus }) {
   const activeIdx = STEPPER.findIndex((s) => s.status === current)
   return (
-    <ol className="flex items-center justify-between rounded-card bg-white px-5 py-4 shadow-soft">
+    <ol className="flex items-center justify-between rounded-card bg-surface px-5 py-4 shadow-soft">
       {STEPPER.map((step, i) => {
         const state = activeIdx === -1 ? 'todo' : i < activeIdx ? 'done' : i === activeIdx ? 'active' : 'todo'
         return (

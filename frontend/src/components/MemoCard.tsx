@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Icon } from './Icon'
 
 interface MemoCardProps {
   code: string
@@ -28,9 +29,9 @@ export function MemoCard({ code, address }: MemoCardProps) {
         <button
           type="button"
           onClick={() => void copy('code', code)}
-          className="rounded-pill bg-white/10 px-3 py-1.5 text-xs font-bold transition-colors hover:bg-white/20"
+          className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-pill bg-white/10 px-4 py-2 text-xs font-bold transition-colors hover:bg-white/20"
         >
-          {copied === 'code' ? 'Copied ✓' : 'Copy'}
+          {copied === 'code' ? <><Icon name="check" size={13} /> Copied</> : 'Copy'}
         </button>
       </div>
       <div className="mt-4 border-t border-white/10 pt-3">
@@ -42,9 +43,9 @@ export function MemoCard({ code, address }: MemoCardProps) {
           <button
             type="button"
             onClick={() => void copy('address', address)}
-            className="shrink-0 rounded-pill bg-white/10 px-3 py-1.5 text-xs font-bold transition-colors hover:bg-white/20"
+            className="inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-pill bg-white/10 px-4 py-2 text-xs font-bold transition-colors hover:bg-white/20"
           >
-            {copied === 'address' ? 'Copied ✓' : 'Copy'}
+            {copied === 'address' ? <><Icon name="check" size={13} /> Copied</> : 'Copy'}
           </button>
         </div>
       </div>

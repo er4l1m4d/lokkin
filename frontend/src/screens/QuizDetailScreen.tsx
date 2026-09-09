@@ -4,6 +4,7 @@ import { api } from '@/api'
 import type { Participant, Quiz } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
 import { MeterBar } from '@/components/MeterBar'
 import { StatusPill } from '@/components/StatusPill'
 import { TimerPill } from '@/components/TimerPill'
@@ -40,8 +41,8 @@ export function QuizDetailScreen() {
   if (error && !quiz) {
     return (
       <AppShell>
-        <div className="rounded-card bg-white p-8 text-center shadow-soft">
-          <p className="text-3xl" aria-hidden>🤷</p>
+        <div className="rounded-card bg-surface p-8 text-center shadow-soft">
+          <Icon name="alert" className="text-amber" size={30} />
           <h1 className="mt-2 font-display text-lg font-extrabold text-ink">Quiz not found</h1>
           <p className="mt-1 text-sm text-ink-soft">It may have been removed.</p>
           <Button className="mt-4" size="sm" onClick={() => navigate('/home')}>
@@ -55,7 +56,7 @@ export function QuizDetailScreen() {
   if (!quiz) {
     return (
       <AppShell>
-        <div className="h-72 animate-pulse rounded-card bg-white/70" />
+        <div className="h-72 animate-pulse rounded-card bg-surface-muted" />
       </AppShell>
     )
   }
@@ -67,11 +68,11 @@ export function QuizDetailScreen() {
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
-        <Link to="/home" className="inline-flex items-center gap-1 text-sm font-semibold text-ink-muted">
-          <span aria-hidden>←</span> All quizzes
+        <Link to="/home" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-muted hover:text-primary-dark">
+          <Icon name="arrow-left" size={17} /> All quizzes
         </Link>
 
-        <section className="rounded-card bg-white p-5 shadow-soft">
+        <section className="rounded-card bg-surface p-5 shadow-soft">
           <div className="flex items-start justify-between gap-3">
             <h1 className="font-display text-xl font-black text-ink">{quiz.title}</h1>
             <StatusPill status={quiz.status} />

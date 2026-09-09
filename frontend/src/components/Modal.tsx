@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { Icon } from './Icon'
 
 interface ModalProps {
   open: boolean
@@ -9,14 +10,38 @@ interface ModalProps {
 
 export function Modal({ open, onClose, title, children }: ModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     if (!open) return
+    const previousFocus = document.activeElement as HTMLElement | null
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeRef.current?.focus()
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
+      if (e.key !== 'Tab') return
+      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      )
+      if (!focusable?.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = previousOverflow
+      previousFocus?.focus()
+    }
   }, [open, onClose])
 
   if (!open) return null
@@ -25,16 +50,28 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 backdrop-blur-sm sm:items-center"
       onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={title}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
+        tabIndex={-1}
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-md rounded-card bg-white p-6 shadow-lift"
+        className="w-full max-w-md rounded-card bg-surface p-6 shadow-lift"
         onClick={(e) => e.stopPropagation()}
       >
-        {title && <h2 className="mb-4 font-display text-xl font-extrabold text-ink">{title}</h2>}
+        <div className="flex items-start justify-between gap-4">
+          {title && <h2 id="modal-title" className="font-display text-xl font-extrabold text-ink">{title}</h2>}
+          <button
+            ref={closeRef}
+            type="button"
+            onClick={onClose}
+            className="-mr-2 -mt-2 flex min-h-11 min-w-11 items-center justify-center rounded-pill text-ink-muted hover:bg-canvas-deep hover:text-ink"
+            aria-label="Close dialog"
+          >
+            <Icon name="x" />
+          </button>
+        </div>
         {children}
       </div>
     </div>

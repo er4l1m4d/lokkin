@@ -1,4 +1,5 @@
 import type { QuizStatus } from '@/api/types'
+import { Icon } from './Icon'
 
 const STATUS_STYLES: Record<QuizStatus, { label: string; className: string }> = {
   DRAFT: { label: 'Draft', className: 'bg-canvas-deep text-ink-muted' },
@@ -18,8 +19,9 @@ export function StatusPill({ status, className = '' }: { status: QuizStatus; cla
   const style = STATUS_STYLES[status] ?? STATUS_STYLES.DRAFT
   return (
     <span
-      className={`inline-flex items-center rounded-pill px-3 py-1 text-xs font-bold tracking-wide uppercase ${style.className} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-xs font-bold ${style.className} ${className}`}
     >
+      {status === 'LIVE' ? <Icon name="spark" size={11} strokeWidth={2.4} /> : <span className="h-1.5 w-1.5 rounded-pill bg-current" aria-hidden />}
       {style.label}
     </span>
   )

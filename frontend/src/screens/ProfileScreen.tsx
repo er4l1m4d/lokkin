@@ -5,6 +5,7 @@ import type { HistoryEntry, QuizMode } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
+import { Icon } from '@/components/Icon'
 import { StatusPill } from '@/components/StatusPill'
 import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
@@ -49,7 +50,7 @@ export function ProfileScreen() {
               {user.displayName}
             </h1>
             <span className="mt-1 inline-flex items-center gap-1.5 rounded-pill bg-canvas-deep px-3 py-1 text-[11px] font-bold text-ink-soft">
-              <span aria-hidden>👛</span>
+              <Icon name="wallet" size={14} />
               {user.walletAddress
                 ? `${user.walletAddress.slice(0, 8)}…`
                 : 'No wallet — links with Nimiq in real mode'}
@@ -67,7 +68,7 @@ export function ProfileScreen() {
           />
         </section>
 
-        <section className="rounded-card bg-white p-5 shadow-soft">
+        <section className="rounded-card bg-surface p-5 shadow-soft">
           <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
             Mode
           </h2>
@@ -101,7 +102,7 @@ export function ProfileScreen() {
           </h2>
           {(history ?? []).length === 0 ? (
             <EmptyState
-              icon="📊"
+              icon={<Icon name="podium" size={28} />}
               title="No quizzes yet"
               description="Join or create your first quiz and your results will show up here."
               action={
@@ -116,7 +117,7 @@ export function ProfileScreen() {
                 <li key={entry.quizId}>
                   <Link
                     to={`/quiz/${entry.quizId}/results`}
-                    className="block rounded-card bg-white p-4 shadow-tap transition-shadow hover:shadow-soft"
+                    className="block rounded-card bg-surface p-4 shadow-tap transition-shadow hover:shadow-soft"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="min-w-0 truncate font-display text-sm font-bold text-ink">
@@ -130,7 +131,7 @@ export function ProfileScreen() {
                       </span>
                       {entry.rank !== null && (
                         <span>
-                          {entry.rank <= 3 ? ['🥇', '🥈', '🥉'][entry.rank - 1] : `#${entry.rank}`} place
+                          {entry.rank <= 3 ? <Icon name="trophy" className="mr-1 inline-block" size={14} /> : `#${entry.rank}`} place
                         </span>
                       )}
                       <span
@@ -183,7 +184,7 @@ function StatCard({
   const toneClass =
     tone === 'positive' ? 'text-success' : tone === 'negative' ? 'text-danger' : 'text-ink'
   return (
-    <div className="rounded-card bg-white px-3 py-4 text-center shadow-soft">
+    <div className="rounded-card bg-surface px-3 py-4 text-center shadow-soft">
       <p className={`font-display text-xl font-black ${toneClass}`}>{value}</p>
       <p className="mt-0.5 text-[10px] font-bold tracking-wide text-ink-muted uppercase">
         {label}

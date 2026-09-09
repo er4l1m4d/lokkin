@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Participant, Quiz, ResultRow } from '@/api/types'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
+import { Icon } from '@/components/Icon'
 import { MemoCard } from '@/components/MemoCard'
 import { MeterBar } from '@/components/MeterBar'
 import { Modal } from '@/components/Modal'
@@ -92,7 +93,7 @@ const podiumRows: ResultRow[] = [
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card bg-white p-5 shadow-soft">
+    <section className="rounded-card bg-surface p-5 shadow-soft">
       <h2 className="mb-4 text-sm font-bold tracking-wide text-ink-muted uppercase">{title}</h2>
       {children}
     </section>
@@ -105,7 +106,7 @@ export function DevGallery() {
   const [demoUntil] = useState(() => new Date(Date.now() + 90_000))
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col gap-4 px-5 py-8">
+      <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-5 py-8">
       <header className="text-center">
         <h1 className="text-2xl">Component Gallery</h1>
         <p className="text-sm text-ink-soft">Dev-only route — every shared component in one place</p>
@@ -220,7 +221,7 @@ export function DevGallery() {
 
       <Section title="EmptyState">
         <EmptyState
-          icon="🎯"
+          icon={<Icon name="podium" size={28} />}
           title="No quizzes yet"
           description="Be the first — create a quiz from your study material and challenge your group."
           action={<Button size="sm">Create a quiz</Button>}

@@ -1,4 +1,5 @@
 import type { OptionKey } from '@/api/types'
+import { Icon } from './Icon'
 
 interface OptionButtonProps {
   optionKey: OptionKey
@@ -45,21 +46,21 @@ export function OptionButton({
   })()
 
   const icon = (() => {
-    if (reveal === 'correct') return '✓'
-    if (reveal === 'wrong') return '✗'
+    if (reveal === 'correct') return <Icon name="check" size={16} strokeWidth={2.5} />
+    if (reveal === 'wrong') return <Icon name="x" size={16} strokeWidth={2.5} />
     return KEY_LETTERS[optionKey]
   })()
 
   return (
     <button
       type="button"
-      className={`${base} ${state} ${disabled ? 'cursor-default' : ''}`}
+      className={`${base} min-h-14 ${state} ${disabled ? 'cursor-default' : 'cursor-pointer'}`}
       disabled={disabled}
       onClick={() => onSelect(optionKey)}
       aria-pressed={selected}
     >
       <span
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-pill font-display text-sm font-extrabold ${keyBadge}`}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-pill font-display text-sm font-extrabold ${keyBadge}`}
       >
         {icon}
       </span>

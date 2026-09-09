@@ -4,6 +4,7 @@ import { api } from '@/api'
 import type { OptionKey, PlayerQuestion } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
 import { OptionButton } from '@/components/OptionButton'
 import { TimerPill } from '@/components/TimerPill'
 import { useSession } from '@/context/useSession'
@@ -149,8 +150,8 @@ export function QuizPlayScreen() {
   if (bootError) {
     return (
       <AppShell hideNav>
-        <div className="rounded-card bg-white p-8 text-center shadow-soft">
-          <p className="text-3xl" aria-hidden>⚠️</p>
+        <div className="rounded-card bg-surface p-8 text-center shadow-soft">
+          <Icon name="alert" className="text-danger" size={30} />
           <h1 className="mt-2 font-display text-lg font-extrabold text-ink">Can't enter the quiz</h1>
           <p className="mt-1 text-sm text-ink-soft">{bootError}</p>
           <Button className="mt-4" size="sm" onClick={() => navigate(quizId ? `/quiz/${quizId}` : '/home')}>
@@ -176,7 +177,7 @@ export function QuizPlayScreen() {
     return (
       <AppShell hideNav>
         <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
-          <p className="text-5xl" aria-hidden>🏁</p>
+          <Icon name="podium" className="text-primary-dark" size={44} />
           <h1 className="font-display text-2xl font-black text-ink">Answers locked in</h1>
           <p className="max-w-xs text-sm leading-relaxed text-ink-soft">
             You answered {Object.keys(answers).length} of {total} questions — {correctCount} correct.
@@ -208,7 +209,7 @@ export function QuizPlayScreen() {
           />
         </div>
 
-        <section className="rounded-card bg-white p-6 shadow-soft">
+        <section className="rounded-card bg-surface p-6 shadow-soft">
           <h2 className="font-display text-lg leading-snug font-extrabold text-ink">
             {question.questionText}
           </h2>

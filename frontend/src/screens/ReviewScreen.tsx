@@ -4,6 +4,7 @@ import type { ReviewQuestion } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
+import { Icon } from '@/components/Icon'
 import { OptionButton } from '@/components/OptionButton'
 import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
@@ -22,7 +23,7 @@ export function ReviewScreen() {
     return (
       <AppShell>
         <EmptyState
-          icon={locked ? '⏳' : '🤷'}
+          icon={<Icon name={locked ? 'clock' : 'alert'} size={28} />}
           title={locked ? 'Review unlocks when the quiz ends' : 'Nothing to review'}
           description={
             locked
@@ -44,7 +45,7 @@ export function ReviewScreen() {
       <AppShell>
         <div className="flex flex-col gap-3">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-44 animate-pulse rounded-card bg-white/70" />
+            <div key={i} className="h-44 animate-pulse rounded-card bg-surface-muted" />
           ))}
         </div>
       </AppShell>
@@ -74,7 +75,7 @@ export function ReviewScreen() {
         </header>
 
         {answered.length === 0 && (
-          <p className="rounded-card bg-amber-soft px-4 py-3 text-sm font-semibold text-ink">
+            <p className="rounded-card bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
             You didn't answer any questions in this quiz — here's what was asked.
           </p>
         )}
@@ -93,7 +94,7 @@ export function ReviewScreen() {
 
 function ReviewCard({ question: q, index }: { question: ReviewQuestion; index: number }) {
   return (
-    <article className="rounded-card bg-white p-5 shadow-soft">
+    <article className="rounded-card bg-surface p-5 shadow-soft">
       <header className="flex items-center justify-between">
         <span className="font-display text-xs font-extrabold tracking-wide text-ink-muted uppercase">
           Question {index}

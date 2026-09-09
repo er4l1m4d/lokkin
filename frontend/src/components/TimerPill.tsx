@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Icon } from './Icon'
 
 function format(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -17,6 +18,12 @@ interface TimerPillProps {
 }
 
 export function TimerPill({ until, seconds, onExpire, warnUnderSeconds = 30 }: TimerPillProps) {
+  const untilMs = until?.getTime()
+  const onExpireRef = useRef(onExpire)
+  useEffect(() => {
+    onExpireRef.current = onExpire
+  }, [onExpire])
+
   const remaining = () => {
     if (seconds !== undefined) return seconds
     if (until) return Math.max(0, Math.floor((until.getTime() - Date.now()) / 1000))
@@ -27,16 +34,19 @@ export function TimerPill({ until, seconds, onExpire, warnUnderSeconds = 30 }: T
 
   useEffect(() => {
     const id = setInterval(() => {
-      const next = remaining()
-      setLeft(next)
-      if (next <= 0) {
-        clearInterval(id)
-        onExpire?.()
-      }
+      setLeft((previous) => {
+        const next = seconds !== undefined
+          ? Math.max(0, previous - 1)
+          : Math.max(0, Math.floor(((untilMs ?? Date.now()) - Date.now()) / 1000))
+        if (next <= 0) {
+          clearInterval(id)
+          onExpireRef.current?.()
+        }
+        return next
+      })
     }, 1000)
     return () => clearInterval(id)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [until?.getTime(), seconds])
+  }, [untilMs, seconds])
 
   const urgent = left <= warnUnderSeconds
 
@@ -48,6 +58,7 @@ export function TimerPill({ until, seconds, onExpire, warnUnderSeconds = 30 }: T
       role="timer"
       aria-label={`${format(left)} remaining`}
     >
+      <Icon name="clock" size={14} />
       {format(left)}
     </span>
   )

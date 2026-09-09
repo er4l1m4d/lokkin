@@ -1,61 +1,97 @@
 @import "tailwindcss";
 
 @theme {
-  /* Canvas — soft blue gradient base */
-  --color-canvas: #f4f7fe;
-  --color-canvas-deep: #eaf0ff;
+  /* Soft blue canvas with a neutral surface hierarchy */
+  --color-canvas: oklch(0.975 0.012 250);
+  --color-canvas-deep: oklch(0.945 0.025 250);
+  --color-surface: oklch(1 0 0);
+  --color-surface-muted: oklch(0.965 0.018 250);
 
-  /* Primary — calm blue family */
-  --color-primary: #4a7dff;
-  --color-primary-dark: #2e5bff;
-  --color-primary-deep: #1e3fbd;
-  --color-primary-soft: #dce7ff;
-  --color-primary-faint: #eef3ff;
+  /* Primary — blue used for action and current state */
+  --color-primary: oklch(0.62 0.19 260);
+  --color-primary-dark: oklch(0.49 0.2 260);
+  --color-primary-deep: oklch(0.37 0.16 260);
+  --color-primary-soft: oklch(0.91 0.07 260);
+  --color-primary-faint: oklch(0.965 0.025 260);
 
-  /* Accent — coral/amber for timers, streaks, warnings */
-  --color-accent: #ff8a5c;
-  --color-accent-soft: #ffe6da;
-  --color-amber: #ffb020;
-  --color-amber-soft: #fff2d9;
+  /* Accent — coral/amber for timers and warnings */
+  --color-accent: oklch(0.68 0.16 35);
+  --color-accent-soft: oklch(0.94 0.055 35);
+  --color-amber: oklch(0.72 0.15 75);
+  --color-amber-soft: oklch(0.95 0.06 85);
 
   /* Feedback */
-  --color-success: #2fbf71;
-  --color-success-soft: #dff5e9;
-  --color-danger: #ff5a5f;
-  --color-danger-soft: #ffe3e4;
+  --color-success: oklch(0.48 0.14 155);
+  --color-success-dark: oklch(0.43 0.14 155);
+  --color-success-soft: oklch(0.93 0.06 155);
+  --color-danger: oklch(0.47 0.15 20);
+  --color-danger-dark: oklch(0.43 0.15 20);
+  --color-danger-soft: oklch(0.93 0.055 20);
 
   /* Neutrals — navy-tinted text */
-  --color-ink: #1e2a4a;
-  --color-ink-soft: #4a5878;
-  --color-ink-muted: #8a96b3;
-  --color-line: #e3e9f7;
+  --color-ink: oklch(0.23 0.045 260);
+  --color-ink-soft: oklch(0.43 0.045 260);
+  --color-ink-muted: oklch(0.46 0.035 260);
+  --color-line: oklch(0.9 0.025 250);
 
   /* Fonts */
   --font-display: "Nunito", ui-rounded, system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
 
   /* Radius */
-  --radius-card: 1.5rem;
+  --radius-card: 1rem;
   --radius-pill: 9999px;
 
   /* Shadows — blue-tinted soft */
-  --shadow-soft: 0 4px 16px rgba(74, 125, 255, 0.1);
-  --shadow-lift: 0 8px 24px rgba(30, 63, 189, 0.14);
-  --shadow-tap: 0 2px 8px rgba(30, 63, 189, 0.1);
+  --shadow-soft: 0 4px 14px oklch(0.35 0.12 260 / 0.08);
+  --shadow-lift: 0 8px 22px oklch(0.35 0.14 260 / 0.13);
+  --shadow-tap: 0 2px 7px oklch(0.35 0.12 260 / 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button, a, input, textarea {
+  touch-action: manipulation;
 }
 
 body {
+  margin: 0;
   font-family: var(--font-body);
   color: var(--color-ink);
-  background: linear-gradient(180deg, var(--color-canvas) 0%, var(--color-canvas-deep) 100%);
-  min-height: 100vh;
+  background: var(--color-canvas);
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 800;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+button, a, input, textarea {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Hide scrollbar for horizontal chip rows */

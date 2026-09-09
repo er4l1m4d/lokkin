@@ -16,10 +16,10 @@ interface ParticipantRowProps {
 
 export function ParticipantRow({ participant, isCreator }: ParticipantRowProps) {
   return (
-    <li className="flex items-center gap-3 rounded-card bg-white px-4 py-3 shadow-tap">
+    <li className="flex min-h-14 items-center gap-3 rounded-card bg-surface px-4 py-3 shadow-tap">
       <span
         className={`h-2.5 w-2.5 rounded-pill ${STATUS_DOTS[participant.status]}`}
-        title={participant.status}
+        title={participant.status.toLowerCase()}
         aria-hidden
       />
       <span className="truncate font-display text-sm font-bold text-ink">
@@ -30,8 +30,11 @@ export function ParticipantRow({ participant, isCreator }: ParticipantRowProps) 
           Host
         </span>
       )}
+      <span className="ml-auto text-xs font-semibold text-ink-muted capitalize">
+        {participant.status.toLowerCase().replace('_', ' ')}
+      </span>
       {participant.rank && (
-        <span className="ml-auto text-xs font-bold text-ink-soft">#{participant.rank}</span>
+        <span className="text-xs font-bold text-ink-soft">#{participant.rank}</span>
       )}
     </li>
   )

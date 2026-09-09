@@ -4,6 +4,7 @@ import { api } from '@/api'
 import type { OptionKey } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
 import { StepDots } from '@/components/StepDots'
 import { useSession } from '@/context/useSession'
 import {
@@ -186,7 +187,7 @@ export function CreateScreen() {
 
         {step === 'upload' && (
           <section className="flex flex-col gap-4">
-            <div className="rounded-card bg-white p-5 shadow-soft">
+            <div className="rounded-card bg-surface p-5 shadow-soft">
               <label htmlFor="quizTitle" className="text-xs font-bold tracking-wide text-ink-muted uppercase">
                 Title
               </label>
@@ -197,7 +198,7 @@ export function CreateScreen() {
                 maxLength={80}
                 placeholder="e.g. Cell Biology Final"
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1.5 w-full rounded-card border-2 border-line bg-white px-4 py-3 font-medium text-ink placeholder:text-ink-muted focus:border-primary focus:outline-none"
+                className="mt-1.5 min-h-12 w-full rounded-card border-2 border-line bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted focus:border-primary"
               />
 
               <label htmlFor="quizDesc" className="mt-4 block text-xs font-bold tracking-wide text-ink-muted uppercase">
@@ -210,25 +211,35 @@ export function CreateScreen() {
                 maxLength={200}
                 placeholder="What is this quiz about?"
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-1.5 w-full rounded-card border-2 border-line bg-white px-4 py-3 font-medium text-ink placeholder:text-ink-muted focus:border-primary focus:outline-none"
+                className="mt-1.5 min-h-12 w-full rounded-card border-2 border-line bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted focus:border-primary"
               />
             </div>
 
-            <div className="rounded-card bg-white p-5 shadow-soft">
-              <p className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-                Study material
-              </p>
+            <div className="rounded-card bg-surface p-5 shadow-soft">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-primary-faint text-primary-dark" aria-hidden>
+                  <Icon name="file" size={20} />
+                </span>
+                <div>
+                  <p className="text-sm font-bold text-ink">Study material</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
+                    Use notes your group can fairly be tested on.
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => fileInput.current?.click()}
                 className="mt-2 w-full rounded-card border-2 border-dashed border-primary-soft bg-primary-faint px-4 py-8 text-center transition-colors hover:border-primary"
               >
-                <span className="block text-2xl" aria-hidden>📄</span>
+                <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-card bg-white text-primary-dark shadow-tap" aria-hidden>
+                  <Icon name="file" size={20} />
+                </span>
                 <span className="mt-1 block text-sm font-bold text-ink">
                   {fileName ?? 'Upload notes or paste below'}
                 </span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  .txt / .md — PDF support lands with the AI backend
+                  .txt / .md for now · PDF support lands with the AI backend
                 </span>
               </button>
               <input
@@ -249,7 +260,7 @@ export function CreateScreen() {
                 }}
                 rows={6}
                 placeholder="Paste your study material here — lecture notes, textbook paragraphs, summary sheets…"
-                className="mt-3 w-full resize-y rounded-card border-2 border-line bg-white px-4 py-3 text-sm leading-relaxed text-ink placeholder:text-ink-muted focus:border-primary focus:outline-none"
+                className="mt-3 min-h-36 w-full resize-y rounded-card border-2 border-line bg-surface px-4 py-3 text-base leading-relaxed text-ink placeholder:text-ink-muted focus:border-primary focus:outline-none"
                 aria-label="Study material"
               />
               <p className="mt-1 text-right text-xs text-ink-muted">
@@ -257,7 +268,7 @@ export function CreateScreen() {
               </p>
             </div>
 
-            <div className="rounded-card bg-white p-5 shadow-soft">
+            <div className="rounded-card bg-surface p-5 shadow-soft">
               <p className="text-xs font-bold tracking-wide text-ink-muted uppercase">Settings</p>
               <ChoiceRow
                 label="Questions"
@@ -297,7 +308,7 @@ export function CreateScreen() {
         )}
 
         {step === 'generating' && (
-          <section className="flex min-h-[50vh] flex-col items-center justify-center gap-4 rounded-card bg-white p-8 shadow-soft">
+          <section className="flex min-h-[50vh] flex-col items-center justify-center gap-4 rounded-card bg-surface p-8 shadow-soft">
             <div className="h-14 w-14 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
             <p className="font-display text-base font-extrabold text-ink">{genMessage}</p>
             <p className="text-xs text-ink-muted">This usually takes a few seconds</p>
@@ -366,14 +377,14 @@ function ChoiceRow({
   return (
     <div className={`flex items-center justify-between gap-3 py-3 ${last ? '' : 'border-b border-line'}`}>
       <span className="text-sm font-semibold text-ink">{label}</span>
-      <div className="flex gap-1.5">
+              <div className="flex flex-wrap justify-end gap-1.5">
         {options.map((o) => (
           <button
             key={o}
             type="button"
             onClick={() => onChange(o)}
             aria-pressed={value === o}
-            className={`rounded-pill px-3 py-1.5 text-xs font-bold transition-colors ${
+            className={`min-h-11 rounded-pill px-3 py-1.5 text-xs font-bold transition-colors ${
               value === o ? 'bg-ink text-white' : 'bg-canvas-deep text-ink-soft'
             }`}
           >
@@ -403,20 +414,20 @@ function QuestionEditor({
   onMove: (dir: -1 | 1) => void
 }) {
   return (
-    <article className="rounded-card bg-white p-5 shadow-soft">
+      <article className="rounded-card bg-surface p-5 shadow-soft">
       <header className="flex items-center justify-between">
-        <span className="font-display text-xs font-extrabold tracking-wide text-ink-muted uppercase">
+          <span className="font-display text-xs font-extrabold tracking-wide text-primary-dark uppercase">
           Question {index + 1}
         </span>
         <div className="flex items-center gap-1">
           <IconBtn label="Move up" disabled={index === 0} onClick={() => onMove(-1)}>
-            ↑
+            <Icon name="arrow-up" size={16} />
           </IconBtn>
           <IconBtn label="Move down" disabled={index === total - 1} onClick={() => onMove(1)}>
-            ↓
+            <Icon name="arrow-down" size={16} />
           </IconBtn>
           <IconBtn label="Delete question" danger onClick={onRemove}>
-            ✕
+            <Icon name="x" size={16} />
           </IconBtn>
         </div>
       </header>
@@ -427,7 +438,7 @@ function QuestionEditor({
         onChange={(e) => onUpdate({ questionText: e.target.value })}
         placeholder="Question text"
         aria-label={`Question ${index + 1} text`}
-        className="mt-3 w-full resize-y rounded-card border-2 border-line bg-white px-3.5 py-2.5 text-sm leading-relaxed text-ink focus:border-primary focus:outline-none"
+        className="mt-3 min-h-24 w-full resize-y rounded-card border-2 border-line bg-surface px-3.5 py-2.5 text-base leading-relaxed text-ink focus:border-primary"
       />
 
       <div className="mt-3 flex flex-col gap-2">
@@ -438,13 +449,13 @@ function QuestionEditor({
               onClick={() => onUpdate({ correctOption: o.key })}
               aria-pressed={draft.correctOption === o.key}
               aria-label={`Mark option ${o.key} as correct`}
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-pill font-display text-xs font-extrabold transition-colors ${
+              className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-pill font-display text-xs font-extrabold transition-colors ${
                 draft.correctOption === o.key
                   ? 'bg-success text-white'
                   : 'bg-canvas-deep text-ink-soft'
               }`}
             >
-              {draft.correctOption === o.key ? '✓' : o.key}
+              {draft.correctOption === o.key ? <Icon name="check" size={15} strokeWidth={2.5} /> : o.key}
             </button>
             <input
               type="text"
@@ -452,7 +463,7 @@ function QuestionEditor({
               placeholder={`Option ${o.key}`}
               onChange={(e) => onUpdateOption(o.key, e.target.value)}
               aria-label={`Option ${o.key} for question ${index + 1}`}
-              className="w-full rounded-card border-2 border-line bg-white px-3.5 py-2 text-sm text-ink focus:border-primary focus:outline-none"
+              className="min-h-11 w-full rounded-card border-2 border-line bg-surface px-3.5 py-2 text-base text-ink focus:border-primary"
             />
           </div>
         ))}
@@ -487,7 +498,7 @@ function IconBtn({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className={`flex h-8 w-8 items-center justify-center rounded-pill text-sm font-bold transition-colors disabled:opacity-30 ${
+      className={`flex min-h-11 min-w-11 items-center justify-center rounded-pill text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
         danger ? 'bg-danger-soft text-danger' : 'bg-canvas-deep text-ink-soft'
       }`}
     >

@@ -1,4 +1,5 @@
 import type { ResultRow } from '@/api/types'
+import { Icon } from './Icon'
 
 interface PodiumSlotProps {
   /** 1, 2 or 3 — determines podium height and medal */
@@ -6,10 +7,10 @@ interface PodiumSlotProps {
   row: ResultRow | null
 }
 
-const MEDALS: Record<1 | 2 | 3, { emoji: string; label: string; block: string }> = {
-  1: { emoji: '🥇', label: '1st', block: 'bg-amber' },
-  2: { emoji: '🥈', label: '2nd', block: 'bg-primary' },
-  3: { emoji: '🥉', label: '3rd', block: 'bg-accent' },
+const MEDALS: Record<1 | 2 | 3, { label: string; block: string; iconClass: string }> = {
+  1: { label: '1st', block: 'bg-amber', iconClass: 'text-amber' },
+  2: { label: '2nd', block: 'bg-primary', iconClass: 'text-primary' },
+  3: { label: '3rd', block: 'bg-accent', iconClass: 'text-accent' },
 }
 
 const HEIGHTS: Record<1 | 2 | 3, string> = {
@@ -25,7 +26,9 @@ export function PodiumSlot({ place, row }: PodiumSlotProps) {
   return (
     <div className={`flex flex-1 flex-col items-center justify-end gap-2 ${displayPlace}`}>
       <div className="text-center" aria-label={`${medal.label} place`}>
-        <div className="text-2xl" aria-hidden>{medal.emoji}</div>
+        <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-pill bg-canvas-deep ${medal.iconClass}`} aria-hidden>
+          <Icon name="trophy" size={19} strokeWidth={2.1} />
+        </div>
         {row ? (
           <>
             <p className="mt-1 max-w-24 truncate font-display text-sm font-extrabold text-ink">

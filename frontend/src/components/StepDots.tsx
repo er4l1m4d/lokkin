@@ -1,3 +1,5 @@
+import { Icon } from './Icon'
+
 interface StepDotsProps {
   steps: readonly string[]
   current: number
@@ -19,7 +21,7 @@ export function StepDots({ steps, current }: StepDotsProps) {
                     : 'bg-canvas-deep text-ink-muted'
               }`}
             >
-              {state === 'done' ? '✓' : i + 1}
+              {state === 'done' ? <Icon name="check" size={15} strokeWidth={2.5} /> : i + 1}
             </span>
             <span
               className={`text-xs font-semibold ${

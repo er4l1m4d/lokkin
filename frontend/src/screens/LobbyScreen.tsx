@@ -4,6 +4,7 @@ import { api } from '@/api'
 import type { Participant, Quiz } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
 import { MeterBar } from '@/components/MeterBar'
 import { ParticipantRow } from '@/components/ParticipantRow'
 import { useSession } from '@/context/useSession'
@@ -48,8 +49,8 @@ export function LobbyScreen() {
     return (
       <AppShell>
         <div className="flex flex-col gap-3">
-          <div className="h-40 animate-pulse rounded-card bg-white/70" />
-          <div className="h-64 animate-pulse rounded-card bg-white/70" />
+          <div className="h-40 animate-pulse rounded-card bg-surface-muted" />
+          <div className="h-64 animate-pulse rounded-card bg-surface-muted" />
         </div>
       </AppShell>
     )
@@ -79,10 +80,10 @@ export function LobbyScreen() {
           </p>
         </header>
 
-        <section className="flex flex-col items-center gap-3 rounded-card bg-white p-6 shadow-soft">
+        <section className="flex flex-col items-center gap-3 rounded-card bg-surface p-6 shadow-soft">
           {roomClosed ? (
             <>
-              <p className="text-4xl" aria-hidden>🏁</p>
+              <Icon name="podium" className="text-primary-dark" size={34} />
               <p className="font-display text-base font-extrabold text-ink">This room has closed</p>
               <Button variant="secondary" onClick={() => navigate(`/quiz/${quizId}/results`)}>
                 See results
@@ -90,7 +91,7 @@ export function LobbyScreen() {
             </>
           ) : isLive ? (
             <>
-              <p className="text-4xl" aria-hidden>🔴</p>
+              <Icon name="spark" className="text-danger" size={34} />
               <p className="font-display text-lg font-black text-danger">Room is live</p>
               <Button size="lg" onClick={() => navigate(`/quiz/${quizId}/play`)}>
                 Enter the quiz
@@ -106,7 +107,7 @@ export function LobbyScreen() {
           )}
         </section>
 
-        <section className="rounded-card bg-white p-5 shadow-soft">
+        <section className="rounded-card bg-surface p-5 shadow-soft">
           <MeterBar
             value={confirmed}
             target={MIN_REQUIRED}
@@ -126,7 +127,7 @@ export function LobbyScreen() {
           )}
         </section>
 
-        <section className="rounded-card bg-white p-5 shadow-soft">
+        <section className="rounded-card bg-surface p-5 shadow-soft">
           <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
             In the room ({confirmed})
           </h2>

@@ -83,6 +83,18 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Cause:** Monorepo — the `dev` script lives in `frontend/package.json`; the repo root had no `package.json` at all.
 - **Fix:** Added a root `package.json` proxying all commands via `npm --prefix frontend run ...` (`dev`, `build`, `lint`, `test`, `checks`) plus `api` for uvicorn. **Rule: all documented commands run from the repo root — never require the user to cd into `frontend/`.**
 
+### E-020 — UI/UX Pro Max search command references missing `search.py`
+- **When:** UI/UX polish phase, design-system discovery
+- **Error:** `python ...ui-ux-pro-max/scripts/search.py ...` failed with `can't open file ... search.py: [Errno 2] No such file or directory`.
+- **Cause:** The installed skill directory contains the UI/UX guide and data references but not the optional searchable CLI script described by the supplied instructions.
+- **Fix:** Continued with the available inspiration screenshots, the persisted `design-system/MASTER.md`, the installed Impeccable product/polish references, and direct source audits. **Rule: missing optional design tooling must not block a scoped UI refinement; record the limitation and use the available design evidence.**
+
+### E-021 — Final UI commit command used unsupported PowerShell `&&`
+- **When:** UI/UX polish phase, final commit/push
+- **Error:** `The token '&&' is not a valid statement separator in this version.`
+- **Cause:** The terminal uses Windows PowerShell 5.1; `&&` is a PowerShell 7 operator.
+- **Fix:** Re-run sequential commands with `;` or dependent `if ($?) { ... }`. Related to E-001; no code impact.
+
 ### E-018 — Self-hosted runner died silently (child of the shell session)
 - **When:** Phase 1, after the tool session that started it ended
 - **Error:** Jobs stuck `queued` forever; API showed runner `status: offline`, no Runner process on the machine.
