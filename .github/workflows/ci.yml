@@ -43,5 +43,5 @@ jobs:
       # Critical-flow suite (DEPLOY.md). Runs from repo root so the `backend`
       # package imports resolve; config lives in backend/pytest.ini.
       - name: Backend tests
-        working-directory: ..
+        working-directory: .
         run: python -m pytest backend/tests -q

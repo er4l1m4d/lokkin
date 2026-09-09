@@ -101,6 +101,12 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Cause:** Request schemas used snake_case while every response and the whole frontend use camelCase; the two sides had never actually talked.
 - **Fix:** Pydantic `CamelModel` base with `alias_generator=to_camel, populate_by_name=True` — all request schemas accept both casings. **Rule: wire-level contracts get exercised by tests before declaring integration done.**
 
+### E-025 — CI pytest step: `file or directory not found: backend/tests`
+- **When:** Phase 6, first CI run of the backend test suite
+- **Error:** pytest exit 1, "file or directory not found: backend/tests"
+- **Cause:** Step `working-directory: ..` resolved against the *workspace root* (checkout dir), not the job's default working-directory — so the step ran one level above the repo.
+- **Fix:** `working-directory: .` (repo root). **Rule: step-level working-directory overrides are always relative to the checkout root, not to defaults.run.working-directory.**
+
 ### E-024 — Smoke-script got 405 from a POST route
 - **When:** Phase 6, first live smoke run
 - **Error:** `405 Method Not Allowed` on `/demo-start`
