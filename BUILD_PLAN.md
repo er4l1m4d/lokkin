@@ -111,8 +111,8 @@
 ## Phase 8 — Polish & Competition Prep
 **Goal:** Ship-ready submission.
 
-- [ ] **8.1 UX polish pass** — Loading/empty/error states everywhere, transitions, copy doc tone ("Prove what you know"), accessibility check.
-- [ ] **8.2 Deploy** — Neon → Render → Vercel per `DEPLOY.md` (CI-gated, tagged releases, post-deploy smoke test).
-- [ ] **8.3 Repo requirements** — MIT LICENSE, repo public, README (setup + demo sequence), 250-word description.
-- [ ] **8.4 Demo video** — Script + record full loop: create → commit → compete → payout.
-- [ ] **8.5 Register + first users** — Competition dashboard registration; seed a quiz; WhatsApp push to university cohort for launch night.
+- [x] **8.1 UX polish pass** — Audit-driven: every screen now has loading/empty/error(+retry)/stale states; failed answer submits no longer render as wrong answers (QuizPlay); friendly error copy via `api/errors.ts`; new `ErrorState`/`ErrorBanner`/`StaleBanner`/`Skeleton` components; AA contrast fixes (amber-dark, accent-dark tokens); a11y (h1 on play screen, aria-live for question/reveal/success announcements, tablist misuse fixed, 44px touch targets, label fixes); route + modal enter motion (reduced-motion safe); copy tone pass (no "mock payments"/"ping"/"AI backend" jargon, pot/pool unified, "99th place" no-show bug fixed).
+- [ ] **8.2 Deploy** — Prep complete: CORS middleware on the backend (`CORS_ORIGINS` allowlist — was a deploy blocker), `render.yaml` blueprint, DEPLOY.md first-deploy runbook (Neon → Render → Vercel, env vars, smoke checks), + E-027 disk-full CI failure fixed. **Execution pending: run the DEPLOY.md "First deploy runbook" (needs Neon/Render/Vercel accounts).**
+- [x] **8.3 Repo requirements** — MIT LICENSE, README rewritten (quickstart, demo sequence, real-mode setup, commands, architecture notes), `DESCRIPTION.md` 250-word description, repo description set via `gh repo edit`.
+- [ ] **8.4 Demo video** — Script done (`DEMO_SCRIPT.md`, ~2:30 shot list + setup checklist). **Recording pending.**
+- [ ] **8.5 Register + first users** — Checklist done (`LAUNCH.md`: dashboard registration, pre-launch sanity, quiz plan, WhatsApp template, post-launch) + `scripts/seed.mjs` (idempotent launch-night quiz seeder, tested against a local server). **Registration + push pending.**

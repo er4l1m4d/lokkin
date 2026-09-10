@@ -107,6 +107,18 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Cause:** `init_db()` uses `Base.metadata.create_all` — it creates *missing tables* but never migrates *existing* ones, so the Phase 6 dev DB lacked the new columns.
 - **Fix (dev):** delete `backend/lokkin.db` and restart — smoke data only. Production is unaffected (fresh Postgres applies `sql/001_initial_schema.sql`). **Rule: after model changes, reset the dev SQLite file; if a 409 swallows a DB error, check uvicorn.log for the real cause before guessing.**
 
+### E-027 — CI failed with `ENOSPC: no space left on device` (host disk full)
+- **When:** Phase 8.2, first CI run of the deploy-prep commit
+- **Error:** Frontend job: `npm warn tar TAR_ENTRY_ERROR ENOSPC: no space left on device, write` during `npm ci` → exit 1. Backend job: pytest printed 5 dots then `Process completed with exit code 1` mid-suite.
+- **Cause:** The self-hosted runner (`lokkin-pc`) executes CI on the dev PC's C: drive, which was down to **157 MB free** of ~256 GB. `npm ci` writes to the npm cache + workspace on the same disk; the backend test crash was the same root cause (writes during the run). Two different-looking failures, one cause.
+- **Fix:** Freed 2.4 GB: `npm cache clean --force` (2.3 GB) + Temp files older than 2 days. Then `gh run rerun <id> --failed` — passed with zero code changes. **Rule: on the self-hosted runner, "no space left on device" in CI means the host C: drive — check `Get-PSDrive C` first before debugging workflow YAML. Keep ≥ 5 GB free; npm cache alone grows past 2 GB.**
+
+### E-028 — Apostrophe inside single-quoted TS string (parse error, caught by lint gate)
+- **When:** Phase 8.1, editing ProfileScreen wallet-link copy
+- **Error:** `Expected ',' or ')' but found 'Identifier'` from oxlint.
+- **Cause:** Wrote `'Confirm it's really you…'` — the apostrophe terminated the string literal.
+- **Fix:** Switched to double quotes for strings containing apostrophes. **Rule: with the codebase's curly apostrophes in UI copy, prefer double quotes for any string containing `'`.**
+
 ### E-025 — CI pytest step: `file or directory not found: backend/tests`
 - **When:** Phase 6, first CI run of the backend test suite
 - **Error:** pytest exit 1, "file or directory not found: backend/tests"
