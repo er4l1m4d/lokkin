@@ -1,4 +1,4 @@
-# Lokkin — Demo Video Script
+# Nivora — Demo Video Script
 
 **Length:** ~2:30 · **Format:** screen recording (OBS/Windows Game Bar), phone-width viewport, mic voiceover
 **Setup before recording:**
@@ -14,12 +14,12 @@
 ## Shot list
 
 ### 0:00–0:15 — Hook (Welcome screen, Window A)
-**VO:** "Studying for an exam shouldn't end with a quiz nobody finishes. Lokkin puts skin in the game."
-- Show welcome screen: "Lock in with Lokkin — Prove what you know. Commit. Compete. Improve."
+**VO:** "Studying for an exam shouldn't end with a quiz nobody finishes. Nivora puts skin in the game."
+- Show welcome screen: "Lock in with Nivora — Prove what you know. Commit. Compete. Improve."
 - Type name "Ada", select **Commitment** mode, press Enter.
 
 ### 0:15–0:45 — Create (host)
-**VO:** "Paste your study notes. Lokkin drafts the quiz — you never see the questions, so you play blind like everyone else."
+**VO:** "Paste your study notes. Nivora drafts the quiz — you never see the questions, so you play blind like everyone else."
 - Home → **Create quiz** → paste a chunk of notes (have them ready on clipboard)
 - Settings: 5 questions · 3 min · 10 NIM · starts now
 - **Generate questions** → progress stages → review screen, tap through one question to show editing
@@ -50,7 +50,7 @@
 - (Optional cutaway: CommitScreen memo code + escrow address, or the sidecar log showing a payout hash)
 
 ### 2:20–2:30 — Outro (Welcome screen)
-**VO:** "Lokkin. Prove what you know."
+**VO:** "Nivora. Prove what you know."
 - Logo + tagline card. End.
 
 ---

@@ -1,4 +1,4 @@
-# Render blueprint — Lokkin API (Phase 8.2)
+# Render blueprint — Nivora API (Phase 8.2)
 # Deploys on every push to main (autoDeploy). DB is Neon (external), connected via DATABASE_URL.
 services:
   - type: web

@@ -1,6 +1,6 @@
-# Lokkin — 250-word description
+# Nivora — 250-word description
 
-Lokkin turns studying into a commitment. Students upload their study material, AI drafts a multiple-choice quiz, and everyone puts NIM on the line before it starts. When the room fills, the quiz goes live: one shot per question, a server-owned clock, sealed answers. Top 3 split the pot 50/30/10, everyone else gets 80% of their stake back, and finishers share a 10% completion bonus — so the economics reward showing up, not just winning. If quorum isn't met, everyone is refunded automatically.
+Nivora turns studying into a commitment. Students upload their study material, AI drafts a multiple-choice quiz, and everyone puts NIM on the line before it starts. When the room fills, the quiz goes live: one shot per question, a server-owned clock, sealed answers. Top 3 split the pot 50/30/10, everyone else gets 80% of their stake back, and finishers share a 10% completion bonus — so the economics reward showing up, not just winning. If quorum isn't met, everyone is refunded automatically.
 
 The backend (FastAPI) owns the entire lifecycle — draft → open → live → validating → finalized → settled — and never trusts the client: answers are validated server-side, correct options are masked until validation ends, deadlines are enforced with grace only on the server, and a dispute window protects result integrity. On Nimiq, commitments are real: each player gets a unique memo code, sends a feeless transaction to escrow from the Nimiq Pay wallet, and the backend verifies the transaction on-chain (recipient, amount, memo, sender) before counting them toward quorum. A settlement sidecar pays winners from escrow and settles the quiz on-chain.
 

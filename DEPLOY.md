@@ -1,4 +1,4 @@
-# DEPLOY.md — Lokkin Deployment Checklist
+# DEPLOY.md — Nivora Deployment Checklist
 
 Solo-dev safety system. Every deployment follows this file. Every deploy maps to a git commit — rollback is always "redeploy the previous tag".
 
@@ -82,7 +82,7 @@ build feature → local checks → push → CI (lint/typecheck/test/build)
 - [ ] `GET https://lokkin-api.onrender.com/health` → 200, DB connected, app responding
 - [ ] Vercel homepage loads (SPA routes deep-linkable, e.g. `/quiz/x` reloads fine)
 - [ ] Session works (display name / wallet link)
-- [ ] Core Lokkin flow works (create → join → play → results)
+- [ ] Core Nivora flow works (create → join → play → results)
 - [ ] Data write + read round-trips (create a quiz, reload, still there)
 - [ ] No CORS errors in the browser console
 - [ ] No errors in logs (Render/Vercel dashboards)

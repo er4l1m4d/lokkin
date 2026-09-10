@@ -1,6 +1,6 @@
-# Lokkin Build Plan
+# Nivora Build Plan
 
-**Deadline: Sep 18** · Stack: React+Vite+TS+Tailwind / FastAPI / Nimiq SDK · Payments: `mock` first, `real` later
+**Deadline: Sep 18** · Stack: React+Vite+TS+Tailwind / FastAPI / Nimiq SDK · Payments: mock first, real later
 
 ---
 

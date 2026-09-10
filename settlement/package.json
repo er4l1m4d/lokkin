@@ -1,9 +1,9 @@
 {
-  "name": "lokkin-settlement",
+  "name": "nivora-settlement",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Lokkin escrow settlement sidecar — pays out finalized quizzes on Nimiq",
+  "description": "Nivora escrow settlement sidecar — pays out finalized quizzes on Nimiq",
   "scripts": {
     "start": "node index.mjs",
     "new-key": "node generate-key.mjs"
