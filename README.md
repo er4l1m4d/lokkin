@@ -1,43 +1,80 @@
-# Lokkin Core MVP
+# Lokkin
 
-Lokkin — commitment-based competitive study quizzes on Nimiq. Upload your study material, let AI draft the quiz, commit NIM, and compete: top 3 win from the pool, everyone else gets most of their stake back.
+**Commit NIM. Take the quiz. Prove what you know.**
 
-This is a monorepo: `frontend/` (React + Vite + TS + Tailwind) and `backend/` (FastAPI + SQLAlchemy async).
+Lokkin is a commitment-based competitive study app on [Nimiq](https://nimiq.com). Upload your study material, let AI draft the quiz, put NIM on the line, and compete live against your classmates. Top 3 split the pot (50/30/10), everyone else gets 80% back — so showing up and finishing is almost always better than not. If the room doesn't fill, everyone is auto-refunded in full.
 
-## Frontend (dev)
+This is a monorepo:
+
+- `frontend/` — React + Vite + TypeScript + Tailwind v4 (mobile-first, Nimiq Mini App SDK)
+- `backend/` — FastAPI + SQLAlchemy async (SQLite dev / Postgres prod), owns the clock and the state machine
+- `settlement/` — Node sidecar that pays out from the escrow wallet via `@nimiq/core`
+- `sql/` — production Postgres schema baseline
+
+## How it works
+
+1. **Create** — paste study notes; the generator drafts cloze-style questions (AI upgrade path behind the same interface). Review, set stake/duration/start time, publish.
+2. **Commit** — players lock in the stake in NIM. Mock mode instant-confirms; real mode issues a unique `LK-XXXX` memo, the Nimiq Pay wallet sends a feeless escrow transaction with the memo, and the backend verifies it on-chain (recipient, value, memo, sender).
+3. **Compete** — when quorum (min 3) is met the quiz goes LIVE at start time. One answer per question, server-clock deadline, sealed answers until validation.
+4. **Payout** — after a dispute window the quiz finalizes: competition ranking (ties share a rank's cut), 10% completion bonus, no-shows forfeit 50% to the pool. The settlement sidecar pays the escrow out on-chain and settles.
+
+## Quickstart (frontend, mock mode — no backend needed)
 
 ```bash
 npm install          # from repo root — installs frontend deps
 npm run dev          # vite dev server on http://localhost:5173
 ```
 
-Set `frontend/.env` with `VITE_USE_MOCK=true` to develop without the backend (in-memory mock with seeded quizzes and the full payout engine). Defaults to the real API at `VITE_API_URL` (fallback `http://localhost:8000`).
+Set `frontend/.env`:
 
-Other commands (all from repo root): `npm run lint`, `npm run test`, `npm run build`, `npm run checks` (all three).
+```
+VITE_USE_MOCK=true
+```
 
-## Backend
+The mock layer is a full in-memory implementation: seeded quizzes, the real state machine, and the locked payout economics (regression-tested for money conservation).
 
-Dev runs on zero-setup SQLite by default (file `backend/lokkin.db`); production sets `DATABASE_URL` to Postgres (Render + Neon).
+## Quickstart (backend)
 
 ```bash
 python -m venv .venv
-. .venv/bin/activate  # Windows: .venv\\Scripts\\activate
+.venv\Scripts\activate            # Windows (bash: source .venv/bin/activate)
 pip install -r backend/requirements.txt -r backend/requirements-dev.txt
-npm run api           # uvicorn on http://localhost:8000
+npm run api                       # uvicorn on http://localhost:8000
 ```
 
-Env knobs: `DISPUTE_WINDOW_SECONDS` (default 300, set lower for demos), `PAYMENTS_MODE` (`mock` instant-confirms commitments; `real` activates on-chain verification), `ESCROW_ADDRESS`, `NIMIQ_RPC_URL`, `SETTLEMENT_TOKEN`.
+Dev runs on zero-setup SQLite (`backend/lokkin.db`); production sets `DATABASE_URL` to Postgres and applies `sql/001_initial_schema.sql`.
+
+Frontend against the real backend — set `frontend/.env`:
+
+```
+VITE_USE_MOCK=false
+VITE_API_URL=http://localhost:8000
+```
+
+Backend env knobs:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PAYMENTS_MODE` | `mock` | `mock` instant-confirms commitments; `real` verifies on-chain |
+| `DISPUTE_WINDOW_SECONDS` | `300` | VALIDATING window before finalize (lower it for demos) |
+| `ESCROW_ADDRESS` | — | escrow wallet address (real mode) |
+| `NIMIQ_RPC_URL` | — | Nimiq JSON-RPC node for tx verification (real mode) |
+| `SETTLEMENT_TOKEN` | — | shared secret between backend and settlement sidecar |
+
+## Demo sequence (judges / smoke test)
+
+```bash
+# terminal 1
+npm run api
+# terminal 2
+npm run dev
+# terminal 3 — end-to-end smoke: 3 users create, commit, play, settle
+node scripts/e2e-smoke.mjs
+```
+
+UI walkthrough (mock mode): Welcome → pick Demo → Home → **Create quiz** → paste any text → Generate → Publish → open a second browser window, join as another player ×2 → quorum met → quiz goes LIVE → answer questions → submitted screen → results (podium, ranking, status stepper) → review with explanations → profile history. The whole loop also runs headless: `python -m pytest backend/tests -q` (14 tests incl. real-mode with a fake chain) and `npm run test` (18 frontend tests).
 
 ## Real payments mode (Nimiq)
-
-`PAYMENTS_MODE=real` turns Lokkin into a real-stakes competition:
-
-1. Players join → receive a unique `LK-XXXX` memo code.
-2. They send their stake from their Nimiq Pay wallet to the escrow address **with the memo as transaction data** (feeless). The mini-app SDK's `sendBasicTransactionWithData` does this in one tap inside Nimiq Pay.
-3. The backend verifies the transaction on-chain (recipient, value, memo, sender) and confirms the commitment. Quorum counts confirmed players only.
-4. After FINALIZED, the settlement sidecar pays out from escrow and the quiz settles.
-
-Activate it:
 
 ```bash
 # 1. escrow wallet (once)
@@ -60,47 +97,26 @@ DRY_RUN=false
 cd settlement && npm start
 ```
 
-`DRY_RUN=true` exercises the full loop without a node or funds (simulated hashes). Mock mode remains the default and needs none of this.
+`DRY_RUN=true` exercises the full settle loop without a node or funds. Mock mode remains the default and needs none of this. Mini-app wiring: the frontend uses `@nimiq/mini-app-sdk` (wallet link, feeless `sendBasicTransactionWithData`, device identifier for anti-cheat).
 
-```bash
-python -m pytest backend/tests -q    # critical-flow suite (mock + real mode with fake chain)
-node scripts/e2e-smoke.mjs           # 3-user run against a live server
-```
+## Commands (all from repo root)
 
-To point the frontend at the real backend, set `VITE_USE_MOCK=false` in `frontend/.env`.
+| Command | What it does |
+|---|---|
+| `npm run dev` | Vite dev server (:5173) |
+| `npm run api` | Uvicorn API (:8000) |
+| `npm run lint` | oxlint (frontend) |
+| `npm run test` | vitest (frontend) |
+| `npm run build` | `tsc -b` typecheck + production build |
+| `npm run checks` | all three frontend gates |
 
-Production Postgres: create database `lokkin`, apply `sql/001_initial_schema.sql`, set `DATABASE_URL=postgresql+asyncpg://...`.
+## Architecture notes
 
-## What is included
+- **Server owns the clock and the lifecycle**: `DRAFT → PUBLISHED → OPEN → LIVE → ENDED → VALIDATING → FINALIZED → SETTLED` (auto-cancel → refund path under quorum). One transition per poll so status steppers walk visibly.
+- **Money conservation is asserted in tests** — mock payouts, backend payouts, and the e2e smoke all verify total distributed == total staked.
+- **Sealed answers**: correct answers never reach the client before validation (`/questions` masks them; review endpoint is 409-gated until the dispute window).
+- Deployment, CI (self-hosted runner), and rollback live in [`DEPLOY.md`](DEPLOY.md); the build history in [`BUILD_PLAN.md`](BUILD_PLAN.md); every debugging scar in [`ERROR.md`](ERROR.md).
 
-- PostgreSQL schema covering users, quizzes, materials, questions, participants, answers, sessions, events, flags, disputes, transactions and payouts.
-- FastAPI demo API for the first quiz loop.
-- Strict quiz state transitions.
-- Server-side answer validation.
-- Immutable answer/event records at the application layer.
-- Competition-ranking unit test.
-- Frontend foundation: typed API client, mock layer with the locked payout economics (regression-tested), 12 shared UI components.
+## License
 
-## Demo API sequence
-
-```text
-POST /api/users
-POST /api/quizzes
-POST /api/quizzes/{id}/questions   (repeat)
-POST /api/quizzes/{id}/publish
-POST /api/quizzes/{id}/open
-POST /api/quizzes/{id}/demo-start?user_id={user}
-POST /api/quizzes/{id}/start
-GET  /api/quizzes/{id}/state
-POST /api/quizzes/{id}/answers
-```
-
-## Important next hardening
-
-- Replace query-string demo identity with proper auth.
-- Add real join/commitment flow through Nimiq Pay.
-- Add server-side deadline enforcement to `submit_answer`.
-- Add reconnect/session endpoints and the 3-strike rule.
-- Add score finalization, invalid-question recalculation and disputes.
-- Add payout-plan generation and blockchain settlement with idempotency keys.
-- Add migrations tooling (Alembic) around the SQL baseline.
+[MIT](LICENSE)
