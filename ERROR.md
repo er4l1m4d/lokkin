@@ -73,7 +73,7 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 
 ### E-019 — `npm run dev` from repo root: `Missing script: "dev"`
 - **When:** Phase 1, user running the app locally
-- **Error:** `npm error Missing script: "dev"` at `C:\...\lokkin`
+- **Error:** `npm error Missing script: "dev"` at `C:\...\nivora`
 - **Cause:** Only `frontend/package.json` had scripts; the repo root had no package.json (backend-first repo origin).
 - **Fix:** Root `package.json` added with proxy scripts (`dev`, `build`, `lint`, `test`, `checks`, `api`) using `npm --prefix frontend run <script>`. **Rule: all dev commands run from the repo root — documented in README.**
 
@@ -105,12 +105,12 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **When:** Phase 7, smoke run after adding `users.device_id` / `participants.memo_code`
 - **Error:** `POST /api/users → 409 "User could not be created"` (root cause: `no such column` on insert, swallowed by the generic 409)
 - **Cause:** `init_db()` uses `Base.metadata.create_all` — it creates *missing tables* but never migrates *existing* ones, so the Phase 6 dev DB lacked the new columns.
-- **Fix (dev):** delete `backend/lokkin.db` and restart — smoke data only. Production is unaffected (fresh Postgres applies `sql/001_initial_schema.sql`). **Rule: after model changes, reset the dev SQLite file; if a 409 swallows a DB error, check uvicorn.log for the real cause before guessing.**
+- **Fix (dev):** delete `backend/nivora.db` and restart — smoke data only. Production is unaffected (fresh Postgres applies `sql/001_initial_schema.sql`). **Rule: after model changes, reset the dev SQLite file; if a 409 swallows a DB error, check uvicorn.log for the real cause before guessing.**
 
 ### E-027 — CI failed with `ENOSPC: no space left on device` (host disk full)
 - **When:** Phase 8.2, first CI run of the deploy-prep commit
 - **Error:** Frontend job: `npm warn tar TAR_ENTRY_ERROR ENOSPC: no space left on device, write` during `npm ci` → exit 1. Backend job: pytest printed 5 dots then `Process completed with exit code 1` mid-suite.
-- **Cause:** The self-hosted runner (`lokkin-pc`) executes CI on the dev PC's C: drive, which was down to **157 MB free** of ~256 GB. `npm ci` writes to the npm cache + workspace on the same disk; the backend test crash was the same root cause (writes during the run). Two different-looking failures, one cause.
+- **Cause:** The self-hosted runner (`nivora-pc`) executes CI on the dev PC's C: drive, which was down to **157 MB free** of ~256 GB. `npm ci` writes to the npm cache + workspace on the same disk; the backend test crash was the same root cause (writes during the run). Two different-looking failures, one cause.
 - **Fix:** Freed 2.4 GB: `npm cache clean --force` (2.3 GB) + Temp files older than 2 days. Then `gh run rerun <id> --failed` — passed with zero code changes. **Rule: on the self-hosted runner, "no space left on device" in CI means the host C: drive — check `Get-PSDrive C` first before debugging workflow YAML. Keep ≥ 5 GB free; npm cache alone grows past 2 GB.**
 
 ### E-028 — Apostrophe inside single-quoted TS string (parse error, caught by lint gate)
@@ -142,7 +142,7 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Error:** Jobs stuck `queued` forever; API showed runner `status: offline`, no Runner process on the machine.
 - **Cause:** `Start-Process cmd /c run.cmd` created the runner as a descendant of the shell session; the session teardown killed the process tree. The Startup-folder .bat only helps after a manual logon.
 - **Attempts:** (1) `svc.cmd install` — file doesn't exist in runner v2.337.0 Windows zip. (2) `schtasks /create` — `Access is denied` (needs admin on this machine).
-- **Fix (works, no admin):** start via WMI so the process is owned by WmiPrvSE and survives the session: `Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = 'cmd /c cd /d C:\Users\hp\actions-runner && run.cmd >> runner-run.log 2>&1' }`. **Rule: if CI jobs sit queued, check runner status first — `gh api repos/er4l1m4d/lokkin/actions/runners --jq '.runners[].status'`; if offline, re-run the WMI command.** Also note: jobs show `queued` with empty runner name while the runner works through them one at a time — check `runner-run.log` tail for truth.
+- **Fix (works, no admin):** start via WMI so the process is owned by WmiPrvSE and survives the session: `Invoke-CimMethod -ClassName Win32_Process -MethodName Create -Arguments @{ CommandLine = 'cmd /c cd /d C:\Users\hp\actions-runner && run.cmd >> runner-run.log 2>&1' }`. **Rule: if CI jobs sit queued, check runner status first — `gh api repos/er4l1m4d/nivora/actions/runners --jq '.runners[].status'`; if offline, re-run the WMI command.** Also note: jobs show `queued` with empty runner name while the runner works through them one at a time — check `runner-run.log` tail for truth.
 
 ### E-017 — Payout math double-scaled the pool (logic bug, caught by conservation tests)
 - **When:** Phase 1, writing payout tests for mock.ts
@@ -161,7 +161,7 @@ When you hit a new error: fix it, then append an entry (phase, error, cause, fix
 - **Error:** Every run: `startup_failure` (private) / `failure` after 3s (public) · jobs created but `runner_id: 0`, `runner_name: ""`, zero steps, no logs, "This workflow run cannot be retried".
 - **Diagnosis path (ruled out in order):** workflow YAML invalid? — valid (js-yaml + GitHub content API, no BOM, LF) · file encoding? — clean · invalid triggers/actions? — even a minimal `echo` hello-world workflow failed identically · repo visibility? — made repo public, same failure · repo Actions permissions? — enabled, `allowed_actions: all` · platform outage? — status page all operational.
 - **Cause (refined):** Account-level Actions restriction. On public repos minutes are free even without a payment method, so this is most likely **anti-abuse flagging** (fresh repo created via CLI + rapid pushes + workflow files = classic spam signature). Known remedies: contact GitHub Support to unflag, and/or "establish" the account (2FA, verified email, payment method).
-- **Status:** RESOLVED via workaround. User's card has issues — payment method path unavailable. A **self-hosted runner** (`lokkin-pc`, installed at `C:\Users\hp\actions-runner`) now executes CI on this PC; workflow moved to `runs-on: [self-hosted, lokkin-pc]` and the `pull_request` trigger was removed (public repo + self-hosted runner = fork PRs must never run on it). Full details in DEPLOY.md "CI runner" section. If a payment method is ever added / the flag lifts, hosted runners can be restored.
+- **Status:** RESOLVED via workaround. User's card has issues — payment method path unavailable. A **self-hosted runner** (`nivora-pc`, installed at `C:\Users\hp\actions-runner`) now executes CI on this PC; workflow moved to `runs-on: [self-hosted, nivora-pc]` and the `pull_request` trigger was removed (public repo + self-hosted runner = fork PRs must never run on it). Full details in DEPLOY.md "CI runner" section. If a payment method is ever added / the flag lifts, hosted runners can be restored.
 - **Related:** E-011 (needed `workflow` scope first, solved), E-012 (refspec form for partial push).
 
 ### E-011 — GitHub push rejected: OAuth token missing `workflow` scope

@@ -5,7 +5,7 @@ Launch night runbook: register on the competition dashboard, seed the first quiz
 ## 1. Competition registration
 
 - [ ] Create the competition dashboard submission:
-  - [ ] Repo link: `https://github.com/er4l1m4d/lokkin` (public ✓, MIT ✓)
+  - [ ] Repo link: `https://github.com/er4l1m4d/nivora` (public ✓, MIT ✓)
   - [ ] Paste the 250-word description from [`DESCRIPTION.md`](DESCRIPTION.md)
   - [ ] Demo video (record per [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md)) — upload or link
   - [ ] Live demo URL (the Vercel URL from the 8.2 deploy)
@@ -13,9 +13,9 @@ Launch night runbook: register on the competition dashboard, seed the first quiz
 
 ## 2. Pre-launch sanity (after the first deploy)
 
-- [ ] `GET https://lokkin-api.onrender.com/health` → 200 (cold start ~1 min on free plan is expected — mention it in the demo, or warm it with an uptime ping)
-- [ ] `node scripts/e2e-smoke.mjs https://lokkin-api.onrender.com` — full 3-user loop against production
-- [ ] Seed the opening quiz: `node scripts/seed.mjs https://lokkin-api.onrender.com --min 3 --entry 25 --in-minutes 90`
+- [ ] `GET https://nivora-api.onrender.com/health` → 200 (cold start ~1 min on free plan is expected — mention it in the demo, or warm it with an uptime ping)
+- [ ] `node scripts/e2e-smoke.mjs https://nivora-api.onrender.com` — full 3-user loop against production
+- [ ] Seed the opening quiz: `node scripts/seed.mjs https://nivora-api.onrender.com --min 3 --entry 25 --in-minutes 90`
 - [ ] Reload the Vercel homepage → seeded quiz visible as OPEN
 - [ ] Join the seeded quiz yourself from a phone (real "first user" pass through Welcome → Commit → Lobby)
 - [ ] `PAYMENTS_MODE=mock` for launch night unless the real-payments checklist in DEPLOY.md is fully done

@@ -42,7 +42,7 @@ pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 npm run api                       # uvicorn on http://localhost:8000
 ```
 
-Dev runs on zero-setup SQLite (`backend/lokkin.db`); production sets `DATABASE_URL` to Postgres and applies `sql/001_initial_schema.sql`.
+Dev runs on zero-setup SQLite (`backend/nivora.db`); production sets `DATABASE_URL` to Postgres and applies `sql/001_initial_schema.sql`.
 
 Frontend against the real backend — set `frontend/.env`:
 

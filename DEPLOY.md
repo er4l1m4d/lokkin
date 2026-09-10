@@ -18,10 +18,10 @@ settlement sidecar (runs on the dev PC for now) ──▶ Render API
 
 ## First deploy runbook (execute top to bottom)
 
-1. **Neon:** create project `lokkin` (region matches Render) → copy pooled `DATABASE_URL`.
+1. **Neon:** create project `nivora` (region matches Render) → copy pooled `DATABASE_URL`.
 2. **Render:** New → Blueprint → select the repo → it reads `render.yaml` → set `DATABASE_URL` (Neon) and `CORS_ORIGINS` (placeholder until Vercel URL exists) → create.
-3. **Verify API:** `GET https://lokkin-api.onrender.com/health` → 200 (first boot can take ~1 min on the free plan; `init_db()` creates all tables — `sql/001_initial_schema.sql` is the reference schema, not a required migration).
-4. **Vercel:** import repo → root directory `frontend/` → env `VITE_API_URL=https://lokkin-api.onrender.com`, `VITE_USE_MOCK=false` → deploy → note the production URL.
+3. **Verify API:** `GET https://nivora-api.onrender.com/health` → 200 (first boot can take ~1 min on the free plan; `init_db()` creates all tables — `sql/001_initial_schema.sql` is the reference schema, not a required migration).
+4. **Vercel:** import repo → root directory `frontend/` → env `VITE_API_URL=https://nivora-api.onrender.com`, `VITE_USE_MOCK=false` → deploy → note the production URL.
 5. **Render:** update `CORS_ORIGINS` with the Vercel URL → service redeploys.
 6. **Tag:** `git tag vX.Y.Z && git push origin vX.Y.Z` (matches the commit that's deployed).
 7. **Smoke test** (section below) + seed the first quiz (8.5).
@@ -29,7 +29,7 @@ settlement sidecar (runs on the dev PC for now) ──▶ Render API
 
 ## CI runner (self-hosted)
 
-- **Where:** `C:\Users\hp\actions-runner`, registered to `er4l1m4d/lokkin` as `lokkin-pc` (labels: `self-hosted, lokkin-pc, Windows, X64`)
+- **Where:** `C:\Users\hp\actions-runner`, registered to `er4l1m4d/nivora` as `nivora-pc` (labels: `self-hosted, nivora-pc, Windows, X64`)
 - **Why:** GitHub's hosted runners are blocked for this account (see ERROR.md E-013). The self-hosted runner is the CI gate until that lifts.
 - **Auto-start:** NOT automatic yet (scheduled-task creation denied — no admin). Runner must be started per boot/session with the WMI detach (see E-018):
   ```powershell
@@ -39,7 +39,7 @@ settlement sidecar (runs on the dev PC for now) ──▶ Render API
 - **Manual start (fallback, dies with the shell session):** run `C:\Users\hp\actions-runner\run.cmd`
 - **Manual stop:** kill the Runner process in Task Manager
 - **Logs:** `C:\Users\hp\actions-runner\runner-run.log` (listener + job results) + `_diag\` (detailed job logs)
-- **If jobs sit queued:** check `gh api repos/er4l1m4d/lokkin/actions/runners --jq '.runners[].status'` — if `offline`, run the WMI start above. If `online` + `busy`, it's working — verify in `runner-run.log` (jobs run one at a time and can show `queued` in the API meanwhile).
+- **If jobs sit queued:** check `gh api repos/er4l1m4d/nivora/actions/runners --jq '.runners[].status'` — if `offline`, run the WMI start above. If `online` + `busy`, it's working — verify in `runner-run.log` (jobs run one at a time and can show `queued` in the API meanwhile).
 - **SECURITY (public repo):** the workflow must NEVER run on `pull_request` — fork PRs would execute untrusted code on this PC. Push to `main` and `workflow_dispatch` only. If the restriction (E-013) lifts and we move back to hosted runners, re-adding `pull_request` is safe.
 - **Upgrading to hosted runners later:** change `runs-on:` back to `ubuntu-latest`, remove the runner (`.\config.cmd remove --token <token>`), delete the Startup .bat.
 
@@ -79,7 +79,7 @@ build feature → local checks → push → CI (lint/typecheck/test/build)
 
 ## After deploy — production smoke test
 
-- [ ] `GET https://lokkin-api.onrender.com/health` → 200, DB connected, app responding
+- [ ] `GET https://nivora-api.onrender.com/health` → 200, DB connected, app responding
 - [ ] Vercel homepage loads (SPA routes deep-linkable, e.g. `/quiz/x` reloads fine)
 - [ ] Session works (display name / wallet link)
 - [ ] Core Nivora flow works (create → join → play → results)

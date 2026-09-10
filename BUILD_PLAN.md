@@ -7,7 +7,7 @@
 ## Process rules
 
 1. **Phase by phase.** Never one-shot the project. One phase at a time → verify (lint, typecheck, build) → tick boxes → **commit & push** → post a phase summary (added / changed / improved).
-2. **CI gate.** CI runs on the **self-hosted runner `lokkin-pc`** (the dev PC — GitHub-hosted runners are account-blocked, E-013; setup/ops in DEPLOY.md). Pushes to `main` trigger: frontend lint + typecheck + build, backend install + compile. **CI green as of Phase 0.5.** If the runner is offline, start it with `C:\Users\hp\actions-runner\run.cmd` — queued jobs pick up automatically. Local gates (lint + build before every commit) remain mandatory regardless.
+2. **CI gate.** CI runs on the **self-hosted runner `nivora-pc`** (the dev PC — GitHub-hosted runners are account-blocked, E-013; setup/ops in DEPLOY.md). Pushes to `main` trigger: frontend lint + typecheck + build, backend install + compile. **CI green as of Phase 0.5.** If the runner is offline, start it with `C:\Users\hp\actions-runner\run.cmd` — queued jobs pick up automatically. Local gates (lint + build before every commit) remain mandatory regardless.
 3. **Error discipline.** Every error gets logged in `ERROR.md` with cause + fix. When a new error appears, **scan `ERROR.md` first** — similar signatures often repeat.
 4. **Build in slices.** UI for a flow → backend for that flow → test → commit. Integration happens per-flow, not as a big bang at the end.
 5. **Deploy via `DEPLOY.md`.** Checklist before/after every deploy; every deploy maps to a git commit (rollback = redeploy previous tag).
@@ -29,12 +29,12 @@
 - [x] **0.5.1 Git repo** — `git init -b main`, root `.gitignore` (deps, dist, env, logs, zip, private planning docs); `git status` clean of junk.- [x] **0.5.2 ERROR.md** — Every error hit so far logged with cause + fix (13 entries; see E-013 for the CI block diagnosis).
 - [x] **0.5.3 CI workflow** — `.github/workflows/ci.yml`: frontend (npm ci → lint → build) + backend (pip install → compileall). **Blocked from going green by account-level Actions restriction (E-013) — fix = add payment method to GitHub account, then re-push. Local gates remain mandatory meanwhile.**
 - [x] **0.5.4 DEPLOY.md** — Deploy checklist, production smoke tests, rollback procedure, critical-flow list.
-- [x] **0.5.5 Commit & push** — Backend baseline + Phase 0 + Phase 0.5 committed and pushed to https://github.com/er4l1m4d/lokkin (public). CI green pending E-013 fix.
+- [x] **0.5.5 Commit & push** — Backend baseline + Phase 0 + Phase 0.5 committed and pushed to https://github.com/er4l1m4d/nivora (public). CI green pending E-013 fix.
 
 ## Phase 1 — Foundation (API layer + shared components) ✅
 **Goal:** Everything screens are built from, so screen work is assembly only.
 
-- [x] **1.1 Types** — `api/types.ts`: Quiz, Participant, Question, Answer, User, all status enums, request/response shapes, `LokkinApi` interface, `VALID_QUIZ_TRANSITIONS` mirroring `services.py`, `QUIZ_LIFECYCLE` for the status stepper.
+- [x] **1.1 Types** — `api/types.ts`: Quiz, Participant, Question, Answer, User, all status enums, request/response shapes, `NivoraApi` interface, `VALID_QUIZ_TRANSITIONS` mirroring `services.py`, `QUIZ_LIFECYCLE` for the status stepper.
 - [x] **1.2 API client** — `api/client.ts`: typed fetch wrapper for all existing endpoints (users, quizzes CRUD, publish/open/start, demo-start, state, answers) + JSON→domain mappers; `ApiError`. Base URL from `VITE_API_URL`.
 - [x] **1.3 Mock mode** — `api/mock.ts`: full in-memory implementation (seeded quizzes, state machine, one-answer enforcement, auto-lifecycle advance) + `computePayouts` implementing the locked economics (50/30/10, 80/20, no-show 50/50, 10% completion bonus, ties split, skipped allocations → bonus). Toggle: `VITE_USE_MOCK=true`.
 - [x] **1.4 Polling hook** — `hooks/usePolling.ts`: interval + pause-when-hidden + error swallowing.

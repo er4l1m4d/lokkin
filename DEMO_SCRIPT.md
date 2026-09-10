@@ -6,7 +6,7 @@
 - Browser devtools → mobile viewport (390×844), 100% zoom
 - Two browser windows side-by-side for the multiplayer moment (Window A = host, Window B = player)
 - `DISPUTE_WINDOW_SECONDS=15` on the API for a fast VALIDATING→SETTLED walk
-- Fresh `backend/lokkin.db` (delete file, restart API) — seeded state only
+- Fresh `backend/nivora.db` (delete file, restart API) — seeded state only
 - Close Slack/notifications; do one dry run
 
 ---
