@@ -38,11 +38,11 @@ Students use Lokkin on a phone between lectures, in a library, or in a group cha
 
 ### Typography
 
-- Body: `Inter`, `16px` minimum for editable mobile fields.
-- Headings: `Nunito`, used for hierarchy and personality, not every label.
+- Display: `Bricolage Grotesque` (variable, optical sizing on) — headings, buttons, stat numbers, brand moments. It carries the app's personality: condensed display cut at large sizes, quirky ink-trap details. Weights above 800 clamp (the axis caps at 800), so `font-black` and `font-extrabold` render identically — size and color do the hierarchy work, not extra weight.
+- Body: `Onest` — prose, descriptions, form fields. Warm geometric with excellent readability at 16px.
 - Body line-height: `1.5` or greater for prose.
 - Headings use balanced wrapping and `-0.02em` tracking.
-- Timers and numeric results use tabular figures.
+- Timers and numeric results use tabular figures (`tnum` — both fonts ship the feature; `tabular-nums` class).
 
 ### Shape and Elevation
 

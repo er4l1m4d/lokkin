@@ -36,9 +36,11 @@
   --color-ink-muted: oklch(0.46 0.035 260);
   --color-line: oklch(0.9 0.025 250);
 
-  /* Fonts */
-  --font-display: "Nunito", ui-rounded, system-ui, sans-serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  /* Fonts — Bricolage Grotesque gives the brand its voice (quirky ink traps,
+     condensed display cut at large sizes via optical sizing); Onest keeps body
+     copy warm and readable. Both carry `tnum` so tabular-nums timers don't jiggle. */
+  --font-display: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "Onest", system-ui, sans-serif;
 
   /* Radius */
   --radius-card: 1rem;
