@@ -2,6 +2,31 @@
 
 Solo-dev safety system. Every deployment follows this file. Every deploy maps to a git commit — rollback is always "redeploy the previous tag".
 
+## Production topology (Phase 8.2)
+
+```
+Vercel (frontend SPA)  ──HTTPS──▶  Render (FastAPI, free plan)  ──▶  Neon (Postgres)
+                                        │
+                                        └──▶  Nimiq RPC node (tx verification, real mode only)
+settlement sidecar (runs on the dev PC for now) ──▶ Render API
+```
+
+- **Neon** — free Postgres. Copy the **pooled** connection string, append `?sslmode=require`.
+- **Render** — blueprint in `render.yaml` (auto-deploys `main` after every push; CI gates the push, Render doesn't wait for CI — only push green commits).
+- **Vercel** — frontend, root directory `frontend/`, framework Vite, `vercel.json` handles SPA rewrites.
+- **Backend origin must be in CORS:** `CORS_ORIGINS` env on Render = the Vercel URL(s), comma-separated. The backend blocks all other browser origins.
+
+## First deploy runbook (execute top to bottom)
+
+1. **Neon:** create project `lokkin` (region matches Render) → copy pooled `DATABASE_URL`.
+2. **Render:** New → Blueprint → select the repo → it reads `render.yaml` → set `DATABASE_URL` (Neon) and `CORS_ORIGINS` (placeholder until Vercel URL exists) → create.
+3. **Verify API:** `GET https://lokkin-api.onrender.com/health` → 200 (first boot can take ~1 min on the free plan; `init_db()` creates all tables — `sql/001_initial_schema.sql` is the reference schema, not a required migration).
+4. **Vercel:** import repo → root directory `frontend/` → env `VITE_API_URL=https://lokkin-api.onrender.com`, `VITE_USE_MOCK=false` → deploy → note the production URL.
+5. **Render:** update `CORS_ORIGINS` with the Vercel URL → service redeploys.
+6. **Tag:** `git tag vX.Y.Z && git push origin vX.Y.Z` (matches the commit that's deployed).
+7. **Smoke test** (section below) + seed the first quiz (8.5).
+8. Point the Nimiq mini app / launch links at the Vercel URL.
+
 ## CI runner (self-hosted)
 
 - **Where:** `C:\Users\hp\actions-runner`, registered to `er4l1m4d/lokkin` as `lokkin-pc` (labels: `self-hosted, lokkin-pc, Windows, X64`)
@@ -42,22 +67,24 @@ build feature → local checks → push → CI (lint/typecheck/test/build)
 
 - [ ] `npm run lint` passes (frontend)
 - [ ] `npm run build` passes (= `tsc -b` typecheck + vite build)
-- [ ] Critical-flow tests pass
+- [ ] `npm run test` + `python -m pytest backend/tests -q` pass
 - [ ] No debug code / console.log / dev-server.log accidentally left in
 - [ ] DB changes reviewed (schema/migration checked against `sql/`)
+- [ ] `CORS_ORIGINS` on Render includes the current Vercel URL (frontend → API calls fail without it)
 
 ## Deploy
 
-- [ ] Deployment succeeds from `main` (Vercel/Render, auto on green CI)
+- [ ] Deployment succeeds from `main` (Vercel + Render, auto on push)
 - [ ] Tag the release: ` vX.Y.Z ` + note the commit SHA
 
 ## After deploy — production smoke test
 
-- [ ] `GET /api/health` → 200, DB connected, app responding
-- [ ] Homepage loads
+- [ ] `GET https://lokkin-api.onrender.com/health` → 200, DB connected, app responding
+- [ ] Vercel homepage loads (SPA routes deep-linkable, e.g. `/quiz/x` reloads fine)
 - [ ] Session works (display name / wallet link)
 - [ ] Core Lokkin flow works (create → join → play → results)
-- [ ] Data write + read round-trips
+- [ ] Data write + read round-trips (create a quiz, reload, still there)
+- [ ] No CORS errors in the browser console
 - [ ] No errors in logs (Render/Vercel dashboards)
 
 ## If anything fails

@@ -4,6 +4,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -44,6 +45,18 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Lokkin Core API", version="0.3.0", lifespan=lifespan)
+
+# CORS — the Vercel frontend is a different origin from this API.
+# CORS_ORIGINS is a comma-separated allowlist (e.g. the Vercel URL + Nimiq origins).
+_raw_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173")
+allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Content-Type", "x-settlement-token"],
+)
 
 
 def chain_for(request: Request):
