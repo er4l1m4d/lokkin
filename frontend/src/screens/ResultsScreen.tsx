@@ -1,9 +1,10 @@
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { api } from '@/api'
+import { api, ApiError } from '@/api'
 import type { Quiz, QuizResults, ResultRow, QuizStatus } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
+import { ErrorState, StaleBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { PodiumSlot } from '@/components/PodiumSlot'
 import { StatusPill } from '@/components/StatusPill'
@@ -34,7 +35,7 @@ export function ResultsScreen() {
   const navigate = useNavigate()
   const { user } = useSession()
 
-  const { data, error } = usePolling<ResultsData>(
+  const { data, error, refresh } = usePolling<ResultsData>(
     async () => {
       if (!quizId) throw new Error('Missing quiz id')
       const quiz = await api.getQuiz(quizId)
@@ -45,18 +46,33 @@ export function ResultsScreen() {
   )
 
   if (error && !data) {
+    const notFound = error instanceof ApiError && error.status === 404
     return (
       <AppShell>
-        <EmptyState
-          icon={<Icon name="alert" size={28} />}
-          title="Quiz not found"
-          description="It may have been removed."
-          action={
-            <Link to="/home">
-              <Button size="sm">Back to Home</Button>
-            </Link>
-          }
-        />
+        {notFound ? (
+          <EmptyState
+            icon={<Icon name="alert" size={28} />}
+            title="Quiz not found"
+            description="It may have been removed."
+            action={
+              <Link to="/home">
+                <Button size="sm">Back to Home</Button>
+              </Link>
+            }
+          />
+        ) : (
+          <ErrorState
+            title="Results didn't load"
+            description="The quiz exists — this page just couldn't reach it."
+            hint="Check your connection"
+            onRetry={() => void refresh()}
+            action={
+              <Link to="/home">
+                <Button variant="ghost" size="sm">Back to Home</Button>
+              </Link>
+            }
+          />
+        )}
       </AppShell>
     )
   }
@@ -82,6 +98,8 @@ export function ResultsScreen() {
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
+        {error && data && <StaleBanner />}
+
         <header className="flex items-start justify-between gap-3">
           <div>
             <h1 className="font-display text-xl font-black text-ink">{quiz.title}</h1>
@@ -110,14 +128,16 @@ export function ResultsScreen() {
         ) : (
           <>
             {myRow && (
-                <section
+              <section
                 className={`rounded-card p-5 text-center shadow-soft ${
                   myRow.payoutKind === 'winner' ? 'bg-primary-faint' : 'bg-surface'
                 }`}
                 aria-label="Your result"
               >
                 <p className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-                  You finished {ordinal(myRow.rank)}
+                  {myRow.rank >= 98
+                    ? "You didn't finish"
+                    : `You finished ${ordinal(myRow.rank)}`}
                 </p>
                 <p className="mt-1 font-display text-3xl font-black text-ink">
                   {myRow.correctAnswers}/{myRow.totalQuestions}
@@ -144,23 +164,23 @@ export function ResultsScreen() {
             )}
 
             <section className="rounded-card bg-surface p-5 shadow-soft">
-              <div className="flex items-center justify-between">
-                <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
-                  The podium
-                </h2>
-                <span className="rounded-pill bg-primary-soft px-3 py-1 font-display text-xs font-extrabold text-primary-dark">
-                  {results.prizePool.toFixed(2)} NIM pool
-                </span>
-              </div>
-              <div className="mt-4 flex items-end gap-2">
-                <PodiumSlot place={2} row={podium[1] ?? null} />
-                <PodiumSlot place={1} row={podium[0] ?? null} />
-                <PodiumSlot place={3} row={podium[2] ?? null} />
-              </div>
-              <p className="mt-3 text-center text-[11px] text-ink-muted">
-                Pool splits 50 / 30 / 10 — ties split their rank's share
-              </p>
-            </section>
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
+              The podium
+            </h2>
+            <span className="rounded-pill bg-primary-soft px-3 py-1 font-display text-xs font-extrabold text-primary-dark">
+              {results.prizePool.toFixed(2)} NIM pot
+            </span>
+          </div>
+          <div className="mt-4 flex items-end gap-2">
+            <PodiumSlot place={2} row={podium[1] ?? null} />
+            <PodiumSlot place={1} row={podium[0] ?? null} />
+            <PodiumSlot place={3} row={podium[2] ?? null} />
+          </div>
+          <p className="mt-3 text-center text-[11px] text-ink-muted">
+            Top 3 split the pot 50 / 30 / 10 — ties share a rank's cut
+          </p>
+        </section>
 
             <section className="rounded-card bg-surface p-5 shadow-soft">
               <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
@@ -178,7 +198,7 @@ export function ResultsScreen() {
                       }`}
                     >
                       <span className="w-8 font-display text-sm font-black text-ink-muted">
-                        {row.rank <= 3 ? <Icon name="trophy" size={18} /> : `#${row.rank}`}
+                        {row.rank <= 3 ? <Icon name="trophy" size={18} /> : row.rank >= 98 ? '—' : `#${row.rank}`}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-display text-sm font-bold text-ink">
@@ -187,7 +207,7 @@ export function ResultsScreen() {
                         </span>
                         <span className="text-xs text-ink-soft">
                           {row.correctAnswers}/{row.totalQuestions} correct
-                          {tied && <span className="ml-1.5 text-amber">· tied</span>}
+                          {tied && <span className="ml-1.5 font-bold text-amber-dark">· tied</span>}
                         </span>
                       </span>
                       <span className="text-right">

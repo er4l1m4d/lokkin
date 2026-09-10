@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '@/api'
+import { friendlyError } from '@/api/errors'
 import type { OptionKey, PlayerQuestion } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { ErrorBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { OptionButton } from '@/components/OptionButton'
 import { TimerPill } from '@/components/TimerPill'
@@ -43,6 +45,7 @@ export function QuizPlayScreen() {
   const [reveal, setReveal] = useState<{ picked: OptionKey; correct: boolean } | null>(null)
   const [answers, setAnswers] = useState<Record<string, { picked: OptionKey; correct: boolean }>>({})
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const [finished, setFinished] = useState(false)
   const submitLock = useRef(false)
 
@@ -107,6 +110,7 @@ export function QuizPlayScreen() {
       submitLock.current = true
       setSubmitting(true)
       setSelected(key)
+      setSubmitError(null)
       try {
         const res = await api.submitAnswer(quizId!, {
           participantId: session.participantId,
@@ -115,9 +119,10 @@ export function QuizPlayScreen() {
         })
         setReveal({ picked: key, correct: res.correct })
         setAnswers((prev) => ({ ...prev, [question.id]: { picked: key, correct: res.correct } }))
-      } catch {
-        setReveal({ picked: key, correct: false })
-        setAnswers((prev) => ({ ...prev, [question.id]: { picked: key, correct: false } }))
+      } catch (err) {
+        // Never fake a network failure as a wrong answer — the pick was not
+        // recorded, so let the player retry.
+        setSubmitError(friendlyError(err, "Couldn't save that answer — try again"))
       } finally {
         setSubmitting(false)
         submitLock.current = false
@@ -135,6 +140,7 @@ export function QuizPlayScreen() {
       setIndex((i) => i + 1)
       setSelected(null)
       setReveal(null)
+      setSubmitError(null)
     }
   }, [session, index, quizId])
 
@@ -159,9 +165,17 @@ export function QuizPlayScreen() {
           <Icon name="alert" className="text-danger" size={30} />
           <h1 className="mt-2 font-display text-lg font-extrabold text-ink">Can't enter the quiz</h1>
           <p className="mt-1 text-sm text-ink-soft">{bootError}</p>
-          <Button className="mt-4" size="sm" onClick={() => navigate(quizId ? `/quiz/${quizId}` : '/home')}>
-            Back to quiz page
-          </Button>
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <Button size="sm" onClick={() => {
+              setBootError(null)
+              setBooting(true)
+            }}>
+              Try again
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate(quizId ? `/quiz/${quizId}` : '/home')}>
+              Back to the quiz page
+            </Button>
+          </div>
         </div>
       </AppShell>
     )
@@ -172,7 +186,7 @@ export function QuizPlayScreen() {
       <AppShell hideNav>
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
           <div className="h-12 w-12 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
-          <p className="text-sm font-semibold text-ink-soft">Locking in the room…</p>
+          <p className="text-sm font-semibold text-ink-soft">Getting you into the room…</p>
         </div>
       </AppShell>
     )
@@ -200,10 +214,11 @@ export function QuizPlayScreen() {
     <AppShell hideNav>
       <div className="flex flex-col gap-5">
         <header className="flex items-center justify-between">
-          <p className="font-display text-sm font-extrabold text-ink-muted">
+          {/* screen heading — visually a label, semantically the h1 */}
+          <h1 className="font-display text-sm font-extrabold text-ink-muted">
             Question {index + 1}
-            <span className="text-ink-muted/60"> / {total}</span>
-          </p>
+            <span className="text-ink-muted"> / {total}</span>
+          </h1>
           {deadline && <TimerPill until={new Date(deadline)} onExpire={onExpire} />}
         </header>
 
@@ -218,7 +233,7 @@ export function QuizPlayScreen() {
           <h2 className="font-display text-lg leading-snug font-extrabold text-ink">
             {question.questionText}
           </h2>
-          <div className="mt-5 flex flex-col gap-2.5">
+          <div className="mt-5 flex flex-col gap-2.5" aria-live="polite">
             {question.options.map((opt) => {
               let optReveal: 'correct' | 'wrong' | 'missed' | undefined
               if (reveal) {
@@ -244,6 +259,8 @@ export function QuizPlayScreen() {
             })}
           </div>
         </section>
+
+        {submitError && <ErrorBanner>{submitError}</ErrorBanner>}
 
         {!reveal ? (
           <Button

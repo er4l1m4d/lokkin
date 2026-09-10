@@ -23,7 +23,7 @@ export function AppShell({ children, hideNav = false }: { children: ReactNode; h
         ref={mainRef}
         id="main-content"
         tabIndex={-1}
-        className={`mx-auto w-full max-w-2xl flex-1 px-5 pt-6 ${hideNav ? 'pb-8' : 'pb-28'}`}
+        className={`mx-auto w-full max-w-2xl flex-1 animate-screen-enter px-5 pt-6 ${hideNav ? 'pb-8' : 'pb-28'}`}
         style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
       >
         {children}

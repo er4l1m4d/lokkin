@@ -50,14 +50,13 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 backdrop-blur-sm sm:items-center"
       onClick={onClose}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
-        tabIndex={-1}
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-md rounded-card bg-surface p-6 shadow-lift"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? 'modal-title' : undefined}
+        className="w-full max-w-md animate-pop-in rounded-card bg-surface p-6 shadow-lift"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">

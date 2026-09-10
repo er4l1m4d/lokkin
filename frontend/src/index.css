@@ -16,8 +16,10 @@
 
   /* Accent — coral/amber for timers and warnings */
   --color-accent: oklch(0.68 0.16 35);
+  --color-accent-dark: oklch(0.55 0.15 35);
   --color-accent-soft: oklch(0.94 0.055 35);
   --color-amber: oklch(0.72 0.15 75);
+  --color-amber-dark: oklch(0.52 0.11 75);
   --color-amber-soft: oklch(0.95 0.06 85);
 
   /* Feedback */
@@ -46,6 +48,32 @@
   --shadow-soft: 0 4px 14px oklch(0.35 0.12 260 / 0.08);
   --shadow-lift: 0 8px 22px oklch(0.35 0.14 260 / 0.13);
   --shadow-tap: 0 2px 7px oklch(0.35 0.12 260 / 0.1);
+
+  /* Motion — subtle enter transitions (killed by prefers-reduced-motion) */
+  --animate-screen-enter: screen-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pop-in: pop-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+
+  @keyframes screen-enter {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 
 * {

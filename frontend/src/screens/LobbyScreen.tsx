@@ -4,6 +4,7 @@ import { api } from '@/api'
 import type { Participant, Quiz } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { ErrorState, StaleBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { MeterBar } from '@/components/MeterBar'
 import { ParticipantRow } from '@/components/ParticipantRow'
@@ -20,11 +21,11 @@ export function LobbyScreen() {
   const navigate = useNavigate()
   const { user } = useSession()
 
-  const { data } = usePolling<LobbyData>(
+  const { data, error, refresh } = usePolling<LobbyData>(
     async () => {
       if (!quizId) throw new Error('no id')
       const quiz = await api.getQuiz(quizId)
-      const participants = await api.getParticipants(quizId).catch(() => [] as Participant[])
+      const participants = await api.getParticipants(quizId)
       return { quiz, participants }
     },
     { intervalMs: 4000 },
@@ -45,9 +46,21 @@ export function LobbyScreen() {
   const isCreator = quiz?.creatorId === user?.id
 
   if (!quiz) {
+    if (error) {
+      return (
+        <AppShell>
+          <ErrorState
+            title="The lobby didn't load"
+            description="The room is out there — this page just couldn't reach it."
+            hint="Check your connection"
+            onRetry={() => void refresh()}
+          />
+        </AppShell>
+      )
+    }
     return (
       <AppShell>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3" role="status" aria-label="Loading lobby">
           <div className="h-40 animate-pulse rounded-card bg-surface-muted" />
           <div className="h-64 animate-pulse rounded-card bg-surface-muted" />
         </div>
@@ -71,6 +84,8 @@ export function LobbyScreen() {
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
+        {error && data && <StaleBanner />}
+
         <header className="text-center">
           <h1 className="font-display text-2xl font-black text-ink">{quiz.title}</h1>
           <p className="mt-1 text-sm text-ink-soft">
@@ -79,7 +94,7 @@ export function LobbyScreen() {
           </p>
         </header>
 
-        <section className="flex flex-col items-center gap-3 rounded-card bg-surface p-6 shadow-soft">
+        <section aria-live="polite" className="flex flex-col items-center gap-3 rounded-card bg-surface p-6 shadow-soft">
           {roomClosed ? (
             <>
               <Icon name="podium" className="text-primary-dark" size={34} />
@@ -115,7 +130,7 @@ export function LobbyScreen() {
           />
           {readyToStart ? (
             <p className="mt-3 rounded-card bg-success-soft px-4 py-2.5 text-xs font-bold text-success">
-              ✓ Quorum reached — this quiz is happening
+              All set — enough players are in. This quiz is happening.
             </p>
           ) : (
             <p className="mt-3 rounded-card bg-amber-soft px-4 py-2.5 text-xs leading-relaxed text-ink">
@@ -130,15 +145,21 @@ export function LobbyScreen() {
           <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
             In the room ({confirmed})
           </h2>
-          <ul className="mt-3 flex flex-col gap-2">
-            {participants.map((p) => (
-              <ParticipantRow
-                key={p.id}
-                participant={p}
-                isCreator={p.displayName === user?.displayName && isCreator}
-              />
-            ))}
-          </ul>
+          {participants.length === 0 ? (
+            <p className="mt-3 text-sm text-ink-soft">
+              Nobody has committed yet — you're early. Share the quiz to fill the room.
+            </p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-2">
+              {participants.map((p) => (
+                <ParticipantRow
+                  key={p.id}
+                  participant={p}
+                  isCreator={p.displayName === user?.displayName && isCreator}
+                />
+              ))}
+            </ul>
+          )}
         </section>
 
         {isCreator && (
@@ -150,7 +171,7 @@ export function LobbyScreen() {
 
         {!isLive && !roomClosed && (
           <p className="text-center text-[11px] leading-relaxed text-ink-muted">
-            Keep this page open — we'll ping you the moment the room goes live.
+            Keep this page open — the room opens automatically when the countdown ends.
           </p>
         )}
       </div>

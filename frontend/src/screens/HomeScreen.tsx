@@ -5,8 +5,10 @@ import type { Quiz } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
+import { ErrorState, StaleBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { QuizCard } from '@/components/QuizCard'
+import { SkeletonList } from '@/components/Skeleton'
 import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
 
@@ -19,6 +21,14 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
   { id: 'VALIDATING', label: 'Validating' },
   { id: 'SETTLED', label: 'Settled' },
 ]
+
+const EMPTY_TITLES: Record<Filter, string> = {
+  ALL: 'No quizzes yet',
+  OPEN: 'Nothing open to join right now',
+  LIVE: 'No live quizzes right now',
+  VALIDATING: 'Nothing in validation right now',
+  SETTLED: 'No settled quizzes yet',
+}
 
 /** Sort: joinable first (OPEN, then LIVE), then by soonest start, rest after */
 function sortQuizzes(quizzes: Quiz[]): Quiz[] {
@@ -41,7 +51,7 @@ export function HomeScreen() {
   const { user, mode } = useSession()
   const [filter, setFilter] = useState<Filter>('ALL')
 
-  const { data: quizzes, error } = usePolling<Quiz[]>(() => api.listQuizzes(), {
+  const { data: quizzes, error, refresh } = usePolling<Quiz[]>(() => api.listQuizzes(), {
     intervalMs: 6000,
   })
 
@@ -93,20 +103,19 @@ export function HomeScreen() {
 
         <div
           className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5"
-          role="tablist"
+          role="group"
           aria-label="Filter quizzes by status"
         >
           {FILTERS.map((f) => (
             <button
               key={f.id}
               type="button"
-              role="tab"
-              aria-selected={filter === f.id}
+              aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
               className={`min-h-11 shrink-0 cursor-pointer rounded-pill px-4 py-2 text-xs font-bold transition-colors ${
                 filter === f.id
                   ? 'bg-ink text-white'
-                  : 'bg-surface text-ink-soft shadow-tap'
+                  : 'bg-surface text-ink-soft shadow-tap hover:bg-canvas-deep'
               }`}
             >
               {f.label}
@@ -115,22 +124,19 @@ export function HomeScreen() {
         </div>
 
         {error && !quizzes ? (
-          <EmptyState
-            icon={<Icon name="refresh" size={26} />}
+          <ErrorState
             title="Can't reach the quizzes"
-            description="Check your connection — we keep trying."
+            description="The list didn't load — your quizzes are safe."
+            hint="Check your connection"
+            onRetry={() => void refresh()}
           />
         ) : filtered.length === 0 ? (
           quizzes === null ? (
-            <div className="flex flex-col gap-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-32 animate-pulse rounded-card bg-surface-muted" />
-              ))}
-            </div>
+            <SkeletonList count={3} className="h-32" />
           ) : (
             <EmptyState
               icon={<Icon name="podium" size={26} />}
-              title={filter === 'ALL' ? 'No quizzes yet' : `No ${filter.toLowerCase()} quizzes`}
+              title={EMPTY_TITLES[filter]}
               description="Be the first — turn your study material into a challenge."
               action={
                 <Link to="/create">
@@ -140,11 +146,14 @@ export function HomeScreen() {
             />
           )
         ) : (
-          <div className="flex flex-col gap-3">
-            {filtered.map((quiz) => (
-              <QuizCard key={quiz.id} quiz={quiz} />
-            ))}
-          </div>
+          <>
+            {error && quizzes && <StaleBanner />}
+            <div className="flex flex-col gap-3">
+              {filtered.map((quiz) => (
+                <QuizCard key={quiz.id} quiz={quiz} />
+              ))}
+            </div>
+          </>
         )}
         <div className="pointer-events-none sticky bottom-24 z-30 flex justify-end">
           <Link

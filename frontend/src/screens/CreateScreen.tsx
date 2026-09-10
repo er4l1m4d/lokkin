@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '@/api'
+import { friendlyError } from '@/api/errors'
 import type { OptionKey } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { ErrorBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { StepDots } from '@/components/StepDots'
 import { useSession } from '@/context/useSession'
@@ -49,7 +51,7 @@ export function CreateScreen() {
     setError(null)
     const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
     if (isPdf) {
-      setError('PDF upload arrives with the AI backend. For now, paste the text below.')
+      setError('PDF upload is coming soon — for now, paste the text below.')
       return
     }
     const text = await file.text()
@@ -128,7 +130,7 @@ export function CreateScreen() {
       await api.openQuiz(quizId)
       navigate(`/quiz/${quizId}`)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Publishing failed — try again')
+      setError(friendlyError(err, 'Publishing failed — try again'))
       setPublishing(false)
     }
   }
@@ -177,14 +179,7 @@ export function CreateScreen() {
           />
         )}
 
-        {error && (
-          <p
-            className="rounded-card bg-danger-soft px-4 py-3 text-sm font-semibold text-danger"
-            role="alert"
-          >
-            {error}
-          </p>
-        )}
+        {error && <ErrorBanner>{error}</ErrorBanner>}
 
         {step === 'upload' && (
           <section className="flex flex-col gap-4">
@@ -240,7 +235,7 @@ export function CreateScreen() {
                   {fileName ?? 'Upload notes or paste below'}
                 </span>
                 <span className="mt-0.5 block text-xs text-ink-muted">
-                  .txt / .md for now · PDF support lands with the AI backend
+                  .txt or .md · PDF coming soon
                 </span>
               </button>
               <input
@@ -265,7 +260,7 @@ export function CreateScreen() {
                 aria-label="Study material"
               />
               <p className="mt-1 text-right text-xs text-ink-muted">
-                {material.trim().length} chars
+                {material.trim().length} characters
               </p>
             </div>
 

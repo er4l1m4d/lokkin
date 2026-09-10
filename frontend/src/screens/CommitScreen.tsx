@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '@/api'
+import { friendlyError } from '@/api/errors'
 import type { AppConfig, JoinResult } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { ErrorBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { MemoCard } from '@/components/MemoCard'
 import { useSession } from '@/context/useSession'
@@ -29,9 +31,17 @@ export function CommitScreen() {
   useEffect(() => {
     if (!quizId) return
     let cancelled = false
-    void api.getConfig().then((c) => {
-      if (!cancelled) setConfig(c)
-    })
+    // Config failure must never silently downgrade a real-money user to
+    // "play money" copy — default to the safe (real) assumption until known.
+    void api
+      .getConfig()
+      .then((c) => {
+        if (!cancelled) setConfig(c)
+      })
+      .catch(() => {
+        if (!cancelled)
+          setConfig({ paymentsMode: 'real', escrowAddress: null, minParticipantsDefault: 3 })
+      })
     void api.getQuiz(quizId).then((quiz) => {
       if (!cancelled) {
         setEntry(quiz.entryAmount)
@@ -63,7 +73,7 @@ export function CommitScreen() {
         setStage('send')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Commitment failed — try again')
+      setError(friendlyError(err, 'Commitment failed — try again'))
       setStage('summary')
     }
   }, [quizId, user])
@@ -82,7 +92,7 @@ export function CommitScreen() {
         setStage('send')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Verification failed — try again')
+      setError(friendlyError(err, "Couldn't verify that transaction — try again"))
       setStage('send')
     }
   }, [quizId, join])
@@ -91,11 +101,15 @@ export function CommitScreen() {
     if (!join || !join.escrowAddress || !entry) return
     setDetail(null)
     setError(null)
-    const res = await sendCommitment(join.escrowAddress, entry, join.memoCode ?? '')
-    if ('txRef' in res) {
-      await submitTxRef(res.txRef)
-    } else {
-      setError(res.error)
+    try {
+      const res = await sendCommitment(join.escrowAddress, entry, join.memoCode ?? '')
+      if ('txRef' in res) {
+        await submitTxRef(res.txRef)
+      } else {
+        setError(res.error)
+      }
+    } catch (err) {
+      setError(friendlyError(err, "Couldn't open the wallet payment — try again"))
     }
   }, [join, entry, submitTxRef])
 
@@ -132,11 +146,7 @@ export function CommitScreen() {
           <p className="mt-1 text-sm text-ink-soft">{title}</p>
         </header>
 
-        {error && (
-          <p className="rounded-card bg-danger-soft px-4 py-3 text-sm font-semibold text-danger" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <ErrorBanner>{error}</ErrorBanner>}
 
         {stage === 'summary' && (
           <>
@@ -182,13 +192,13 @@ export function CommitScreen() {
         )}
 
         {stage === 'confirming' && (
-          <section className="flex min-h-[40vh] flex-col items-center justify-center gap-4 rounded-card bg-surface p-8 shadow-soft">
+          <section className="flex min-h-[40vh] flex-col items-center justify-center gap-4 rounded-card bg-surface p-8 shadow-soft" role="status">
             <div className="h-14 w-14 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
             <p className="font-display text-base font-extrabold text-ink">
               {realMode ? 'Reserving your spot…' : 'Confirming transaction…'}
             </p>
             <p className="text-xs text-ink-muted">
-              {realMode ? 'Generating your commitment code' : 'Mock payments mode — instant confirmation'}
+              {realMode ? 'Generating your commitment code' : 'Demo mode — instantly confirmed'}
             </p>
           </section>
         )}
@@ -203,13 +213,14 @@ export function CommitScreen() {
             <MemoCard code={join.memoCode ?? ''} address={join.escrowAddress ?? ''} />
 
             {stage === 'verifying' ? (
-              <section className="flex flex-col items-center gap-3 rounded-card bg-surface p-8 text-center shadow-soft">
+              <section className="flex flex-col items-center gap-3 rounded-card bg-surface p-8 text-center shadow-soft" role="status">
                 <div className="h-12 w-12 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
                 <p className="font-display text-base font-extrabold text-ink">
                   Verifying on-chain…
                 </p>
                 <p className="text-xs text-ink-muted">
-                  This page keeps checking — you can also come back later.
+                  Usually a few seconds. If it doesn't confirm now, come back later —
+                  your spot is already reserved.
                 </p>
               </section>
             ) : (
@@ -256,7 +267,11 @@ export function CommitScreen() {
 
         {stage === 'confirmed' && (
           <>
-            <section className="flex flex-col items-center gap-2 rounded-card bg-success-soft px-6 py-8 text-center">
+            <section
+              className="flex flex-col items-center gap-2 rounded-card bg-success-soft px-6 py-8 text-center"
+              role="status"
+              aria-live="polite"
+            >
               <span className="flex h-12 w-12 items-center justify-center rounded-pill bg-white/60 text-success" aria-hidden>
                 <Icon name="check" size={28} strokeWidth={2.4} />
               </span>

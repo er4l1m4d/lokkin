@@ -8,9 +8,9 @@ interface PodiumSlotProps {
 }
 
 const MEDALS: Record<1 | 2 | 3, { label: string; block: string; iconClass: string }> = {
-  1: { label: '1st', block: 'bg-amber', iconClass: 'text-amber' },
-  2: { label: '2nd', block: 'bg-primary', iconClass: 'text-primary' },
-  3: { label: '3rd', block: 'bg-accent', iconClass: 'text-accent' },
+  1: { label: '1st', block: 'bg-amber', iconClass: 'text-amber-dark' },
+  2: { label: '2nd', block: 'bg-primary', iconClass: 'text-primary-dark' },
+  3: { label: '3rd', block: 'bg-accent', iconClass: 'text-accent-dark' },
 }
 
 const HEIGHTS: Record<1 | 2 | 3, string> = {

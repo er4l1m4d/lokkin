@@ -1,9 +1,10 @@
 import { Link, useParams } from 'react-router-dom'
-import { api } from '@/api'
+import { api, ApiError } from '@/api'
 import type { ReviewQuestion } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
+import { ErrorState, StaleBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { OptionButton } from '@/components/OptionButton'
 import { useSession } from '@/context/useSession'
@@ -13,29 +14,44 @@ export function ReviewScreen() {
   const { quizId } = useParams<{ quizId: string }>()
   const { user } = useSession()
 
-  const { data: review, error } = usePolling<ReviewQuestion[]>(
+  const { data: review, error, refresh } = usePolling<ReviewQuestion[]>(
     () => (quizId && user ? api.getReview(quizId, user.id) : Promise.reject(new Error('no session'))),
     { intervalMs: 8000 },
   )
 
   if (error && !review) {
-    const locked = error instanceof Error && error.message.includes('unlocks')
+    // 409 = answers sealed until validation ends; anything else = transient
+    const locked = error instanceof ApiError && error.status === 409
     return (
       <AppShell>
-        <EmptyState
-          icon={<Icon name={locked ? 'clock' : 'alert'} size={28} />}
-          title={locked ? 'Review unlocks when the quiz ends' : 'Nothing to review'}
-          description={
-            locked
-              ? 'Answers stay sealed until everyone finishes and results are validated.'
-              : 'This quiz may not exist, or you did not take part.'
-          }
-          action={
-            <Link to={quizId ? `/quiz/${quizId}` : '/home'}>
-              <Button size="sm">Back to the quiz</Button>
-            </Link>
-          }
-        />
+        {locked ? (
+          <EmptyState
+            icon={<Icon name="clock" size={28} />}
+            title="Review unlocks when the quiz ends"
+            description="Answers stay sealed until everyone finishes and results are validated."
+            action={
+              <Link to={quizId ? `/quiz/${quizId}` : '/home'}>
+                <Button size="sm">Back to the quiz</Button>
+              </Link>
+            }
+          />
+        ) : (
+          <ErrorState
+            title="Review didn't load"
+            description={
+              user
+                ? "Either you didn't take part in this quiz, or the page just couldn't reach it."
+                : 'Your session expired — sign in again to see your review.'
+            }
+            hint="Check your connection"
+            onRetry={() => void refresh()}
+            action={
+              <Link to={quizId ? `/quiz/${quizId}/results` : '/home'}>
+                <Button variant="ghost" size="sm">Back to results</Button>
+              </Link>
+            }
+          />
+        )}
       </AppShell>
     )
   }
@@ -59,6 +75,8 @@ export function ReviewScreen() {
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
+        {error && review && <StaleBanner />}
+
         <header className="flex items-start justify-between gap-3">
           <div>
             <h1 className="font-display text-xl font-black text-ink">Review</h1>
@@ -68,14 +86,14 @@ export function ReviewScreen() {
           </div>
           <Link
             to={quizId ? `/quiz/${quizId}/results` : '/home'}
-            className="text-sm font-semibold text-primary-dark"
+            className="inline-flex min-h-11 items-center gap-1 px-1 text-sm font-semibold text-primary-dark"
           >
-            Results →
+            Results <Icon name="arrow-right" size={15} />
           </Link>
         </header>
 
         {answered.length === 0 && (
-            <p className="rounded-card bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
+          <p className="rounded-card bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
             You didn't answer any questions in this quiz — here's what was asked.
           </p>
         )}

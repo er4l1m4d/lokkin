@@ -73,7 +73,7 @@ export function WelcomeScreen() {
         <section aria-labelledby="mode-heading">
           <div className="mb-3 flex items-end justify-between">
             <h2 id="mode-heading" className="text-lg text-ink">Choose your lane</h2>
-            <span className="text-xs font-medium text-ink-muted">Step 1 of 2</span>
+            <span className="text-xs font-medium text-ink-muted">Then pick a name</span>
           </div>
           <div className="flex flex-col gap-2">
             {MODES.map((m) => (
@@ -109,7 +109,7 @@ export function WelcomeScreen() {
             <h2 id="name-heading" className="text-lg text-ink">What should we call you?</h2>
           </div>
           <label htmlFor="displayName" className="text-sm font-medium text-ink-soft">
-            This is how you'll appear on the leaderboard.
+            Display name — this is how you'll appear on the leaderboard
           </label>
           <input
             id="displayName"

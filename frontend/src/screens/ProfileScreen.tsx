@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api } from '@/api'
+import { friendlyError } from '@/api/errors'
 import type { HistoryEntry, QuizMode } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
 import { EmptyState } from '@/components/EmptyState'
+import { ErrorBanner, StaleBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
+import { SkeletonList } from '@/components/Skeleton'
 import { StatusPill } from '@/components/StatusPill'
 import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
@@ -24,7 +27,7 @@ export function ProfileScreen() {
   const [linking, setLinking] = useState(false)
   const [linkError, setLinkError] = useState<string | null>(null)
 
-  const { data: history } = usePolling<HistoryEntry[]>(
+  const { data: history, error: historyError } = usePolling<HistoryEntry[]>(
     () => (user ? api.getMyHistory(user.id) : Promise.resolve([])),
     { intervalMs: 10_000, disabled: !user },
   )
@@ -47,11 +50,13 @@ export function ProfileScreen() {
         setLinkError('No account found in your wallet. Open Lokkin inside Nimiq Pay to link one.')
         return
       }
-      const deviceId = await getDeviceIdentifier('Quiz anti-cheat: one identity per device')
+      const deviceId = await getDeviceIdentifier(
+        "Confirm it's really you — one Lokkin identity per device",
+      )
       const res = await api.linkWallet(user.id, accounts[0], deviceId ?? undefined)
       setWallet(res.walletAddress)
     } catch (err) {
-      setLinkError(err instanceof Error ? err.message : 'Could not link the wallet.')
+      setLinkError(friendlyError(err, 'Could not link the wallet.'))
     } finally {
       setLinking(false)
     }
@@ -83,11 +88,15 @@ export function ProfileScreen() {
         </header>
 
         <section className="grid grid-cols-3 gap-3">
-          <StatCard label="Quizzes" value={`${stats.played}`} />
-          <StatCard label="Podiums" value={`${stats.podiums}`} />
+          <StatCard label="Quizzes" value={history === null ? '—' : `${stats.played}`} />
+          <StatCard label="Podiums" value={history === null ? '—' : `${stats.podiums}`} />
           <StatCard
             label="Net NIM"
-            value={`${stats.net >= 0 ? '+' : ''}${stats.net.toFixed(2)}`}
+            value={
+              history === null
+                ? '—'
+                : `${stats.net >= 0 ? '+' : ''}${stats.net.toFixed(2)}`
+            }
             tone={stats.net > 0 ? 'positive' : stats.net < 0 ? 'negative' : 'neutral'}
           />
         </section>
@@ -134,7 +143,7 @@ export function ProfileScreen() {
                 type="button"
                 onClick={() => setMode(m.id)}
                 aria-pressed={mode === m.id}
-                className={`flex-1 rounded-pill px-3 py-2.5 text-xs font-bold transition-colors ${
+                className={`min-h-11 flex-1 rounded-pill px-3 py-2.5 text-xs font-bold transition-colors ${
                   mode === m.id ? 'bg-ink text-white' : 'bg-canvas-deep text-ink-soft'
                 }`}
               >
@@ -155,7 +164,11 @@ export function ProfileScreen() {
           <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
             History
           </h2>
-          {(history ?? []).length === 0 ? (
+          {historyError && !history ? (
+            <ErrorBanner>Couldn't load your history — it'll retry automatically.</ErrorBanner>
+          ) : history === null ? (
+            <SkeletonList count={2} className="h-20" />
+          ) : history.length === 0 ? (
             <EmptyState
               icon={<Icon name="podium" size={28} />}
               title="No quizzes yet"
@@ -167,8 +180,10 @@ export function ProfileScreen() {
               }
             />
           ) : (
-            <ul className="flex flex-col gap-2.5">
-              {(history ?? []).map((entry) => (
+            <>
+              {historyError && <StaleBanner />}
+              <ul className="flex flex-col gap-2.5">
+                {history.map((entry) => (
                 <li key={entry.quizId}>
                   <Link
                     to={`/quiz/${entry.quizId}/results`}
@@ -186,7 +201,13 @@ export function ProfileScreen() {
                       </span>
                       {entry.rank !== null && (
                         <span>
-                          {entry.rank <= 3 ? <Icon name="trophy" className="mr-1 inline-block" size={14} /> : `#${entry.rank}`} place
+                          {entry.rank <= 3 ? (
+                            <Icon name="trophy" className="mr-1 inline-block" size={14} />
+                          ) : entry.rank >= 98 ? (
+                            '—'
+                          ) : (
+                            `#${entry.rank} place`
+                          )}
                         </span>
                       )}
                       <span
@@ -204,8 +225,9 @@ export function ProfileScreen() {
                     </div>
                   </Link>
                 </li>
-              ))}
-            </ul>
+                ))}
+              </ul>
+            </>
           )}
         </section>
 

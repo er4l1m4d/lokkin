@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { api } from '@/api'
+import { api, ApiError } from '@/api'
 import type { Participant, Quiz } from '@/api/types'
 import { AppShell } from '@/components/AppShell'
 import { Button } from '@/components/Button'
+import { ErrorState, StaleBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { MeterBar } from '@/components/MeterBar'
 import { StatusPill } from '@/components/StatusPill'
@@ -21,11 +22,11 @@ export function QuizDetailScreen() {
   const navigate = useNavigate()
   const { user } = useSession()
 
-  const { data, error } = usePolling<QuizDetailData>(
+  const { data, error, refresh } = usePolling<QuizDetailData>(
     async () => {
       if (!quizId) throw new Error('Missing quiz id')
       const quiz = await api.getQuiz(quizId)
-      const participants = await api.getParticipants(quizId).catch(() => [] as Participant[])
+      const participants = await api.getParticipants(quizId)
       return { quiz, participants }
     },
     { intervalMs: 6000 },
@@ -40,16 +41,32 @@ export function QuizDetailScreen() {
   )
 
   if (error && !quiz) {
+    const notFound = error instanceof ApiError && error.status === 404
     return (
       <AppShell>
-        <div className="rounded-card bg-surface p-8 text-center shadow-soft">
-          <Icon name="alert" className="text-amber" size={30} />
-          <h1 className="mt-2 font-display text-lg font-extrabold text-ink">Quiz not found</h1>
-          <p className="mt-1 text-sm text-ink-soft">It may have been removed.</p>
-          <Button className="mt-4" size="sm" onClick={() => navigate('/home')}>
-            Back to Home
-          </Button>
-        </div>
+        {notFound ? (
+          <ErrorState
+            title="Quiz not found"
+            description="It may have been removed by its creator."
+            action={
+              <Button size="sm" onClick={() => navigate('/home')}>
+                Back to Home
+              </Button>
+            }
+          />
+        ) : (
+          <ErrorState
+            title="This quiz didn't load"
+            description="It's out there — the page just couldn't reach it."
+            hint="Check your connection"
+            onRetry={() => void refresh()}
+            action={
+              <Button variant="ghost" size="sm" onClick={() => navigate('/home')}>
+                Back to Home
+              </Button>
+            }
+          />
+        )}
       </AppShell>
     )
   }
@@ -57,7 +74,9 @@ export function QuizDetailScreen() {
   if (!quiz) {
     return (
       <AppShell>
-        <div className="h-72 animate-pulse rounded-card bg-surface-muted" />
+        <div role="status" aria-label="Loading quiz">
+          <div className="h-72 animate-pulse rounded-card bg-surface-muted" />
+        </div>
       </AppShell>
     )
   }
@@ -68,6 +87,8 @@ export function QuizDetailScreen() {
   return (
     <AppShell>
       <div className="flex flex-col gap-4">
+        {error && data && <StaleBanner />}
+
         <Link to="/home" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-muted hover:text-primary-dark">
           <Icon name="arrow-left" size={17} /> All quizzes
         </Link>
@@ -117,7 +138,7 @@ export function QuizDetailScreen() {
           <p className="mt-1 font-display text-2xl font-black text-ink">
             {(quiz.entryAmount * Math.max(confirmed, 1)).toLocaleString()} NIM
             <span className="ml-2 text-xs font-semibold text-ink-muted">
-              if {Math.max(confirmed, minRequired)} join
+              if {Math.max(confirmed, minRequired)} players commit
             </span>
           </p>
           <div className="mt-3">
@@ -129,13 +150,13 @@ export function QuizDetailScreen() {
             />
           </div>
           <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
-            Needs {minRequired} to run. Fewer than that and everyone is auto-refunded. Top 3
-            split the pool 50 / 30 / 10; everyone else gets 80% back.
+            Needs {minRequired} players to run. Fewer than that and everyone is auto-refunded.
+            Top 3 split the pot 50 / 30 / 10; everyone else gets 80% back.
           </p>
         </section>
 
         {participants.length > 0 && (
-          <section className="rounded-card bg-white p-5 shadow-soft">
+          <section className="rounded-card bg-surface p-5 shadow-soft">
             <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
               Players ({participants.length})
             </h2>
@@ -155,7 +176,7 @@ export function QuizDetailScreen() {
         {isCreator && (
           <p className="rounded-card bg-amber-soft px-4 py-3 text-xs font-semibold leading-relaxed text-ink">
             You created this quiz — you play blind, same as everyone else. You never see the
-            questions before the room goes live.
+            questions before the room opens.
           </p>
         )}
 
