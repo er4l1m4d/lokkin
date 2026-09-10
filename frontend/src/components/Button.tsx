@@ -11,16 +11,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-primary-dark text-white shadow-lift hover:bg-primary-deep active:bg-primary-deep',
-  secondary: 'border-2 border-line bg-surface text-ink hover:border-primary-soft hover:bg-primary-faint active:bg-primary-soft',
-  danger: 'bg-danger-dark text-white shadow-tap hover:bg-danger',
-  ghost: 'bg-transparent text-primary-dark hover:bg-primary-faint',
+  primary: 'press border-2 border-ink bg-volt text-ink shadow-press hover:bg-volt-deep',
+  secondary: 'press border-2 border-ink bg-surface text-ink shadow-press-sm hover:bg-paper-deep',
+  danger: 'press border-2 border-ink bg-danger text-white shadow-press-sm hover:bg-danger/90',
+  ghost: 'text-ink hover:bg-paper-deep',
 }
 
 const sizes: Record<Size, string> = {
-  sm: 'min-h-11 px-4 py-2 text-sm',
-  md: 'min-h-11 px-6 py-3 text-base',
-  lg: 'min-h-12 w-full px-6 py-3.5 text-lg font-extrabold',
+  sm: 'min-h-10 px-4 py-2 text-sm',
+  md: 'min-h-11 px-5 py-2.5 text-[15px]',
+  lg: 'min-h-13 w-full px-6 py-3.5 text-lg',
 }
 
 export function Button({
@@ -33,7 +33,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-pill font-semibold transition-all duration-200 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 ${variants[variant]} ${sizes[size]} ${block ? 'w-full' : ''} ${className}`}
+      className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-pill font-display font-bold tracking-tight transition-colors duration-150 disabled:pointer-events-none disabled:opacity-40 ${variants[variant]} ${sizes[size]} ${block ? 'w-full' : ''} ${className}`}
       {...rest}
     >
       {children}

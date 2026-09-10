@@ -94,8 +94,8 @@ const podiumRows: ResultRow[] = [
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card bg-surface p-5 shadow-soft">
-      <h2 className="mb-4 text-sm font-bold tracking-wide text-ink-muted uppercase">{title}</h2>
+    <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+      <h2 className="mb-4 font-display text-base font-extrabold tracking-tight text-ink">{title}</h2>
       {children}
     </section>
   )
@@ -107,10 +107,12 @@ export function DevGallery() {
   const [demoUntil] = useState(() => new Date(Date.now() + 90_000))
 
   return (
-      <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-4 px-5 py-8">
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 border-line px-5 py-8 sm:border-x">
       <header className="text-center">
-        <h1 className="text-2xl">Component Gallery</h1>
-        <p className="text-sm text-ink-soft">Dev-only route — every shared component in one place</p>
+        <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
+          Component <span className="highlight">Gallery</span>
+        </h1>
+        <p className="mt-1 text-sm text-ink-soft">Dev-only route — every shared component in one place</p>
       </header>
 
       <Section title="StatusPill">
@@ -217,12 +219,12 @@ export function DevGallery() {
       </Section>
 
       <Section title="MemoCard">
-        <MemoCard code="LK-7F3K" address="NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0" />
+        <MemoCard code="NV-7F3K" address="NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0" />
       </Section>
 
       <Section title="EmptyState">
         <EmptyState
-          icon={<Icon name="podium" size={28} />}
+          icon={<Icon name="podium" size={28} weight="duotone" />}
           title="No quizzes yet"
           description="Be the first — create a quiz from your study material and challenge your group."
           action={<Button size="sm">Create a quiz</Button>}

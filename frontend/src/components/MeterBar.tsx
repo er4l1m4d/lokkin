@@ -17,19 +17,19 @@ export function MeterBar({ value, target, max, label }: MeterBarProps) {
       {label && (
         <div className="mb-1.5 flex items-center justify-between text-xs font-semibold text-ink-soft">
           <span>{label}</span>
-          <span className={reached ? 'text-success' : ''}>
+          <span className={`tabular-nums ${reached ? 'text-success' : ''}`}>
             {value}/{max}
           </span>
         </div>
       )}
-      <div className="relative h-2.5 overflow-visible rounded-pill bg-canvas-deep">
+      <div className="relative h-3 overflow-visible rounded-pill border-2 border-ink bg-surface">
         <div
-          className={`h-full rounded-pill transition-all duration-500 ${reached ? 'bg-success' : 'bg-primary'}`}
+          className={`h-full rounded-pill transition-all duration-500 ${reached ? 'bg-success' : 'bg-volt'}`}
           style={{ width: `${pct}%` }}
         />
         {targetPct !== null && (
           <div
-            className="absolute top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-ink-muted"
+            className="absolute top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-ink"
             style={{ left: `${targetPct}%` }}
             aria-hidden
           />

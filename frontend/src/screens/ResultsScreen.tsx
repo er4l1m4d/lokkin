@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorState, StaleBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { PodiumSlot } from '@/components/PodiumSlot'
+import { Skeleton } from '@/components/Skeleton'
 import { StatusPill } from '@/components/StatusPill'
 import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
@@ -51,7 +52,7 @@ export function ResultsScreen() {
       <AppShell>
         {notFound ? (
           <EmptyState
-            icon={<Icon name="alert" size={28} />}
+            icon={<Icon name="alert" size={28} weight="duotone" />}
             title="Quiz not found"
             description="It may have been removed."
             action={
@@ -81,10 +82,10 @@ export function ResultsScreen() {
   if (!quiz) {
     return (
       <AppShell>
-        <div className="flex flex-col gap-3">
-          <div className="h-28 animate-pulse rounded-card bg-surface-muted" />
-          <div className="h-56 animate-pulse rounded-card bg-surface-muted" />
-          <div className="h-40 animate-pulse rounded-card bg-surface-muted" />
+        <div className="flex flex-col gap-3" role="status" aria-label="Loading results">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-56" />
+          <Skeleton className="h-40" />
         </div>
       </AppShell>
     )
@@ -101,9 +102,9 @@ export function ResultsScreen() {
         {error && data && <StaleBanner />}
 
         <header className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="font-display text-xl font-black text-ink">{quiz.title}</h1>
-            <p className="mt-0.5 text-xs text-ink-soft">
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">{quiz.title}</h1>
+            <p className="mt-0.5 text-xs font-semibold text-ink-soft tabular-nums">
               {quiz.entryAmount} NIM stake · {quiz.questionCount} questions
             </p>
           </div>
@@ -113,11 +114,11 @@ export function ResultsScreen() {
         <StatusStepper current={quiz.status} />
 
         {results === null ? (
-          <section className="flex flex-col items-center gap-3 rounded-card bg-surface p-8 text-center shadow-soft">
-            <div className="flex h-12 w-12 items-center justify-center rounded-pill bg-primary-faint text-primary-dark" aria-hidden>
+          <section className="flex flex-col items-center gap-3 rounded-card border-2 border-ink bg-surface p-8 text-center shadow-card">
+            <div className="flex h-12 w-12 items-center justify-center rounded-pill bg-volt-faint text-ink" aria-hidden>
               <Icon name="refresh" size={22} className="animate-spin" />
             </div>
-            <h2 className="font-display text-lg font-extrabold text-ink">
+            <h2 className="font-display text-lg font-extrabold tracking-tight text-ink">
               {quiz.status === 'LIVE' ? 'Still in play…' : 'Calculating results…'}
             </h2>
             <p className="max-w-xs text-sm leading-relaxed text-ink-soft">
@@ -129,32 +130,36 @@ export function ResultsScreen() {
           <>
             {myRow && (
               <section
-                className={`rounded-card p-5 text-center shadow-soft ${
-                  myRow.payoutKind === 'winner' ? 'bg-primary-faint' : 'bg-surface'
+                className={`rounded-card border-2 p-5 text-center ${
+                  myRow.payoutKind === 'winner'
+                    ? 'border-ink bg-volt shadow-press-sm'
+                    : 'border-ink bg-surface shadow-card'
                 }`}
                 aria-label="Your result"
               >
-                <p className="text-xs font-bold tracking-wide text-ink-muted uppercase">
+                <p className="font-display text-sm font-bold text-ink-soft">
                   {myRow.rank >= 98
                     ? "You didn't finish"
                     : `You finished ${ordinal(myRow.rank)}`}
                 </p>
-                <p className="mt-1 font-display text-3xl font-black text-ink">
+                <p className="mt-1 font-display text-4xl font-extrabold tracking-tight tabular-nums text-ink">
                   {myRow.correctAnswers}/{myRow.totalQuestions}
                 </p>
                 <p className="mt-1 text-sm font-semibold text-ink-soft">
                   {myRow.payout >= myRow.entryAmount ? (
                     <>
-                      <span className="text-success">{myRow.payout.toFixed(2)} NIM back</span>
+                      <span className="font-display font-extrabold text-success">
+                        {myRow.payout.toFixed(2)} NIM back
+                      </span>
                       {myRow.payout > myRow.entryAmount && (
-                        <span className="text-success">
+                        <span className="font-display font-extrabold text-success">
                           {' '}
                           (+{(myRow.payout - myRow.entryAmount).toFixed(2)} won)
                         </span>
                       )}
                     </>
                   ) : (
-                    <span className="text-danger">
+                    <span className="font-display font-extrabold text-danger">
                       {myRow.payout.toFixed(2)} NIM back (−
                       {(myRow.entryAmount - myRow.payout).toFixed(2)})
                     </span>
@@ -163,28 +168,28 @@ export function ResultsScreen() {
               </section>
             )}
 
-            <section className="rounded-card bg-surface p-5 shadow-soft">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
-              The podium
-            </h2>
-            <span className="rounded-pill bg-primary-soft px-3 py-1 font-display text-xs font-extrabold text-primary-dark">
-              {results.prizePool.toFixed(2)} NIM pot
-            </span>
-          </div>
-          <div className="mt-4 flex items-end gap-2">
-            <PodiumSlot place={2} row={podium[1] ?? null} />
-            <PodiumSlot place={1} row={podium[0] ?? null} />
-            <PodiumSlot place={3} row={podium[2] ?? null} />
-          </div>
-          <p className="mt-3 text-center text-[11px] text-ink-muted">
-            Top 3 split the pot 50 / 30 / 10 — ties share a rank's cut
-          </p>
-        </section>
+            <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+              <div className="flex items-center justify-between">
+                <h2 className="font-display text-base font-extrabold tracking-tight text-ink">
+                  The podium
+                </h2>
+                <span className="rounded-pill border border-ink bg-volt px-3 py-1 font-display text-xs font-extrabold tabular-nums text-ink">
+                  {results.prizePool.toFixed(2)} NIM pot
+                </span>
+              </div>
+              <div className="mt-4 flex items-end gap-2">
+                <PodiumSlot place={2} row={podium[1] ?? null} />
+                <PodiumSlot place={1} row={podium[0] ?? null} />
+                <PodiumSlot place={3} row={podium[2] ?? null} />
+              </div>
+              <p className="mt-3 text-center text-[11px] text-ink-muted">
+                Top 3 split the pot 50 / 30 / 10 — ties share a rank's cut
+              </p>
+            </section>
 
-            <section className="rounded-card bg-surface p-5 shadow-soft">
-              <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
-                Full ranking
+            <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+              <h2 className="font-display text-base font-extrabold tracking-tight text-ink">
+                Standing
               </h2>
               <ol className="mt-3 flex flex-col gap-2">
                 {rows.map((row) => {
@@ -194,27 +199,27 @@ export function ResultsScreen() {
                     <li
                       key={row.participantId}
                       className={`flex items-center gap-3 rounded-card px-4 py-3 ${
-                        isMe ? 'bg-primary-faint ring-2 ring-primary/30' : 'bg-canvas'
+                        isMe ? 'border-2 border-ink bg-volt-faint' : 'border border-line bg-paper'
                       }`}
                     >
-                      <span className="w-8 font-display text-sm font-black text-ink-muted">
-                        {row.rank <= 3 ? <Icon name="trophy" size={18} /> : row.rank >= 98 ? '—' : `#${row.rank}`}
+                      <span className="w-8 font-display text-sm font-extrabold tabular-nums text-ink-muted">
+                        {row.rank <= 3 ? <Icon name="trophy" size={18} weight="fill" className="text-ink" /> : row.rank >= 98 ? '—' : `#${row.rank}`}
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate font-display text-sm font-bold text-ink">
                           {row.displayName}
-                          {isMe && <span className="ml-1.5 text-[10px] text-primary-dark">(you)</span>}
+                          {isMe && <span className="ml-1.5 text-[11px] font-semibold text-ink-soft">(you)</span>}
                         </span>
-                        <span className="text-xs text-ink-soft">
+                        <span className="text-xs text-ink-soft tabular-nums">
                           {row.correctAnswers}/{row.totalQuestions} correct
-                          {tied && <span className="ml-1.5 font-bold text-amber-dark">· tied</span>}
+                          {tied && <span className="ml-1.5 font-bold text-amber">· tied</span>}
                         </span>
                       </span>
                       <span className="text-right">
-                        <span className="block font-display text-sm font-extrabold text-ink">
+                        <span className="block font-display text-sm font-extrabold tabular-nums text-ink">
                           {row.payout.toFixed(2)}
                         </span>
-                        <span className="text-[10px] font-bold tracking-wide text-ink-muted uppercase">
+                        <span className="text-[10px] font-bold text-ink-muted">
                           {PAYOUT_LABELS[row.payoutKind]}
                         </span>
                       </span>
@@ -247,22 +252,22 @@ export function ResultsScreen() {
 function StatusStepper({ current }: { current: QuizStatus }) {
   const activeIdx = STEPPER.findIndex((s) => s.status === current)
   return (
-    <ol className="flex items-center justify-between rounded-card bg-surface px-5 py-4 shadow-soft">
+    <ol className="flex items-center justify-between rounded-card border-2 border-ink bg-surface px-5 py-4 shadow-card">
       {STEPPER.map((step, i) => {
         const state = activeIdx === -1 ? 'todo' : i < activeIdx ? 'done' : i === activeIdx ? 'active' : 'todo'
         return (
           <li key={step.status} className="flex flex-1 items-center last:flex-none">
             <div className="flex items-center gap-2">
               <span
-                className={`flex h-7 w-7 items-center justify-center rounded-pill font-display text-xs font-extrabold ${
+                className={`flex h-7 w-7 items-center justify-center rounded-pill border-2 font-display text-xs font-extrabold ${
                   state === 'done'
-                    ? 'bg-success text-white'
+                    ? 'border-ink bg-ink text-paper'
                     : state === 'active'
-                      ? 'bg-primary text-white'
-                      : 'bg-canvas-deep text-ink-muted'
+                      ? 'border-ink bg-volt text-ink'
+                      : 'border-line bg-paper text-ink-muted'
                 }`}
               >
-                {state === 'done' ? '✓' : i + 1}
+                {state === 'done' ? <Icon name="check" size={14} weight="bold" /> : i + 1}
               </span>
               <span
                 className={`text-xs font-bold ${state === 'active' ? 'text-ink' : 'text-ink-muted'}`}

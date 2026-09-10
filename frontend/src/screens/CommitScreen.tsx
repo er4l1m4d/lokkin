@@ -116,9 +116,9 @@ export function CommitScreen() {
   if (error && entry === null) {
     return (
       <AppShell>
-        <div className="rounded-card bg-surface p-8 text-center shadow-soft">
-          <Icon name="alert" className="text-danger" size={30} />
-          <h1 className="mt-2 font-display text-lg font-extrabold text-ink">Can't commit</h1>
+        <div className="rounded-card border-2 border-ink bg-surface p-8 text-center shadow-card">
+          <Icon name="alert" className="text-danger" size={30} weight="fill" />
+          <h1 className="mt-2 font-display text-lg font-extrabold tracking-tight text-ink">Can't commit</h1>
           <p className="mt-1 text-sm text-ink-soft">{error}</p>
           <Button className="mt-4" size="sm" onClick={() => navigate(quizId ? `/quiz/${quizId}` : '/home')}>
             Back
@@ -131,7 +131,7 @@ export function CommitScreen() {
   if (entry === null) {
     return (
       <AppShell>
-        <div className="h-64 animate-pulse rounded-card bg-surface-muted" />
+        <div className="h-64 animate-pulse rounded-card border border-line bg-paper-deep" aria-hidden />
       </AppShell>
     )
   }
@@ -142,7 +142,9 @@ export function CommitScreen() {
     <AppShell>
       <div className="flex flex-col gap-4">
         <header>
-          <h1 className="font-display text-2xl font-black text-ink">Lock in your stake</h1>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
+            Lock in your <span className="highlight">stake</span>
+          </h1>
           <p className="mt-1 text-sm text-ink-soft">{title}</p>
         </header>
 
@@ -150,24 +152,22 @@ export function CommitScreen() {
 
         {stage === 'summary' && (
           <>
-            <section className="rounded-card bg-surface p-6 text-center shadow-soft">
-              <p className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-                You're committing
-              </p>
-              <p className="mt-2 font-display text-4xl font-black text-primary-dark">
+            <section className="rounded-card border-2 border-ink bg-volt p-6 text-center shadow-press-sm">
+              <p className="font-display text-sm font-bold text-ink-soft">You're committing</p>
+              <p className="mt-2 font-display text-5xl font-extrabold tracking-tight tabular-nums text-ink">
                 {entry} NIM
               </p>
               {realMode ? (
-                <p className="mt-1 text-xs font-semibold text-ink-soft">
+                <p className="mt-2 text-xs font-semibold text-ink-soft">
                   Real NIM · sent from your Nimiq wallet · feeless
                 </p>
               ) : (
-                <p className="mt-1 text-xs text-ink-muted">Play money — instantly confirmed</p>
+                <p className="mt-2 text-xs text-ink-muted">Play money — instantly confirmed</p>
               )}
             </section>
 
-            <section className="rounded-card bg-surface p-5 shadow-soft">
-              <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
+            <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+              <h2 className="font-display text-base font-extrabold tracking-tight text-ink">
                 How payouts work
               </h2>
               <ul className="mt-3 flex flex-col gap-2.5 text-sm text-ink">
@@ -176,13 +176,14 @@ export function CommitScreen() {
                 <PayoutRow icon="check" text="Complete the quiz — split a 10% completion bonus with everyone who finished" />
                 <PayoutRow icon="clock" text="No-show — 50% back, 50% to the pool. Locking in means showing up" />
               </ul>
-              <p className="mt-4 rounded-card bg-amber-soft px-3.5 py-2.5 text-xs leading-relaxed text-ink">
+              <p className="mt-4 rounded-card border border-amber/30 bg-amber-soft px-3.5 py-2.5 text-xs leading-relaxed text-ink">
                 Needs at least 3 confirmed commitments to run — otherwise everyone is
                 auto-refunded in full.
               </p>
             </section>
 
             <Button size="lg" onClick={() => void confirm()}>
+              <Icon name="lock" size={18} weight="fill" />
               Commit {entry} NIM
             </Button>
             <Button variant="ghost" size="sm" onClick={() => navigate(`/quiz/${quizId}`)}>
@@ -192,9 +193,9 @@ export function CommitScreen() {
         )}
 
         {stage === 'confirming' && (
-          <section className="flex min-h-[40vh] flex-col items-center justify-center gap-4 rounded-card bg-surface p-8 shadow-soft" role="status">
-            <div className="h-14 w-14 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
-            <p className="font-display text-base font-extrabold text-ink">
+          <section className="flex min-h-[40vh] flex-col items-center justify-center gap-4 rounded-card border-2 border-ink bg-surface p-8 shadow-card" role="status">
+            <div className="h-14 w-14 animate-spin rounded-pill border-4 border-paper-deep border-t-ink" />
+            <p className="font-display text-base font-extrabold tracking-tight text-ink">
               {realMode ? 'Reserving your spot…' : 'Confirming transaction…'}
             </p>
             <p className="text-xs text-ink-muted">
@@ -206,16 +207,16 @@ export function CommitScreen() {
         {(stage === 'send' || stage === 'verifying') && join && (
           <>
             {detail && (
-              <p className="rounded-card bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
+              <p className="rounded-card border border-amber/30 bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
                 {detail}
               </p>
             )}
             <MemoCard code={join.memoCode ?? ''} address={join.escrowAddress ?? ''} />
 
             {stage === 'verifying' ? (
-              <section className="flex flex-col items-center gap-3 rounded-card bg-surface p-8 text-center shadow-soft" role="status">
-                <div className="h-12 w-12 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
-                <p className="font-display text-base font-extrabold text-ink">
+              <section className="flex flex-col items-center gap-3 rounded-card border-2 border-ink bg-surface p-8 text-center shadow-card" role="status">
+                <div className="h-12 w-12 animate-spin rounded-pill border-4 border-paper-deep border-t-ink" />
+                <p className="font-display text-base font-extrabold tracking-tight text-ink">
                   Verifying on-chain…
                 </p>
                 <p className="text-xs text-ink-muted">
@@ -236,8 +237,8 @@ export function CommitScreen() {
                 </Button>
 
                 {walletAvailable === false && (
-                  <section className="rounded-card bg-surface p-5 shadow-soft">
-                    <p className="text-sm font-bold text-ink">Sent it manually?</p>
+                  <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+                    <p className="font-display text-sm font-extrabold text-ink">Sent it manually?</p>
                     <p className="mt-1 text-xs leading-relaxed text-ink-soft">
                       Send exactly {entry} NIM to the escrow address with your memo code above,
                       then paste the transaction hash here to confirm.
@@ -249,7 +250,7 @@ export function CommitScreen() {
                         onChange={(e) => setPastedHash(e.target.value)}
                         placeholder="Transaction hash"
                         aria-label="Transaction hash"
-                        className="min-h-12 w-full rounded-card border-2 border-line bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted focus:border-primary"
+                        className="min-h-12 w-full rounded-card border-2 border-ink bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted/70 focus:bg-volt-faint"
                       />
                       <Button
                         disabled={pastedHash.trim().length < 8}
@@ -268,14 +269,14 @@ export function CommitScreen() {
         {stage === 'confirmed' && (
           <>
             <section
-              className="flex flex-col items-center gap-2 rounded-card bg-success-soft px-6 py-8 text-center"
+              className="flex flex-col items-center gap-2 rounded-card border-2 border-success bg-success-soft px-6 py-8 text-center"
               role="status"
               aria-live="polite"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-pill bg-white/60 text-success" aria-hidden>
-                <Icon name="check" size={28} strokeWidth={2.4} />
+              <span className="flex h-12 w-12 items-center justify-center rounded-pill border-2 border-ink bg-volt text-ink" aria-hidden>
+                <Icon name="check" size={28} weight="bold" />
               </span>
-              <h2 className="font-display text-xl font-black text-ink">You're in</h2>
+              <h2 className="font-display text-2xl font-extrabold tracking-tight text-ink">You're in</h2>
               <p className="text-sm text-ink-soft">
                 {entry} NIM committed and {realMode ? 'confirmed on-chain' : 'confirmed'}.
               </p>
@@ -296,7 +297,7 @@ export function CommitScreen() {
 function PayoutRow({ icon, text }: { icon: 'trophy' | 'podium' | 'check' | 'clock'; text: string }) {
   return (
     <li className="flex items-start gap-2.5">
-      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-pill bg-primary-faint text-primary-dark" aria-hidden>
+      <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-pill border border-line bg-paper-deep text-ink" aria-hidden>
         <Icon name={icon} size={14} />
       </span>
       <span className="leading-relaxed">{text}</span>

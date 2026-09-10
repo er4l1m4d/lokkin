@@ -7,7 +7,7 @@ import type {
   CreateUserRequest,
   HistoryEntry,
   JoinResult,
-  LokkinApi,
+  NivoraApi,
   Participant,
   PlayerQuestion,
   Quiz,
@@ -43,7 +43,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export function createRealApi(): LokkinApi {
+export function createRealApi(): NivoraApi {
   return {
     async getConfig() {
       return request<AppConfig>('/api/config')

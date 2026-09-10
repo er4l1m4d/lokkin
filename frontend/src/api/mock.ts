@@ -6,7 +6,7 @@ import type {
   CreateQuizRequest,
   CreateUserRequest,
   JoinResult,
-  LokkinApi,
+  NivoraApi,
   OptionKey,
   Participant,
   PlayerQuestion,
@@ -371,7 +371,7 @@ function maybeAdvanceLifecycle(quiz: Quiz) {
   }
 }
 
-export function createMockApi(): LokkinApi {
+export function createMockApi(): NivoraApi {
   return {
     async getConfig(): Promise<AppConfig> {
       return {

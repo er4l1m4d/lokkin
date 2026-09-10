@@ -1,59 +1,54 @@
 @import "tailwindcss";
 
 @theme {
-  /* Soft blue canvas with a neutral surface hierarchy */
-  --color-canvas: oklch(0.975 0.012 250);
-  --color-canvas-deep: oklch(0.945 0.025 250);
+  /* ── Nivora v2 "Highlighter Arena" ─────────────────────────────────
+     Warm paper canvas, near-black ink, one electric accent: the
+     highlighter. Yellow is spent only where money and moments are —
+     primary actions, active state, key highlights. Everything else
+     stays ink-on-paper and lets the type do the shouting. */
+
+  /* Warm paper canvas */
+  --color-paper: oklch(0.98 0.008 95);
+  --color-paper-deep: oklch(0.945 0.014 95);
   --color-surface: oklch(1 0 0);
-  --color-surface-muted: oklch(0.965 0.018 250);
 
-  /* Primary — blue used for action and current state */
-  --color-primary: oklch(0.62 0.19 260);
-  --color-primary-dark: oklch(0.49 0.2 260);
-  --color-primary-deep: oklch(0.37 0.16 260);
-  --color-primary-soft: oklch(0.91 0.07 260);
-  --color-primary-faint: oklch(0.965 0.025 260);
+  /* Ink — near-black, warm */
+  --color-ink: oklch(0.21 0.012 90);
+  --color-ink-soft: oklch(0.4 0.018 90);
+  --color-ink-muted: oklch(0.5 0.012 90);
+  --color-line: oklch(0.88 0.014 95);
 
-  /* Accent — coral/amber for timers and warnings */
-  --color-accent: oklch(0.68 0.16 35);
-  --color-accent-dark: oklch(0.55 0.15 35);
-  --color-accent-soft: oklch(0.94 0.055 35);
-  --color-amber: oklch(0.72 0.15 75);
-  --color-amber-dark: oklch(0.52 0.11 75);
+  /* Volt — the highlighter */
+  --color-volt: oklch(0.92 0.2 105);
+  --color-volt-deep: oklch(0.84 0.19 105);
+  --color-volt-faint: oklch(0.965 0.09 105);
+
+  /* Feedback — reserved for outcomes and urgency, never decoration */
+  --color-success: oklch(0.5 0.14 150);
+  --color-success-soft: oklch(0.94 0.07 150);
+  --color-danger: oklch(0.5 0.19 25);
+  --color-danger-soft: oklch(0.94 0.055 25);
+  --color-amber: oklch(0.62 0.13 70);
   --color-amber-soft: oklch(0.95 0.06 85);
 
-  /* Feedback */
-  --color-success: oklch(0.48 0.14 155);
-  --color-success-dark: oklch(0.43 0.14 155);
-  --color-success-soft: oklch(0.93 0.06 155);
-  --color-danger: oklch(0.47 0.15 20);
-  --color-danger-dark: oklch(0.43 0.15 20);
-  --color-danger-soft: oklch(0.93 0.055 20);
-
-  /* Neutrals — navy-tinted text */
-  --color-ink: oklch(0.23 0.045 260);
-  --color-ink-soft: oklch(0.43 0.045 260);
-  --color-ink-muted: oklch(0.46 0.035 260);
-  --color-line: oklch(0.9 0.025 250);
-
-  /* Fonts — Bricolage Grotesque gives the brand its voice (quirky ink traps,
-     condensed display cut at large sizes via optical sizing); Onest keeps body
-     copy warm and readable. Both carry `tnum` so tabular-nums timers don't jiggle. */
+  /* Fonts — Bricolage carries the brand voice at display sizes;
+     Onest keeps body copy warm and readable. Both ship `tnum`. */
   --font-display: "Bricolage Grotesque", system-ui, sans-serif;
   --font-body: "Onest", system-ui, sans-serif;
 
-  /* Radius */
-  --radius-card: 1rem;
-  --radius-pill: 9999px;
+  /* Shape lock: cards 14px, actions + chips are full pills */
+  --radius-card: 0.875rem;
 
-  /* Shadows — blue-tinted soft */
-  --shadow-soft: 0 4px 14px oklch(0.35 0.12 260 / 0.08);
-  --shadow-lift: 0 8px 22px oklch(0.35 0.14 260 / 0.13);
-  --shadow-tap: 0 2px 7px oklch(0.35 0.12 260 / 0.1);
+  /* Hard ink shadows — the marker-press system */
+  --shadow-press: 0 4px 0 0 oklch(0.21 0.012 90);
+  --shadow-press-sm: 0 3px 0 0 oklch(0.21 0.012 90);
+  --shadow-card: 0 2px 0 0 oklch(0.21 0.012 90);
 
-  /* Motion — subtle enter transitions (killed by prefers-reduced-motion) */
+  /* Motion — milestone moments animate, everything else stays quiet */
   --animate-screen-enter: screen-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-pop-in: pop-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-rise: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-swipe: swipe 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
 
   @keyframes screen-enter {
     from {
@@ -76,6 +71,26 @@
       transform: none;
     }
   }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes swipe {
+    from {
+      background-size: 0% 0.45em;
+    }
+    to {
+      background-size: 100% 0.45em;
+    }
+  }
 }
 
 * {
@@ -90,7 +105,7 @@ body {
   margin: 0;
   font-family: var(--font-body);
   color: var(--color-ink);
-  background: var(--color-canvas);
+  background: var(--color-paper);
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
 }
@@ -111,8 +126,32 @@ button, a, input, textarea {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-primary);
+  outline: 3px solid var(--color-ink);
   outline-offset: 3px;
+}
+
+/* Marker highlight — the signature swipe behind key words */
+.highlight {
+  background-image: linear-gradient(to right, var(--color-volt), var(--color-volt));
+  background-repeat: no-repeat;
+  background-size: 100% 0.45em;
+  background-position: 0 82%;
+}
+
+.highlight-swipe {
+  background-image: linear-gradient(to right, var(--color-volt), var(--color-volt));
+  background-repeat: no-repeat;
+  background-position: 0 82%;
+  animation: swipe 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+/* Hard-press feel: shadow collapses and the element lands on press-in */
+.press {
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+.press:active:not(:disabled) {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 0 var(--color-ink) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -7,10 +7,10 @@ interface PodiumSlotProps {
   row: ResultRow | null
 }
 
-const MEDALS: Record<1 | 2 | 3, { label: string; block: string; iconClass: string }> = {
-  1: { label: '1st', block: 'bg-amber', iconClass: 'text-amber-dark' },
-  2: { label: '2nd', block: 'bg-primary', iconClass: 'text-primary-dark' },
-  3: { label: '3rd', block: 'bg-accent', iconClass: 'text-accent-dark' },
+const MEDALS: Record<1 | 2 | 3, { label: string; block: string; iconBox: string; delay: string }> = {
+  1: { label: '1st', block: 'bg-volt', iconBox: 'border-ink bg-volt text-ink', delay: '200ms' },
+  2: { label: '2nd', block: 'bg-ink', iconBox: 'border-ink bg-ink text-volt', delay: '100ms' },
+  3: { label: '3rd', block: 'bg-paper-deep', iconBox: 'border-line bg-surface text-ink-soft', delay: '0ms' },
 }
 
 const HEIGHTS: Record<1 | 2 | 3, string> = {
@@ -25,9 +25,9 @@ export function PodiumSlot({ place, row }: PodiumSlotProps) {
 
   return (
     <div className={`flex flex-1 flex-col items-center justify-end gap-2 ${displayPlace}`}>
-      <div className="text-center" aria-label={`${medal.label} place`}>
-        <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-pill bg-canvas-deep ${medal.iconClass}`} aria-hidden>
-          <Icon name="trophy" size={19} strokeWidth={2.1} />
+      <div className="text-center animate-rise" style={{ animationDelay: medal.delay }} aria-label={`${medal.label} place`}>
+        <div className={`mx-auto flex h-9 w-9 items-center justify-center rounded-pill border-2 ${medal.iconBox}`} aria-hidden>
+          <Icon name="trophy" size={19} weight="bold" />
         </div>
         {row ? (
           <>
@@ -38,7 +38,7 @@ export function PodiumSlot({ place, row }: PodiumSlotProps) {
               {row.correctAnswers}/{row.totalQuestions}
             </p>
             <p className="font-display text-sm font-extrabold text-success">
-              {(row.payout - row.entryAmount).toFixed(2)} NIM won
+              +{(row.payout - row.entryAmount).toFixed(2)} NIM
             </p>
           </>
         ) : (
@@ -46,7 +46,8 @@ export function PodiumSlot({ place, row }: PodiumSlotProps) {
         )}
       </div>
       <div
-        className={`w-full max-w-28 rounded-t-card ${HEIGHTS[place]} ${medal.block} shadow-tap`}
+        className={`w-full max-w-28 rounded-t-card border-2 border-b-0 border-ink ${HEIGHTS[place]} ${medal.block} animate-rise`}
+        style={{ animationDelay: medal.delay }}
         aria-hidden
       />
     </div>

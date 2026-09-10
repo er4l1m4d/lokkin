@@ -1,93 +1,79 @@
-# Lokkin Design System
+# Nivora Design System — v2 "Highlighter Arena"
 
 ## Product Register
 
-Lokkin is a mobile-first competitive study app. The interface should feel calm while users study, then become visibly more focused during commitment and play. The primary job is to make the next decision obvious: choose a mode, enter a quiz, commit, answer, or understand the result.
+Nivora is a commitment-based competitive study platform on Nimiq. Nivora is a realm where knowledge has no value until it is tested — you turn your notes into live Trials, stake NIM on your prep, face your Challengers, and the top 3 split the pot. The interface should feel like studying turned up to competition: ink on paper, a highlighter that marks what matters, and money moments that hit hard.
 
-## Physical Scene
+**Brand line**: Don't just know it. Prove it.
+**Philosophy**: Knowledge is only potential until you put it to the test.
 
-Students use Lokkin on a phone between lectures, in a library, or in a group chat. Ambient light is variable, attention is limited, and the interface must stay readable and trustworthy when money and rankings are involved.
+## Brand vocabulary
 
-## Visual Direction
+Nivora speaks a shared language across every surface — keep it consistent:
 
-- Soft blue canvas with white surfaces and blue action states.
-- Restrained color strategy: blue carries action and navigation; coral/amber communicate urgency; green/red communicate outcomes.
-- Calm, structured product UI rather than decorative gamification.
-- Rounded surfaces are useful for grouping, but card radius stays compact at `16px`.
-- Use elevation sparingly: one soft shadow for surfaces, one lift shadow for primary actions.
-- Do not use emoji as structural icons. Use the shared `Icon` component and its single stroke language.
+- **Trial** — a quiz challenge (user-facing copy; code identifiers keep `quiz`)
+- **Challenger** — a player/participant
+- **Standing** — the leaderboard / full ranking
+- **Host** — the Trial's creator (code keeps `creator`)
+- The lock is the commitment motif: stakes, sealed answers, locked-in states.
+
+## The idea
+
+The brand color *is* the highlighter you mark notes with. Warm paper canvas, near-black ink, one electric yellow spent only where money and moments are — primary actions, active state, key highlights. Type does the shouting; color stays quiet.
+
+## Signature motifs
+
+1. **Highlight swipe** — key words in headlines carry a marker-bar highlight (`.highlight` static, `.highlight-swipe` animated). Used on hero words and milestone moments only — never decoration.
+2. **The lock** — Phosphor `lock-key` is the brand glyph. It appears at the wordmark, on commit CTAs, "locked in" confirmations, and sealed states. Commitment vocabulary is literal.
+3. **Hard-press** — primary CTAs and cards sit on hard ink offset shadows (`shadow-press`, `shadow-press-sm`, `shadow-card`) and collapse onto your finger on press-in (`.press`).
 
 ## Tokens
 
-### Color
+### Color (light-first)
 
-- `canvas`: page background
-- `canvas-deep`: secondary neutral and skeleton background
-- `surface`: primary white surface
-- `surface-muted`: empty states and loading surfaces
-- `primary-dark`: primary button and high-contrast action text
-- `primary`: active accents and progress
-- `primary-soft` / `primary-faint`: selection and informational surfaces
-- `accent`: coral urgency accent
-- `amber`: warning and timer accent
-- `success` / `danger`: semantic outcome colors, always paired with text or an icon
-- `ink`: primary text
-- `ink-soft`: body copy
-- `ink-muted`: secondary labels, kept contrast-safe
-- `line`: dividers and input borders
+- `paper` — canvas; `paper-deep` — pressed/empty surfaces
+- `surface` — white cards
+- `ink` / `ink-soft` / `ink-muted` — near-black warm text ramp; `line` — hairlines
+- `volt` / `volt-deep` / `volt-faint` — THE accent (actions, active states, money). Text on volt is always `ink`.
+- `success` / `danger` — reveal and payout outcomes, always paired with an icon or text
+- `amber` — urgency and notes only (timers, host warnings)
+
+Never introduce a second accent hue. If something feels like it needs another color, it needs more `ink` contrast instead.
 
 ### Typography
 
-- Display: `Bricolage Grotesque` (variable, optical sizing on) — headings, buttons, stat numbers, brand moments. It carries the app's personality: condensed display cut at large sizes, quirky ink-trap details. Weights above 800 clamp (the axis caps at 800), so `font-black` and `font-extrabold` render identically — size and color do the hierarchy work, not extra weight.
-- Body: `Onest` — prose, descriptions, form fields. Warm geometric with excellent readability at 16px.
-- Body line-height: `1.5` or greater for prose.
-- Headings use balanced wrapping and `-0.02em` tracking.
-- Timers and numeric results use tabular figures (`tnum` — both fonts ship the feature; `tabular-nums` class).
+- Display: `Bricolage Grotesque` (variable, optical sizing on) — headlines, buttons, stat numbers, the wordmark. Weights above 800 clamp; size and the volt highlight do the hierarchy work.
+- Body: `Onest` — prose, inputs, secondary labels.
+- Headings: `-0.02em` tracking, `text-wrap: balance`. Display sizes run large (24–44px mobile) — the type is the loudest tool in the kit.
+- Timers, stakes, scores: tabular figures (`tabular-nums`).
 
-### Shape and Elevation
+### Shape and elevation
 
-- Card radius: `1rem`.
-- Full pills are reserved for status, filters, compact values, and primary rounded actions.
-- `shadow-soft`: resting surface elevation.
-- `shadow-tap`: compact list elevation.
-- `shadow-lift`: primary CTA / featured surface elevation.
+- Shape lock: cards `rounded-card` (14px), actions/chips/pills full round. No other radii.
+- Cards: `border-2 border-ink bg-surface shadow-card` (interactive/primary) or `border border-line bg-surface` (quiet).
+- Inputs: `border-2 border-ink`, `focus:bg-volt-faint`.
+- Elevation is hard ink offsets, never blur: `shadow-press` (4px, primary CTA), `shadow-press-sm` (3px), `shadow-card` (2px).
 
 ## Layout
 
-- Mobile-first content width: `max-w-2xl` inside the desktop shell.
-- Desktop app frame: `max-w-6xl` with a readable centered content column.
-- Use a `4 / 8px` spacing rhythm: `gap-2`, `gap-3`, `gap-4`, `gap-5`, `gap-6`.
-- Fixed bottom navigation reserves content space through shell padding.
-- All fixed controls respect safe-area insets.
-- Deep routes keep the same shell and predictable back path.
+- Phone-width column: `max-w-md` centered, `px-5`; desktop shows the same column with hairline frame borders (`sm:border-x`). Desktop-expansion is a later project.
+- `4 / 8px` spacing rhythm. Bottom nav is fixed with a 2px ink top border; safe-area insets respected everywhere.
+- Milestone motion only: `animate-screen-enter` (route changes), `animate-pop-in` (small elements), `animate-rise` (podium, staged), `animate-swipe` (the marker). All ≤500ms, all killed by `prefers-reduced-motion`.
 
 ## Interaction
 
-- Interactive targets are at least `44px` high or wide.
-- Every button has visible hover, focus-visible, active, disabled, and loading behavior where applicable.
-- Primary screens expose one clear primary CTA.
-- Async actions disable themselves and communicate progress.
-- Modal dialogs provide a close control, Escape support, focus return, and a trapped Tab cycle.
-- Route changes move focus to the main content region.
-- Reduced-motion users receive instant or near-instant state changes.
+- Buttons: `font-display` bold, pills; primary is volt with the hard press. One primary CTA per view.
+- Answer options flip volt on select, green/red on reveal — never color alone (letter badge + icon).
+- Focus: 3px ink outline, offset 3px. Targets ≥44px. Status never communicated by color alone.
 
 ## Components
 
-- `Button`: primary, secondary, danger, and ghost hierarchy.
-- `StatusPill`: state vocabulary for quiz lifecycle.
-- `TimerPill`: urgency-aware time display with a clock icon.
-- `OptionButton`: answer selection and reveal states; never relies on color alone.
-- `QuizCard`: title, lifecycle, stake, duration, participant count, and affordance.
-- `PodiumSlot`: results hierarchy with a consistent trophy icon.
-- `ParticipantRow`: status text plus status dot.
-- `EmptyState`: teaches the next action instead of showing a blank surface.
-- `Icon`: the only structural icon primitive; keep stroke weight and sizing consistent.
+`Button` (primary/secondary/danger/ghost) · `StatusPill` (LIVE = ink on volt-inverse) · `TimerPill` · `OptionButton` · `QuizCard` · `PodiumSlot` (1st volt, 2nd ink, 3rd paper-deep; staggered rise) · `ParticipantRow` · `MeterBar` (ink-bordered volt fill) · `EmptyState` (volt icon box) · `Modal` (ink border, press shadow) · `MemoCard` (ink card, volt code) · `StepDots` · `Icon` (Phosphor — one family, no mixing).
 
 ## Accessibility and QA
 
-- Maintain WCAG AA contrast for body copy and controls.
-- Preserve visible `:focus-visible` rings; never use `focus:outline-none` without a replacement.
-- Use labels for all form controls and `role="alert"` or `role="status"` for dynamic feedback.
-- Do not communicate state with color alone; pair it with text, icon, rank, or copy.
-- Test at 375px, 768px, and desktop widths, plus reduced-motion mode.
-- Keep this file as the source of truth. Page-specific exceptions belong in `design-system/pages/` and must explain why they differ.
+- WCAG AA contrast for body copy and controls; volt is a background, never body text on paper.
+- Preserve `:focus-visible` rings; never `outline-none` without a replacement.
+- Reduced motion collapses swipe/rise to instant states.
+- Test at 375px minimum; the app is phone-first.
+- Keep this file as the source of truth. Page-specific exceptions must explain why they differ.

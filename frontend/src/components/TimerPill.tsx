@@ -52,13 +52,13 @@ export function TimerPill({ until, seconds, onExpire, warnUnderSeconds = 30 }: T
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-pill px-3 py-1 font-display text-sm font-extrabold tabular-nums ${
-        urgent ? 'bg-danger-soft text-danger' : 'bg-amber-soft text-ink'
+      className={`inline-flex items-center gap-1.5 rounded-pill border-2 px-3 py-1 font-display text-sm font-extrabold tabular-nums ${
+        urgent ? 'border-ink bg-danger text-white' : 'border-ink bg-surface text-ink'
       }`}
       role="timer"
       aria-label={`${format(left)} remaining`}
     >
-      <Icon name="clock" size={14} />
+      <Icon name="timer" size={14} weight="bold" />
       {format(left)}
     </span>
   )

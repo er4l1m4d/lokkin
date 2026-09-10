@@ -48,7 +48,7 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 backdrop-blur-sm sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/50 p-4 backdrop-blur-sm sm:items-center"
       onClick={onClose}
     >
       <div
@@ -56,19 +56,19 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
-        className="w-full max-w-md animate-pop-in rounded-card bg-surface p-6 shadow-lift"
+        className="w-full max-w-md animate-pop-in rounded-card border-2 border-ink bg-surface p-6 shadow-press"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
-          {title && <h2 id="modal-title" className="font-display text-xl font-extrabold text-ink">{title}</h2>}
+          {title && <h2 id="modal-title" className="font-display text-xl font-extrabold tracking-tight text-ink">{title}</h2>}
           <button
             ref={closeRef}
             type="button"
             onClick={onClose}
-            className="-mr-2 -mt-2 flex min-h-11 min-w-11 items-center justify-center rounded-pill text-ink-muted hover:bg-canvas-deep hover:text-ink"
+            className="-mr-2 -mt-2 flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-pill text-ink-muted transition-colors hover:bg-paper-deep hover:text-ink"
             aria-label="Close dialog"
           >
-            <Icon name="x" />
+            <Icon name="x" weight="bold" />
           </button>
         </div>
         {children}

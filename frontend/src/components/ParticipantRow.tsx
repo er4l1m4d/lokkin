@@ -17,9 +17,9 @@ interface ParticipantRowProps {
 
 export function ParticipantRow({ participant, isCreator }: ParticipantRowProps) {
   return (
-    <li className="flex min-h-14 items-center gap-3 rounded-card bg-surface px-4 py-3 shadow-tap">
+    <li className="flex min-h-14 items-center gap-3 rounded-card border border-line bg-surface px-4 py-3">
       <span
-        className={`h-2.5 w-2.5 rounded-pill ${STATUS_DOTS[participant.status]}`}
+        className={`h-2.5 w-2.5 shrink-0 rounded-pill ${STATUS_DOTS[participant.status]}`}
         title={participant.status.toLowerCase()}
         aria-hidden
       />
@@ -27,7 +27,7 @@ export function ParticipantRow({ participant, isCreator }: ParticipantRowProps) 
         {participant.displayName}
       </span>
       {isCreator && (
-        <span className="rounded-pill bg-primary-faint px-2 py-0.5 text-[10px] font-bold tracking-wide text-primary-dark uppercase">
+        <span className="rounded-pill border border-ink bg-volt px-2 py-0.5 text-[10px] font-bold tracking-wide text-ink uppercase">
           Host
         </span>
       )}
@@ -35,7 +35,7 @@ export function ParticipantRow({ participant, isCreator }: ParticipantRowProps) 
         {participant.status.toLowerCase().replace('_', ' ')}
       </span>
       {participant.rank && (
-        <span className="text-xs font-bold text-ink-soft">#{participant.rank}</span>
+        <span className="font-display text-xs font-extrabold text-ink-soft">#{participant.rank}</span>
       )}
     </li>
   )

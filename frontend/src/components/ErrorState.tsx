@@ -26,11 +26,11 @@ export function ErrorState({
   action,
 }: ErrorStateProps) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-card border-2 border-dashed border-line bg-surface-muted px-6 py-12 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-card bg-danger-soft text-danger" aria-hidden>
-        <Icon name="alert" size={24} />
+    <div className="flex flex-col items-center gap-3 rounded-card border-2 border-dashed border-line bg-surface px-6 py-12 text-center">
+      <div className="flex h-12 w-12 items-center justify-center rounded-card border-2 border-ink bg-danger-soft text-danger" aria-hidden>
+        <Icon name="alert" size={24} weight="bold" />
       </div>
-      <h2 className="font-display text-lg font-extrabold text-ink">{title}</h2>
+      <h2 className="font-display text-lg font-extrabold tracking-tight text-ink">{title}</h2>
       {description && <p className="max-w-xs text-sm leading-relaxed text-ink-soft">{description}</p>}
       {hint && <p className="text-xs font-semibold text-ink-muted">{hint}</p>}
       {onRetry && (
@@ -46,7 +46,7 @@ export function ErrorState({
 /** Inline alert banner for action failures (form submit, wallet send, …) */
 export function ErrorBanner({ children }: { children: ReactNode }) {
   return (
-    <p className="rounded-card bg-danger-soft px-4 py-3 text-sm font-semibold text-danger" role="alert">
+    <p className="rounded-card border-2 border-danger bg-danger-soft px-4 py-3 text-sm font-semibold text-danger" role="alert">
       {children}
     </p>
   )
@@ -55,8 +55,8 @@ export function ErrorBanner({ children }: { children: ReactNode }) {
 /** Shown alongside existing data when a refresh fails — "connection lost" signal */
 export function StaleBanner() {
   return (
-    <p className="flex items-center justify-center gap-2 rounded-card bg-amber-soft px-4 py-2.5 text-xs font-semibold text-ink" role="status">
-      <Icon name="refresh" size={14} />
+    <p className="flex items-center justify-center gap-2 rounded-card border border-line bg-amber-soft px-4 py-2.5 text-xs font-semibold text-ink" role="status">
+      <Icon name="refresh" size={14} weight="bold" />
       Connection hiccup — showing the latest info we have.
     </p>
   )

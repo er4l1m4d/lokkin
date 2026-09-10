@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { ErrorState, StaleBanner } from '@/components/ErrorState'
 import { Icon } from '@/components/Icon'
 import { OptionButton } from '@/components/OptionButton'
+import { SkeletonList } from '@/components/Skeleton'
 import { useSession } from '@/context/useSession'
 import { usePolling } from '@/hooks/usePolling'
 
@@ -26,7 +27,7 @@ export function ReviewScreen() {
       <AppShell>
         {locked ? (
           <EmptyState
-            icon={<Icon name="clock" size={28} />}
+            icon={<Icon name="lock" size={28} weight="duotone" />}
             title="Review unlocks when the quiz ends"
             description="Answers stay sealed until everyone finishes and results are validated."
             action={
@@ -59,11 +60,7 @@ export function ReviewScreen() {
   if (!review) {
     return (
       <AppShell>
-        <div className="flex flex-col gap-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-44 animate-pulse rounded-card bg-surface-muted" />
-          ))}
-        </div>
+        <SkeletonList count={3} className="h-44" />
       </AppShell>
     )
   }
@@ -79,21 +76,23 @@ export function ReviewScreen() {
 
         <header className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="font-display text-xl font-black text-ink">Review</h1>
-            <p className="mt-0.5 text-sm text-ink-soft">
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
+              Rev<span className="highlight">iew</span>
+            </h1>
+            <p className="mt-0.5 text-sm font-semibold text-ink-soft tabular-nums">
               {correctCount}/{review.length} correct · {pct}%
             </p>
           </div>
           <Link
             to={quizId ? `/quiz/${quizId}/results` : '/home'}
-            className="inline-flex min-h-11 items-center gap-1 px-1 text-sm font-semibold text-primary-dark"
+            className="inline-flex min-h-11 items-center gap-1 px-1 font-display text-sm font-bold text-ink transition-colors hover:text-ink-soft"
           >
-            Results <Icon name="arrow-right" size={15} />
+            Results <Icon name="arrow-right" size={15} weight="bold" />
           </Link>
         </header>
 
         {answered.length === 0 && (
-          <p className="rounded-card bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
+          <p className="rounded-card border border-amber/30 bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
             You didn't answer any questions in this quiz — here's what was asked.
           </p>
         )}
@@ -112,23 +111,24 @@ export function ReviewScreen() {
 
 function ReviewCard({ question: q, index }: { question: ReviewQuestion; index: number }) {
   return (
-    <article className="rounded-card bg-surface p-5 shadow-soft">
+    <article className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
       <header className="flex items-center justify-between">
-        <span className="font-display text-xs font-extrabold tracking-wide text-ink-muted uppercase">
+        <span className="font-display text-xs font-bold text-ink-muted tabular-nums">
           Question {index}
         </span>
         {q.wasCorrect !== null && (
           <span
-            className={`rounded-pill px-3 py-1 text-[10px] font-bold tracking-wide uppercase ${
-              q.wasCorrect ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'
+            className={`inline-flex items-center gap-1 rounded-pill border px-2.5 py-1 text-[11px] font-bold ${
+              q.wasCorrect ? 'border-success/40 bg-success-soft text-success' : 'border-danger/40 bg-danger-soft text-danger'
             }`}
           >
+            <Icon name={q.wasCorrect ? 'check' : 'x'} size={11} weight="bold" />
             {q.wasCorrect ? 'Correct' : 'Missed'}
           </span>
         )}
       </header>
 
-      <h2 className="mt-3 font-display text-base leading-snug font-extrabold text-ink">
+      <h2 className="mt-3 font-display text-base leading-snug font-extrabold tracking-tight text-ink">
         {q.questionText}
       </h2>
 
@@ -163,8 +163,8 @@ function ReviewCard({ question: q, index }: { question: ReviewQuestion; index: n
       )}
 
       {q.explanation && (
-        <div className="mt-3 rounded-card bg-amber-soft px-4 py-3">
-          <p className="text-[10px] font-bold tracking-wide text-ink uppercase">Why</p>
+        <div className="mt-3 rounded-card border-l-4 border-volt bg-paper-deep px-4 py-3">
+          <p className="font-display text-[11px] font-extrabold tracking-tight text-ink-soft">Why</p>
           <p className="mt-1 text-xs leading-relaxed text-ink">{q.explanation}</p>
         </div>
       )}

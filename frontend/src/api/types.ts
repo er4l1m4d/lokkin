@@ -239,7 +239,7 @@ export interface HistoryEntry {
 
 // ---------- API interface (implemented by both real client and mock) ----------
 
-export interface LokkinApi {
+  export interface NivoraApi {
   getConfig(): Promise<AppConfig>
   createUser(req: CreateUserRequest): Promise<User>
   linkWallet(userId: string, walletAddress: string, deviceId?: string): Promise<{ id: string; walletAddress: string | null; deviceId: string | null }>

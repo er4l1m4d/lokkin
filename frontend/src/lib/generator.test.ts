@@ -48,9 +48,9 @@ describe('generator', () => {
     expect(d.correctOption).toBe('A')
   })
 
-  it('memo codes match LK-XXXX', () => {
+  it('memo codes match NV-XXXX', () => {
     for (let i = 0; i < 20; i++) {
-      expect(generateMemoCode()).toMatch(/^LK-[A-Z2-9]{4}$/)
+      expect(generateMemoCode()).toMatch(/^NV-[A-Z2-9]{4}$/)
     }
   })
 })

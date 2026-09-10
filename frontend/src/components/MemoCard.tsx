@@ -26,49 +26,57 @@ export function MemoCard({ code, address }: MemoCardProps) {
   const buttonLabel = copied === 'copied' ? 'Copied!' : copied === 'failed' ? 'Copy failed' : 'Copy'
 
   return (
-    <div className="rounded-card bg-ink p-5 text-white shadow-lift">
-      <p className="text-xs font-semibold tracking-wide text-white/75 uppercase">
+    <div className="rounded-card border-2 border-ink bg-ink p-5 text-paper shadow-press">
+      <p className="text-xs font-semibold tracking-wide text-paper/70 uppercase">
         Send with this memo code
       </p>
       <div className="mt-2 flex items-center justify-between gap-3">
-        <code className="font-display text-2xl font-extrabold tracking-widest">{code}</code>
+        <code className="font-display text-2xl font-extrabold tracking-widest text-volt">{code}</code>
         <button
           type="button"
           onClick={() => void copy(code)}
           aria-live="polite"
-          className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-pill px-4 py-2 text-xs font-bold transition-colors ${
-            copied === 'failed' ? 'bg-white/20 text-white' : 'bg-white/10 hover:bg-white/20'
+          className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-pill border-2 px-4 py-2 font-display text-xs font-bold transition-colors ${
+            copied === 'copied'
+              ? 'border-ink bg-volt text-ink'
+              : copied === 'failed'
+                ? 'border-paper/30 bg-paper/10 text-paper'
+                : 'border-ink bg-volt text-ink hover:bg-volt-deep'
           }`}
         >
-          {copied === 'copied' && <Icon name="check" size={13} />}
+          {copied === 'copied' && <Icon name="check" size={13} weight="bold" />}
           {buttonLabel}
         </button>
       </div>
-      <div className="mt-4 border-t border-white/10 pt-3">
-        <p className="text-xs font-semibold tracking-wide text-white/75 uppercase">
+      <div className="mt-4 border-t border-paper/15 pt-3">
+        <p className="text-xs font-semibold tracking-wide text-paper/70 uppercase">
           Escrow address
         </p>
         <div className="mt-1 flex items-center justify-between gap-3">
-          <code className="truncate text-xs text-white/90">{address}</code>
+          <code className="truncate text-xs text-paper/90">{address}</code>
           <button
             type="button"
             onClick={() => void copy(address)}
             aria-live="polite"
-            className={`inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-pill px-4 py-2 text-xs font-bold transition-colors ${
-              copied === 'failed' ? 'bg-white/20 text-white' : 'bg-white/10 hover:bg-white/20'
+            className={`inline-flex min-h-11 shrink-0 cursor-pointer items-center gap-1.5 rounded-pill border-2 px-4 py-2 font-display text-xs font-bold transition-colors ${
+              copied === 'copied'
+                ? 'border-ink bg-volt text-ink'
+                : copied === 'failed'
+                  ? 'border-paper/30 bg-paper/10 text-paper'
+                  : 'border-ink bg-volt text-ink hover:bg-volt-deep'
             }`}
           >
-            {copied === 'copied' && <Icon name="check" size={13} />}
+            {copied === 'copied' && <Icon name="check" size={13} weight="bold" />}
             {buttonLabel}
           </button>
         </div>
       </div>
       {copied === 'failed' && (
-        <p className="mt-2 text-xs font-semibold text-white" role="alert">
+        <p className="mt-2 text-xs font-semibold text-paper" role="alert">
           Couldn't copy automatically — press and hold the text above to copy it.
         </p>
       )}
-      <p className="mt-3 text-xs leading-relaxed text-white/75">
+      <p className="mt-3 text-xs leading-relaxed text-paper/70">
         Your commitment is confirmed once the transaction is detected on-chain. Keep this page
         open — we check automatically.
       </p>

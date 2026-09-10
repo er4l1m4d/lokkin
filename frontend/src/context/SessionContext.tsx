@@ -3,7 +3,7 @@ import { api } from '@/api'
 import type { QuizMode, User } from '@/api/types'
 import { SessionContext } from './session-context'
 
-const STORAGE_KEY = 'lokkin.session.v1'
+const STORAGE_KEY = 'nivora.session.v1'
 
 interface StoredSession {
   user: User

@@ -10,6 +10,7 @@ import { Icon } from '@/components/Icon'
 import { OptionButton } from '@/components/OptionButton'
 import { TimerPill } from '@/components/TimerPill'
 import { useSession } from '@/context/useSession'
+import { bumpStreak } from '@/lib/streak'
 import { usePolling } from '@/hooks/usePolling'
 
 const REVEAL_MS = 900
@@ -21,7 +22,7 @@ interface PlaySession {
   durationSeconds: number
 }
 
-const SESSION_KEY = (quizId: string) => `lokkin.play.${quizId}`
+const SESSION_KEY = (quizId: string) => `nivora.play.${quizId}`
 
 export function QuizPlayScreen() {
   const { quizId } = useParams<{ quizId: string }>()
@@ -135,6 +136,7 @@ export function QuizPlayScreen() {
     if (!session) return
     if (index + 1 >= session.questions.length) {
       setFinished(true)
+      bumpStreak()
       sessionStorage.removeItem(SESSION_KEY(quizId!))
     } else {
       setIndex((i) => i + 1)
@@ -154,6 +156,7 @@ export function QuizPlayScreen() {
   const onExpire = useCallback(() => {
     if (!finished && session) {
       setFinished(true)
+      bumpStreak()
       sessionStorage.removeItem(SESSION_KEY(quizId!))
     }
   }, [finished, session, quizId])
@@ -161,9 +164,9 @@ export function QuizPlayScreen() {
   if (bootError) {
     return (
       <AppShell hideNav>
-        <div className="rounded-card bg-surface p-8 text-center shadow-soft">
-          <Icon name="alert" className="text-danger" size={30} />
-          <h1 className="mt-2 font-display text-lg font-extrabold text-ink">Can't enter the quiz</h1>
+        <div className="rounded-card border-2 border-ink bg-surface p-8 text-center shadow-card">
+          <Icon name="alert" className="text-danger" size={30} weight="fill" />
+          <h1 className="mt-2 font-display text-lg font-extrabold tracking-tight text-ink">Can't enter the quiz</h1>
           <p className="mt-1 text-sm text-ink-soft">{bootError}</p>
           <div className="mt-4 flex flex-col items-center gap-2">
             <Button size="sm" onClick={() => {
@@ -185,7 +188,7 @@ export function QuizPlayScreen() {
     return (
       <AppShell hideNav>
         <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
-          <div className="h-12 w-12 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
+          <div className="h-12 w-12 animate-spin rounded-pill border-4 border-paper-deep border-t-ink" />
           <p className="text-sm font-semibold text-ink-soft">Getting you into the room…</p>
         </div>
       </AppShell>
@@ -196,8 +199,12 @@ export function QuizPlayScreen() {
     return (
       <AppShell hideNav>
         <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
-          <Icon name="podium" className="text-primary-dark" size={44} />
-          <h1 className="font-display text-2xl font-black text-ink">Answers locked in</h1>
+          <span className="flex h-16 w-16 items-center justify-center rounded-card border-2 border-ink bg-volt text-ink" aria-hidden>
+            <Icon name="lock" size={30} weight="fill" />
+          </span>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
+            Answers <span className="highlight">locked in</span>
+          </h1>
           <p className="max-w-xs text-sm leading-relaxed text-ink-soft">
             You answered {Object.keys(answers).length} of {total} questions — {correctCount} correct.
             Results are calculated once everyone finishes.
@@ -215,22 +222,22 @@ export function QuizPlayScreen() {
       <div className="flex flex-col gap-5">
         <header className="flex items-center justify-between">
           {/* screen heading — visually a label, semantically the h1 */}
-          <h1 className="font-display text-sm font-extrabold text-ink-muted">
+          <h1 className="font-display text-sm font-extrabold text-ink-muted tabular-nums">
             Question {index + 1}
-            <span className="text-ink-muted"> / {total}</span>
+            <span> / {total}</span>
           </h1>
           {deadline && <TimerPill until={new Date(deadline)} onExpire={onExpire} />}
         </header>
 
-        <div className="h-2 overflow-hidden rounded-pill bg-canvas-deep">
+        <div className="h-3 overflow-hidden rounded-pill border-2 border-ink bg-surface" role="progressbar" aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={total}>
           <div
-            className="h-full rounded-pill bg-primary transition-all duration-500"
+            className="h-full rounded-pill bg-volt transition-all duration-500"
             style={{ width: `${((index + (reveal ? 1 : 0)) / total) * 100}%` }}
           />
         </div>
 
-        <section className="rounded-card bg-surface p-6 shadow-soft">
-          <h2 className="font-display text-lg leading-snug font-extrabold text-ink">
+        <section className="rounded-card border-2 border-ink bg-surface p-6 shadow-card">
+          <h2 className="font-display text-[1.35rem] leading-snug font-extrabold tracking-tight text-ink">
             {question.questionText}
           </h2>
           <div className="mt-5 flex flex-col gap-2.5" aria-live="polite">
@@ -269,13 +276,15 @@ export function QuizPlayScreen() {
             onClick={() => selected && void confirmAnswer(selected)}
           >
             {submitting ? 'Locking answer…' : selected ? 'Lock answer' : 'Pick an option'}
+            {selected && !submitting && <Icon name="lock" size={18} weight="fill" />}
           </Button>
         ) : (
           <p
-            className={`text-center text-sm font-bold ${reveal.correct ? 'text-success' : 'text-danger'}`}
+            className={`flex items-center justify-center gap-1.5 text-center font-display text-base font-extrabold tracking-tight ${reveal.correct ? 'text-success' : 'text-danger'}`}
             role="status"
           >
-            {reveal.correct ? 'Correct ✓' : 'Not quite ✗'}
+            <Icon name={reveal.correct ? 'check-circle' : 'x-circle'} size={20} weight="fill" />
+            {reveal.correct ? 'Correct' : 'Not quite'}
           </p>
         )}
 

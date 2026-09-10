@@ -7,7 +7,7 @@ from .models import Base
 
 # Dev default is a local SQLite file (zero setup); production sets
 # DATABASE_URL to Postgres (e.g. postgresql+asyncpg://... on Render/Neon).
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./lokkin.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./nivora.db")
 
 if DATABASE_URL.startswith("sqlite"):
     if ":memory:" in DATABASE_URL:

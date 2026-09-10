@@ -5,7 +5,7 @@ interface SkeletonProps {
 
 /** Loading placeholder block with the standard pulse */
 export function Skeleton({ className = 'h-32' }: SkeletonProps) {
-  return <div className={`animate-pulse rounded-card bg-surface-muted ${className}`} aria-hidden />
+  return <div className={`animate-pulse rounded-card border border-line bg-paper-deep ${className}`} aria-hidden />
 }
 
 /** Vertical stack of skeleton blocks — the standard list-loading pattern */

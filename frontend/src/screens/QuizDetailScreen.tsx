@@ -75,7 +75,7 @@ export function QuizDetailScreen() {
     return (
       <AppShell>
         <div role="status" aria-label="Loading quiz">
-          <div className="h-72 animate-pulse rounded-card bg-surface-muted" />
+          <div className="h-72 animate-pulse rounded-card border border-line bg-paper-deep" />
         </div>
       </AppShell>
     )
@@ -89,13 +89,13 @@ export function QuizDetailScreen() {
       <div className="flex flex-col gap-4">
         {error && data && <StaleBanner />}
 
-        <Link to="/home" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-muted hover:text-primary-dark">
-          <Icon name="arrow-left" size={17} /> All quizzes
+        <Link to="/home" className="inline-flex min-h-11 items-center gap-2 font-display text-sm font-bold text-ink-muted transition-colors hover:text-ink">
+          <Icon name="arrow-left" size={17} weight="bold" /> All quizzes
         </Link>
 
-        <section className="rounded-card bg-surface p-5 shadow-soft">
+        <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
           <div className="flex items-start justify-between gap-3">
-            <h1 className="font-display text-xl font-black text-ink">{quiz.title}</h1>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">{quiz.title}</h1>
             <StatusPill status={quiz.status} />
           </div>
           {quiz.description && (
@@ -103,42 +103,42 @@ export function QuizDetailScreen() {
           )}
 
           <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
-            <div className="rounded-card bg-primary-faint px-2 py-3">
-              <dt className="text-[10px] font-bold tracking-wide text-ink-muted uppercase">Stake</dt>
-              <dd className="font-display text-base font-extrabold text-primary-dark">
+            <div className="rounded-card border border-ink bg-volt-faint px-2 py-3">
+              <dt className="text-[11px] font-semibold text-ink-muted">Stake</dt>
+              <dd className="font-display text-base font-extrabold tabular-nums text-ink">
                 {quiz.entryAmount} NIM
               </dd>
             </div>
-            <div className="rounded-card bg-primary-faint px-2 py-3">
-              <dt className="text-[10px] font-bold tracking-wide text-ink-muted uppercase">Questions</dt>
-              <dd className="font-display text-base font-extrabold text-primary-dark">
+            <div className="rounded-card border border-ink bg-volt-faint px-2 py-3">
+              <dt className="text-[11px] font-semibold text-ink-muted">Questions</dt>
+              <dd className="font-display text-base font-extrabold tabular-nums text-ink">
                 {quiz.questionCount}
               </dd>
             </div>
-            <div className="rounded-card bg-primary-faint px-2 py-3">
-              <dt className="text-[10px] font-bold tracking-wide text-ink-muted uppercase">Duration</dt>
-              <dd className="font-display text-base font-extrabold text-primary-dark">
+            <div className="rounded-card border border-ink bg-volt-faint px-2 py-3">
+              <dt className="text-[11px] font-semibold text-ink-muted">Duration</dt>
+              <dd className="font-display text-base font-extrabold tabular-nums text-ink">
                 {Math.round(quiz.durationSeconds / 60)} min
               </dd>
             </div>
           </dl>
 
           {quiz.startsAt && isUpcoming(quiz.startsAt) && quiz.status === 'OPEN' && (
-            <div className="mt-4 flex items-center justify-between rounded-card bg-amber-soft px-4 py-3">
+            <div className="mt-4 flex items-center justify-between rounded-card border border-amber/30 bg-amber-soft px-4 py-3">
               <span className="text-xs font-bold text-ink">Starts in</span>
               <TimerPill until={new Date(quiz.startsAt)} warnUnderSeconds={60} />
             </div>
           )}
         </section>
 
-        <section className="rounded-card bg-white p-5 shadow-soft">
-          <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
+        <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+          <h2 className="font-display text-base font-extrabold tracking-tight text-ink">
             The pot
           </h2>
-          <p className="mt-1 font-display text-2xl font-black text-ink">
+          <p className="mt-1 font-display text-3xl font-extrabold tracking-tight tabular-nums text-ink">
             {(quiz.entryAmount * Math.max(confirmed, 1)).toLocaleString()} NIM
-            <span className="ml-2 text-xs font-semibold text-ink-muted">
-              if {Math.max(confirmed, minRequired)} players commit
+            <span className="ml-2 font-body text-xs font-semibold text-ink-muted">
+              if {Math.max(confirmed, minRequired)} Challengers commit
             </span>
           </p>
           <div className="mt-3">
@@ -156,15 +156,15 @@ export function QuizDetailScreen() {
         </section>
 
         {participants.length > 0 && (
-          <section className="rounded-card bg-surface p-5 shadow-soft">
-            <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
-              Players ({participants.length})
+          <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+            <h2 className="font-display text-base font-extrabold tracking-tight text-ink">
+              Challengers <span className="tabular-nums">({participants.length})</span>
             </h2>
             <ul className="mt-3 flex flex-wrap gap-2">
               {participants.map((p) => (
                 <li
                   key={p.id}
-                  className="rounded-pill bg-primary-faint px-3 py-1.5 text-xs font-bold text-ink"
+                  className="rounded-pill border border-ink bg-volt-faint px-3 py-1.5 text-xs font-bold text-ink"
                 >
                   {p.displayName}
                 </li>
@@ -174,7 +174,7 @@ export function QuizDetailScreen() {
         )}
 
         {isCreator && (
-          <p className="rounded-card bg-amber-soft px-4 py-3 text-xs font-semibold leading-relaxed text-ink">
+          <p className="rounded-card border border-amber/30 bg-amber-soft px-4 py-3 text-xs font-semibold leading-relaxed text-ink">
             You created this quiz — you play blind, same as everyone else. You never see the
             questions before the room opens.
           </p>
@@ -182,23 +182,24 @@ export function QuizDetailScreen() {
 
         <div className="sticky bottom-24">
           {joined ? (
-            <Button size="lg" onClick={() => navigate(`/quiz/${quizId}/lobby`)}>
+            <Button size="lg" block onClick={() => navigate(`/quiz/${quizId}/lobby`)}>
               {quiz.status === 'LIVE' ? 'Return to the quiz' : 'Go to lobby'}
             </Button>
           ) : quiz.status === 'OPEN' ? (
-            <Button size="lg" onClick={() => navigate(`/quiz/${quizId}/commit`)}>
+            <Button size="lg" block onClick={() => navigate(`/quiz/${quizId}/commit`)}>
+              <Icon name="lock" size={18} weight="fill" />
               Commit {quiz.entryAmount} NIM
             </Button>
           ) : quiz.status === 'LIVE' ? (
-            <Button size="lg" disabled>
+            <Button size="lg" block disabled>
               Already live — join earlier next time
             </Button>
           ) : quiz.status === 'VALIDATING' || quiz.status === 'ENDED' || quiz.status === 'FINALIZED' || quiz.status === 'SETTLED' ? (
-            <Button size="lg" variant="secondary" onClick={() => navigate(`/quiz/${quizId}/results`)}>
+            <Button size="lg" block variant="secondary" onClick={() => navigate(`/quiz/${quizId}/results`)}>
               See results
             </Button>
           ) : (
-            <Button size="lg" disabled>
+            <Button size="lg" block disabled>
               Not open for entries
             </Button>
           )}

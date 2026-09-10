@@ -28,26 +28,26 @@ export function OptionButton({
   onSelect,
 }: OptionButtonProps) {
   const base =
-    'flex w-full items-center gap-3 rounded-card border-2 bg-white p-4 text-left transition-all duration-150'
+    'flex w-full items-center gap-3 rounded-card border-2 p-4 text-left transition-all duration-150'
 
   const state = (() => {
     if (reveal === 'correct') return 'border-success bg-success-soft'
     if (reveal === 'wrong') return 'border-danger bg-danger-soft'
-    if (reveal === 'missed') return 'border-line bg-canvas-deep opacity-70'
-    if (selected) return 'border-primary bg-primary-faint shadow-tap'
-    return 'border-line hover:border-primary-soft active:scale-[0.99]'
+    if (reveal === 'missed') return 'border-line bg-paper-deep opacity-70'
+    if (selected) return 'border-ink bg-volt shadow-press-sm'
+    return 'border-line bg-surface hover:border-ink active:translate-y-0.5'
   })()
 
   const keyBadge = (() => {
-    if (reveal === 'correct') return 'bg-success text-white'
-    if (reveal === 'wrong') return 'bg-danger text-white'
-    if (selected) return 'bg-primary text-white'
-    return 'bg-canvas-deep text-ink-soft'
+    if (reveal === 'correct') return 'border-success bg-success text-white'
+    if (reveal === 'wrong') return 'border-danger bg-danger text-white'
+    if (selected) return 'border-ink bg-ink text-volt'
+    return 'border-line bg-surface text-ink-soft'
   })()
 
   const icon = (() => {
-    if (reveal === 'correct') return <Icon name="check" size={16} strokeWidth={2.5} />
-    if (reveal === 'wrong') return <Icon name="x" size={16} strokeWidth={2.5} />
+    if (reveal === 'correct') return <Icon name="check" size={16} weight="bold" />
+    if (reveal === 'wrong') return <Icon name="x" size={16} weight="bold" />
     return KEY_LETTERS[optionKey]
   })()
 
@@ -60,11 +60,11 @@ export function OptionButton({
       aria-pressed={selected}
     >
       <span
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-pill font-display text-sm font-extrabold ${keyBadge}`}
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-pill border-2 font-display text-sm font-extrabold ${keyBadge}`}
       >
         {icon}
       </span>
-      <span className="text-sm font-medium text-ink">{text}</span>
+      <span className="text-[15px] font-medium text-ink">{text}</span>
     </button>
   )
 }

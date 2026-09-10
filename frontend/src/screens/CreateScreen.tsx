@@ -61,7 +61,7 @@ export function CreateScreen() {
 
   const generate = async () => {
     if (title.trim().length < 3) {
-      setError('Give your quiz a title (3+ characters)')
+      setError('Give your Trial a title (3+ characters)')
       return
     }
     if (!canGenerate(material)) {
@@ -166,9 +166,11 @@ export function CreateScreen() {
     <AppShell>
       <div className="flex flex-col gap-5">
         <header>
-          <h1 className="font-display text-2xl font-black text-ink">Create a quiz</h1>
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
+            Create a <span className="highlight">Trial</span>
+          </h1>
           <p className="mt-1 text-sm text-ink-soft">
-            Your material in, a challenge out. You play blind — same as everyone.
+            Your material in, a Trial out. You play blind — same as everyone.
           </p>
         </header>
 
@@ -183,8 +185,8 @@ export function CreateScreen() {
 
         {step === 'upload' && (
           <section className="flex flex-col gap-4">
-            <div className="rounded-card bg-surface p-5 shadow-soft">
-              <label htmlFor="quizTitle" className="text-xs font-bold tracking-wide text-ink-muted uppercase">
+            <div className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+              <label htmlFor="quizTitle" className="text-xs font-semibold text-ink-muted">
                 Title
               </label>
               <input
@@ -194,11 +196,11 @@ export function CreateScreen() {
                 maxLength={80}
                 placeholder="e.g. Cell Biology Final"
                 onChange={(e) => setTitle(e.target.value)}
-                className="mt-1.5 min-h-12 w-full rounded-card border-2 border-line bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted focus:border-primary"
+                className="mt-1.5 min-h-12 w-full rounded-card border-2 border-ink bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted/70 focus:bg-volt-faint"
               />
 
-              <label htmlFor="quizDesc" className="mt-4 block text-xs font-bold tracking-wide text-ink-muted uppercase">
-                Description <span className="font-medium normal-case">(optional)</span>
+              <label htmlFor="quizDesc" className="mt-4 block text-xs font-semibold text-ink-muted">
+                Description <span className="font-normal">(optional)</span>
               </label>
               <input
                 id="quizDesc"
@@ -207,17 +209,17 @@ export function CreateScreen() {
                 maxLength={200}
                 placeholder="What is this quiz about?"
                 onChange={(e) => setDescription(e.target.value)}
-                className="mt-1.5 min-h-12 w-full rounded-card border-2 border-line bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted focus:border-primary"
+                className="mt-1.5 min-h-12 w-full rounded-card border-2 border-ink bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted/70 focus:bg-volt-faint"
               />
             </div>
 
-            <div className="rounded-card bg-surface p-5 shadow-soft">
+            <div className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
               <div className="flex items-start gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card bg-primary-faint text-primary-dark" aria-hidden>
-                  <Icon name="file" size={20} />
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card border-2 border-ink bg-volt text-ink" aria-hidden>
+                  <Icon name="note" size={20} weight="fill" />
                 </span>
                 <div>
-                  <p className="text-sm font-bold text-ink">Study material</p>
+                  <p className="font-display text-sm font-extrabold tracking-tight text-ink">Study material</p>
                   <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
                     Use notes your group can fairly be tested on.
                   </p>
@@ -226,9 +228,9 @@ export function CreateScreen() {
               <button
                 type="button"
                 onClick={() => fileInput.current?.click()}
-                className="mt-2 w-full rounded-card border-2 border-dashed border-primary-soft bg-primary-faint px-4 py-8 text-center transition-colors hover:border-primary"
+                className="mt-2 w-full cursor-pointer rounded-card border-2 border-dashed border-ink bg-volt-faint px-4 py-8 text-center transition-colors hover:bg-volt"
               >
-                <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-card bg-white text-primary-dark shadow-tap" aria-hidden>
+                <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-card border-2 border-ink bg-surface text-ink" aria-hidden>
                   <Icon name="file" size={20} />
                 </span>
                 <span className="mt-1 block text-sm font-bold text-ink">
@@ -256,16 +258,16 @@ export function CreateScreen() {
                 }}
                 rows={6}
                 placeholder="Paste your study material here — lecture notes, textbook paragraphs, summary sheets…"
-                className="mt-3 min-h-36 w-full resize-y rounded-card border-2 border-line bg-surface px-4 py-3 text-base leading-relaxed text-ink placeholder:text-ink-muted focus:border-primary focus:outline-none"
+                className="mt-3 min-h-36 w-full resize-y rounded-card border-2 border-ink bg-surface px-4 py-3 text-base leading-relaxed text-ink placeholder:text-ink-muted/70 focus:bg-volt-faint"
                 aria-label="Study material"
               />
-              <p className="mt-1 text-right text-xs text-ink-muted">
+              <p className="mt-1 text-right text-xs text-ink-muted tabular-nums">
                 {material.trim().length} characters
               </p>
             </div>
 
-            <div className="rounded-card bg-surface p-5 shadow-soft">
-              <p className="text-xs font-bold tracking-wide text-ink-muted uppercase">Settings</p>
+            <div className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+              <p className="font-display text-base font-extrabold tracking-tight text-ink">Settings</p>
               <ChoiceRow
                 label="Questions"
                 options={QUESTION_COUNTS}
@@ -286,6 +288,7 @@ export function CreateScreen() {
                 value={stake}
                 onChange={setStake}
                 format={(v) => `${v} NIM`}
+                accent
               />
               <ChoiceRow
                 label="Starts in"
@@ -304,17 +307,17 @@ export function CreateScreen() {
         )}
 
         {step === 'generating' && (
-          <section className="flex min-h-[50vh] flex-col items-center justify-center gap-4 rounded-card bg-surface p-8 shadow-soft">
-            <div className="h-14 w-14 animate-spin rounded-pill border-4 border-primary-soft border-t-primary" />
-            <p className="font-display text-base font-extrabold text-ink">{genMessage}</p>
+          <section className="flex min-h-[50vh] flex-col items-center justify-center gap-4 rounded-card border-2 border-ink bg-surface p-8 shadow-card">
+            <div className="h-14 w-14 animate-spin rounded-pill border-4 border-paper-deep border-t-ink" />
+            <p className="font-display text-base font-extrabold tracking-tight text-ink">{genMessage}</p>
             <p className="text-xs text-ink-muted">This usually takes a few seconds</p>
           </section>
         )}
 
         {step === 'review' && (
           <section className="flex flex-col gap-4">
-            <div className="rounded-card bg-primary-faint px-4 py-3">
-              <p className="text-sm font-bold text-ink">
+            <div className="rounded-card border-2 border-ink bg-volt px-4 py-3 shadow-card">
+              <p className="font-display text-sm font-extrabold tracking-tight text-ink tabular-nums">
                 {drafts.length} question{drafts.length === 1 ? '' : 's'} drafted
               </p>
               <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
@@ -337,7 +340,8 @@ export function CreateScreen() {
             ))}
 
             <Button variant="secondary" onClick={() => setDrafts((prev) => [...prev, blankDraft()])}>
-              + Add question
+              <Icon name="plus" size={16} weight="bold" />
+              Add question
             </Button>
 
             <div className="sticky bottom-24 flex flex-col gap-2">
@@ -366,6 +370,7 @@ function ChoiceRow({
   onChange,
   format,
   last = false,
+  accent = false,
 }: {
   label: string
   options: readonly number[]
@@ -373,19 +378,25 @@ function ChoiceRow({
   onChange: (v: number) => void
   format: (v: number) => string
   last?: boolean
+  /** the money choice gets the highlighter */
+  accent?: boolean
 }) {
   return (
     <div className={`flex items-center justify-between gap-3 py-3 ${last ? '' : 'border-b border-line'}`}>
       <span className="text-sm font-semibold text-ink">{label}</span>
-              <div className="flex flex-wrap justify-end gap-1.5">
+      <div className="flex flex-wrap justify-end gap-1.5">
         {options.map((o) => (
           <button
             key={o}
             type="button"
             onClick={() => onChange(o)}
             aria-pressed={value === o}
-            className={`min-h-11 rounded-pill px-3 py-1.5 text-xs font-bold transition-colors ${
-              value === o ? 'bg-ink text-white' : 'bg-canvas-deep text-ink-soft'
+            className={`min-h-11 cursor-pointer rounded-pill border-2 px-3 py-1.5 font-display text-xs font-bold tabular-nums tracking-tight transition-colors ${
+              value === o
+                ? accent
+                  ? 'border-ink bg-volt text-ink'
+                  : 'border-ink bg-ink text-paper'
+                : 'border-line bg-surface text-ink-soft hover:border-ink'
             }`}
           >
             {format(o)}
@@ -414,20 +425,20 @@ function QuestionEditor({
   onMove: (dir: -1 | 1) => void
 }) {
   return (
-      <article className="rounded-card bg-surface p-5 shadow-soft">
+    <article className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
       <header className="flex items-center justify-between">
-          <span className="font-display text-xs font-extrabold tracking-wide text-primary-dark uppercase">
+        <span className="font-display text-xs font-bold text-ink-muted tabular-nums">
           Question {index + 1}
         </span>
         <div className="flex items-center gap-1">
           <IconBtn label="Move up" disabled={index === 0} onClick={() => onMove(-1)}>
-            <Icon name="arrow-up" size={16} />
+            <Icon name="arrow-up" size={16} weight="bold" />
           </IconBtn>
           <IconBtn label="Move down" disabled={index === total - 1} onClick={() => onMove(1)}>
-            <Icon name="arrow-down" size={16} />
+            <Icon name="arrow-down" size={16} weight="bold" />
           </IconBtn>
           <IconBtn label="Delete question" danger onClick={onRemove}>
-            <Icon name="x" size={16} />
+            <Icon name="trash" size={16} weight="bold" />
           </IconBtn>
         </div>
       </header>
@@ -438,7 +449,7 @@ function QuestionEditor({
         onChange={(e) => onUpdate({ questionText: e.target.value })}
         placeholder="Question text"
         aria-label={`Question ${index + 1} text`}
-        className="mt-3 min-h-24 w-full resize-y rounded-card border-2 border-line bg-surface px-3.5 py-2.5 text-base leading-relaxed text-ink focus:border-primary"
+        className="mt-3 min-h-24 w-full resize-y rounded-card border-2 border-ink bg-surface px-3.5 py-2.5 text-base leading-relaxed text-ink focus:bg-volt-faint"
       />
 
       <div className="mt-3 flex flex-col gap-2">
@@ -449,13 +460,13 @@ function QuestionEditor({
               onClick={() => onUpdate({ correctOption: o.key })}
               aria-pressed={draft.correctOption === o.key}
               aria-label={`Mark option ${o.key} as correct`}
-              className={`flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-pill font-display text-xs font-extrabold transition-colors ${
+              className={`flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center justify-center rounded-pill border-2 font-display text-xs font-extrabold transition-colors ${
                 draft.correctOption === o.key
-                  ? 'bg-success text-white'
-                  : 'bg-canvas-deep text-ink-soft'
+                  ? 'border-ink bg-success text-white'
+                  : 'border-line bg-paper-deep text-ink-soft hover:border-ink'
               }`}
             >
-              {draft.correctOption === o.key ? <Icon name="check" size={15} strokeWidth={2.5} /> : o.key}
+              {draft.correctOption === o.key ? <Icon name="check" size={15} weight="bold" /> : o.key}
             </button>
             <input
               type="text"
@@ -463,14 +474,14 @@ function QuestionEditor({
               placeholder={`Option ${o.key}`}
               onChange={(e) => onUpdateOption(o.key, e.target.value)}
               aria-label={`Option ${o.key} for question ${index + 1}`}
-              className="min-h-11 w-full rounded-card border-2 border-line bg-surface px-3.5 py-2 text-base text-ink focus:border-primary"
+              className="min-h-11 w-full rounded-card border-2 border-ink bg-surface px-3.5 py-2 text-base text-ink focus:bg-volt-faint"
             />
           </div>
         ))}
       </div>
 
       {draft.explanation && (
-        <p className="mt-3 rounded-card bg-amber-soft px-3.5 py-2 text-xs leading-relaxed text-ink">
+        <p className="mt-3 rounded-card border-l-4 border-volt bg-paper-deep px-3.5 py-2 text-xs leading-relaxed text-ink">
           <span className="font-bold">Why: </span>
           {draft.explanation}
         </p>
@@ -498,8 +509,8 @@ function IconBtn({
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className={`flex min-h-11 min-w-11 items-center justify-center rounded-pill text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
-        danger ? 'bg-danger-soft text-danger' : 'bg-canvas-deep text-ink-soft'
+      className={`flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-pill text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
+        danger ? 'bg-danger-soft text-danger hover:bg-danger hover:text-white' : 'bg-paper-deep text-ink-soft hover:bg-ink hover:text-paper'
       }`}
     >
       {children}

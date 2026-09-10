@@ -61,8 +61,8 @@ export function LobbyScreen() {
     return (
       <AppShell>
         <div className="flex flex-col gap-3" role="status" aria-label="Loading lobby">
-          <div className="h-40 animate-pulse rounded-card bg-surface-muted" />
-          <div className="h-64 animate-pulse rounded-card bg-surface-muted" />
+          <div className="h-40 animate-pulse rounded-card border border-line bg-paper-deep" />
+          <div className="h-64 animate-pulse rounded-card border border-line bg-paper-deep" />
         </div>
       </AppShell>
     )
@@ -87,26 +87,32 @@ export function LobbyScreen() {
         {error && data && <StaleBanner />}
 
         <header className="text-center">
-          <h1 className="font-display text-2xl font-black text-ink">{quiz.title}</h1>
-          <p className="mt-1 text-sm text-ink-soft">
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">{quiz.title}</h1>
+          <p className="mt-1 text-sm font-semibold text-ink-soft tabular-nums">
             {quiz.entryAmount} NIM stake · {quiz.questionCount} questions ·{' '}
             {Math.round(quiz.durationSeconds / 60)} min
           </p>
         </header>
 
-        <section aria-live="polite" className="flex flex-col items-center gap-3 rounded-card bg-surface p-6 shadow-soft">
+        <section aria-live="polite" className="flex flex-col items-center gap-3 rounded-card border-2 border-ink bg-surface p-6 shadow-card">
           {roomClosed ? (
             <>
-              <Icon name="podium" className="text-primary-dark" size={34} />
-              <p className="font-display text-base font-extrabold text-ink">This room has closed</p>
+              <span className="flex h-12 w-12 items-center justify-center rounded-card border-2 border-ink bg-volt text-ink" aria-hidden>
+                <Icon name="podium" size={26} weight="duotone" />
+              </span>
+              <p className="font-display text-base font-extrabold tracking-tight text-ink">This room has closed</p>
               <Button variant="secondary" onClick={() => navigate(`/quiz/${quizId}/results`)}>
                 See results
               </Button>
             </>
           ) : isLive ? (
             <>
-              <Icon name="spark" className="text-danger" size={34} />
-              <p className="font-display text-lg font-black text-danger">Room is live</p>
+              <span className="flex h-12 w-12 items-center justify-center rounded-card border-2 border-ink bg-ink text-volt animate-pop-in" aria-hidden>
+                <Icon name="lightning" size={26} weight="fill" />
+              </span>
+              <p className="font-display text-xl font-extrabold tracking-tight text-ink">
+                Room is <span className="highlight-swipe">live</span>
+              </p>
               <Button size="lg" onClick={() => navigate(`/quiz/${quizId}/play`)}>
                 Enter the quiz
               </Button>
@@ -121,7 +127,7 @@ export function LobbyScreen() {
           )}
         </section>
 
-        <section className="rounded-card bg-surface p-5 shadow-soft">
+        <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
           <MeterBar
             value={confirmed}
             target={minRequired}
@@ -129,21 +135,21 @@ export function LobbyScreen() {
             label="Confirmed commitments"
           />
           {readyToStart ? (
-            <p className="mt-3 rounded-card bg-success-soft px-4 py-2.5 text-xs font-bold text-success">
+            <p className="mt-3 rounded-card border border-success/30 bg-success-soft px-4 py-2.5 text-xs font-bold text-success">
               All set — enough players are in. This quiz is happening.
             </p>
           ) : (
-            <p className="mt-3 rounded-card bg-amber-soft px-4 py-2.5 text-xs leading-relaxed text-ink">
+            <p className="mt-3 rounded-card border border-amber/30 bg-amber-soft px-4 py-2.5 text-xs leading-relaxed text-ink">
               Needs {minRequired - confirmed} more{' '}
-              {minRequired - confirmed === 1 ? 'player' : 'players'}. If the room opens with
+              {minRequired - confirmed === 1 ? 'challenger' : 'challengers'}. If the room opens with
               fewer than {minRequired}, everyone is auto-refunded in full.
             </p>
           )}
         </section>
 
-        <section className="rounded-card bg-surface p-5 shadow-soft">
-          <h2 className="font-display text-sm font-extrabold tracking-wide text-ink-muted uppercase">
-            In the room ({confirmed})
+        <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+          <h2 className="font-display text-base font-extrabold tracking-tight text-ink">
+            In the room <span className="tabular-nums">({confirmed})</span>
           </h2>
           {participants.length === 0 ? (
             <p className="mt-3 text-sm text-ink-soft">
@@ -163,7 +169,7 @@ export function LobbyScreen() {
         </section>
 
         {isCreator && (
-          <p className="rounded-card bg-amber-soft px-4 py-3 text-xs font-semibold leading-relaxed text-ink">
+          <p className="rounded-card border border-amber/30 bg-amber-soft px-4 py-3 text-xs font-semibold leading-relaxed text-ink">
             You're hosting this one — you play blind, same as everyone else. The questions
             lock the moment the room opens.
           </p>
@@ -185,19 +191,19 @@ function CountdownRing({ fraction, label }: { fraction: number; label: string })
   return (
     <div className="relative h-28 w-28" role="timer" aria-label={`${label} until start`}>
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-        <circle cx="50" cy="50" r={R} fill="none" strokeWidth="8" className="stroke-canvas-deep" />
+        <circle cx="50" cy="50" r={R} fill="none" strokeWidth="9" className="stroke-paper-deep" />
         <circle
           cx="50"
           cy="50"
           r={R}
           fill="none"
-          strokeWidth="8"
+          strokeWidth="9"
           strokeLinecap="round"
-          className="stroke-primary transition-[stroke-dashoffset] duration-1000"
+          className="stroke-ink transition-[stroke-dashoffset] duration-1000"
           style={{ strokeDasharray: C, strokeDashoffset: C * (1 - fraction) }}
         />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center font-display text-xl font-black tabular-nums text-ink">
+      <span className="absolute inset-0 flex items-center justify-center font-display text-xl font-extrabold tabular-nums text-ink">
         {label}
       </span>
     </div>
