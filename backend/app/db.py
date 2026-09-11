@@ -9,6 +9,12 @@ from .models import Base
 # DATABASE_URL to Postgres (e.g. postgresql+asyncpg://... on Render/Neon).
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./nivora.db")
 
+# Neon/Render may pass postgresql:// — async engine needs postgresql+asyncpg://
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = "postgresql+asyncpg://" + DATABASE_URL[len("postgresql://"):]
+elif DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = "postgresql+asyncpg://" + DATABASE_URL[len("postgres://"):]
+
 if DATABASE_URL.startswith("sqlite"):
     if ":memory:" in DATABASE_URL:
         # Single shared connection so :memory: survives across sessions (tests)
