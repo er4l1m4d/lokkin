@@ -15,6 +15,12 @@ if DATABASE_URL.startswith("postgresql://"):
 elif DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = "postgresql+asyncpg://" + DATABASE_URL[len("postgres://"):]
 
+# Strip sslmode param (asyncpg doesn't accept it) — SSL is enabled by default on port 5432
+if "?sslmode=" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.split("?sslmode=")[0]
+elif "&sslmode=" in DATABASE_URL:
+    DATABASE_URL = DATABASE_URL.split("&sslmode=")[0]
+
 if DATABASE_URL.startswith("sqlite"):
     if ":memory:" in DATABASE_URL:
         # Single shared connection so :memory: survives across sessions (tests)
