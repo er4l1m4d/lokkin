@@ -24,11 +24,11 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
 ]
 
 const EMPTY_TITLES: Record<Filter, string> = {
-  ALL: 'No Trials yet',
+  ALL: 'No Qestias yet',
   OPEN: 'Nothing open to join right now',
-  LIVE: 'No live Trials right now',
+  LIVE: 'No live Qestias right now',
   VALIDATING: 'Nothing in validation right now',
-  SETTLED: 'No settled Trials yet',
+  SETTLED: 'No settled Qestias yet',
 }
 
 /** Sort: joinable first (OPEN, then LIVE), then by soonest start, rest after */
@@ -112,7 +112,7 @@ export function HomeScreen() {
             </div>
             <div>
               <h2 className="font-display text-xl font-extrabold tracking-tight text-paper">
-                Which Trial will you take?
+                Which Qestia will you enter?
               </h2>
               <p className="mt-1 max-w-[34ch] text-sm leading-relaxed text-paper/70">
                 Pick a challenge, trust your prep, and make every answer count.
@@ -124,7 +124,7 @@ export function HomeScreen() {
         <div
           className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5"
           role="group"
-          aria-label="Filter Trials by status"
+          aria-label="Filter Qestias by status"
         >
           {FILTERS.map((f) => (
             <button
@@ -145,8 +145,8 @@ export function HomeScreen() {
 
         {error && !quizzes ? (
           <ErrorState
-            title="Can't reach the Trials"
-            description="The list didn't load — your Trials are safe."
+            title="Can't reach the Qestias"
+            description="The list didn't load — your Qestias are safe."
             hint="Check your connection"
             onRetry={() => void refresh()}
           />
@@ -157,7 +157,7 @@ export function HomeScreen() {
             <EmptyState
               icon={<Icon name="podium" size={26} weight="duotone" />}
               title={EMPTY_TITLES[filter]}
-              description="Be the first — turn your study material into a Trial."
+              description="Be the first — turn your study material into a Qestia."
               action={
                 <Link to="/create">
                   <Button size="sm">Create a quiz</Button>
@@ -180,8 +180,8 @@ export function HomeScreen() {
             to="/create"
             className="press pointer-events-auto flex min-h-12 items-center gap-2 rounded-pill border-2 border-ink bg-volt px-5 font-display text-sm font-extrabold tracking-tight text-ink shadow-press hover:bg-volt-deep"
           >
-            <Icon name="plus" size={17} weight="bold" />
-            Create a Trial
+            <            Icon name="plus" size={17} weight="bold" />
+            Create a Qestia
           </Link>
         </div>
       </div>

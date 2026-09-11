@@ -1,21 +1,23 @@
-# Nivora Design System — v2 "Highlighter Arena"
+# Qestia Design System — v2 "Highlighter Arena"
 
 ## Product Register
 
-Nivora is a commitment-based competitive study platform on Nimiq. Nivora is a realm where knowledge has no value until it is tested — you turn your notes into live Trials, stake NIM on your prep, face your Challengers, and the top 3 split the pot. The interface should feel like studying turned up to competition: ink on paper, a highlighter that marks what matters, and money moments that hit hard.
+Qestia is a commitment-based competitive study platform on Nimiq — **where knowing becomes proving**. Qestia is the Threshold between knowledge and proof: you prepare, you stake NIM on your prep, and the moment you enter, the clock applies pressure and the result tells the truth. Top 3 split the pot; showing up still pays. The interface should feel like studying turned up to competition: ink on paper, a highlighter that marks what matters, and money moments that hit hard.
 
-**Brand line**: Don't just know it. Prove it.
-**Philosophy**: Knowledge is only potential until you put it to the test.
+**Brand line**: Qestia — Know it. Prove it.
+**Philosophy**: Where knowing becomes proving.
+**Product loop**: Learn. Prepare. Challenge. Prove. Rise.
 
 ## Brand vocabulary
 
-Nivora speaks a shared language across every surface — keep it consistent:
+Qestia speaks a shared language across every surface — keep it consistent:
 
-- **Trial** — a quiz challenge (user-facing copy; code identifiers keep `quiz`)
+- **Qestia** — a challenge itself ("Create a Qestia", "Enter Qestia"); code identifiers keep `quiz`
 - **Challenger** — a player/participant
 - **Standing** — the leaderboard / full ranking
-- **Host** — the Trial's creator (code keeps `creator`)
-- The lock is the commitment motif: stakes, sealed answers, locked-in states.
+- **Host** — the Qestia's creator in UI ("Keeper" is reserved for lore)
+- **The Threshold** — the moment of entry: commitment confirmed, clock started. Reserve "crossing" language for that exact moment (commit confirm, Enter Qestia button)
+- The lock stays the commitment motif (stakes, sealed answers, locked-in states); the **Q-portal mark** (volt ring + tail on ink) is the brand symbol
 
 ## The idea
 
@@ -24,8 +26,9 @@ The brand color *is* the highlighter you mark notes with. Warm paper canvas, nea
 ## Signature motifs
 
 1. **Highlight swipe** — key words in headlines carry a marker-bar highlight (`.highlight` static, `.highlight-swipe` animated). Used on hero words and milestone moments only — never decoration.
-2. **The lock** — Phosphor `lock-key` is the brand glyph. It appears at the wordmark, on commit CTAs, "locked in" confirmations, and sealed states. Commitment vocabulary is literal.
-3. **Hard-press** — primary CTAs and cards sit on hard ink offset shadows (`shadow-press`, `shadow-press-sm`, `shadow-card`) and collapse onto your finger on press-in (`.press`).
+2. **The Q-portal mark** — a volt ring + tail on ink (the Q as a circular threshold). It is the brand symbol: favicon, wordmark glyph. 
+3. **The lock** — Phosphor `lock-key` carries commitment: commit CTAs, "locked in" confirmations, sealed states. Commitment vocabulary is literal, but the lock serves the mechanic, not the wordmark.
+4. **Hard-press** — primary CTAs and cards sit on hard ink offset shadows (`shadow-press`, `shadow-press-sm`, `shadow-card`) and collapse onto your finger on press-in (`.press`).
 
 ## Tokens
 

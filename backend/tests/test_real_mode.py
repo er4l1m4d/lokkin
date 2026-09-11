@@ -51,7 +51,7 @@ async def join_and_pay(client, chain, quiz_id, user, wallet=None):
     assert r.status_code == 200, r.text
     body = r.json()
     assert body["status"] == "PENDING"
-    assert body["memoCode"].startswith("NV-")
+    assert body["memoCode"].startswith("QS-")
     assert body["escrowAddress"] == ESCROW
     assert body["paymentsMode"] == "real"
 
@@ -131,7 +131,7 @@ async def test_verification_rejects_wrong_amount_recipient_and_memo(client, real
     assert "value" in r.json()["detail"].lower()
 
     # wrong memo
-    tx = fake_tx(real_mode, "NV-WRONG")
+    tx = fake_tx(real_mode, "QS-WRONG")
     r = await client.post(f"/api/quizzes/{quiz_id}/commitments/verify", json={"participantId": pid, "txRef": tx})
     assert r.json()["verified"] is False
     assert "memo" in r.json()["detail"].lower()

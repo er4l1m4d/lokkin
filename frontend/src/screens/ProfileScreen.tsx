@@ -57,11 +57,11 @@ export function ProfileScreen() {
     try {
       const accounts = await listWallets()
       if (accounts.length === 0) {
-        setLinkError('No account found in your wallet. Open Nivora inside Nimiq Pay to link one.')
+        setLinkError('No account found in your wallet. Open Qestia inside Nimiq Pay to link one.')
         return
       }
       const deviceId = await getDeviceIdentifier(
-        "Confirm it's really you — one Nivora identity per device",
+        "Confirm it's really you — one Qestia identity per device",
       )
       const res = await api.linkWallet(user.id, accounts[0], deviceId ?? undefined)
       setWallet(res.walletAddress)
@@ -106,7 +106,7 @@ export function ProfileScreen() {
         </header>
 
         <section className="grid grid-cols-3 gap-3">
-          <StatCard label="Trials" value={history === null ? '—' : `${stats.played}`} />
+          <StatCard label="Qestias" value={history === null ? '—' : `${stats.played}`} />
           <StatCard label="Podiums" value={history === null ? '—' : `${stats.podiums}`} />
           <StatCard
             label="Net NIM"
@@ -215,8 +215,8 @@ export function ProfileScreen() {
           ) : history.length === 0 ? (
             <EmptyState
               icon={<Icon name="podium" size={28} weight="duotone" />}
-              title="No Trials yet"
-              description="Join or create your first Trial and your results will show up here."
+              title="No Qestias yet"
+              description="Join or create your first Qestia and your results will show up here."
               action={
                 <Link to="/home">
                   <Button size="sm">Find a quiz</Button>
@@ -286,7 +286,7 @@ export function ProfileScreen() {
         </Button>
 
         <p className="text-center text-[11px] text-ink-muted">
-          Nivora · commitment-based study Trials · v0.1
+          Qestia · where knowing becomes proving · v0.1
         </p>
       </div>
 

@@ -6,7 +6,7 @@ import type {
   CreateQuizRequest,
   CreateUserRequest,
   JoinResult,
-  NivoraApi,
+  QestiaApi,
   OptionKey,
   Participant,
   PlayerQuestion,
@@ -371,7 +371,7 @@ function maybeAdvanceLifecycle(quiz: Quiz) {
   }
 }
 
-export function createMockApi(): NivoraApi {
+export function createMockApi(): QestiaApi {
   return {
     async getConfig(): Promise<AppConfig> {
       return {

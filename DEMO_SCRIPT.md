@@ -1,4 +1,4 @@
-# Nivora — Demo Video Script
+# Qestia — Demo Video Script
 
 **Length:** ~2:30 · **Format:** screen recording (OBS/Windows Game Bar), phone-width viewport, mic voiceover
 **Setup before recording:**
@@ -6,7 +6,7 @@
 - Browser devtools → mobile viewport (390×844), 100% zoom
 - Two browser windows side-by-side for the multiplayer moment (Window A = host, Window B = player)
 - `DISPUTE_WINDOW_SECONDS=15` on the API for a fast VALIDATING→SETTLED walk
-- Fresh `backend/nivora.db` (delete file, restart API) — seeded state only
+- Fresh `backend/qestia.db` (delete file, restart API) — seeded state only
 - Close Slack/notifications; do one dry run
 
 ---
@@ -14,12 +14,12 @@
 ## Shot list
 
 ### 0:00–0:15 — Hook (Welcome screen, Window A)
-**VO:** "Studying for an exam shouldn't end with a quiz nobody finishes. Nivora puts skin in the game."
-- Show welcome screen: "Lock in with Nivora — Prove what you know. Commit. Compete. Improve."
+**VO:** "Studying for an exam shouldn't end with a quiz nobody finishes. Qestia puts skin in the game."
+- Show welcome screen: "Qestia — Know it. Prove it."
 - Type name "Ada", select **Commitment** mode, press Enter.
 
 ### 0:15–0:45 — Create (host)
-**VO:** "Paste your study notes. Nivora drafts the quiz — you never see the questions, so you play blind like everyone else."
+**VO:** "Paste your study notes. Qestia drafts the quiz — you never see the questions, so you play blind like everyone else."
 - Home → **Create quiz** → paste a chunk of notes (have them ready on clipboard)
 - Settings: 5 questions · 3 min · 10 NIM · starts now
 - **Generate questions** → progress stages → review screen, tap through one question to show editing
@@ -50,7 +50,7 @@
 - (Optional cutaway: CommitScreen memo code + escrow address, or the sidecar log showing a payout hash)
 
 ### 2:20–2:30 — Outro (Welcome screen)
-**VO:** "Nivora. Prove what you know."
+**VO:** "Qestia. Know it. Prove it."
 - Logo + tagline card. End.
 
 ---

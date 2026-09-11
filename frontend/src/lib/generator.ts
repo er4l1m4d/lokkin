@@ -109,5 +109,5 @@ export function generateMemoCode(): string {
   for (let i = 0; i < 4; i++) {
     code += chars[Math.floor(Math.random() * chars.length)]
   }
-  return `NV-${code}`
+  return `QS-${code}`
 }

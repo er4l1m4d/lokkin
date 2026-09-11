@@ -1,8 +1,8 @@
-# Nivora
+# Qestia
 
-**Don't just know it. Prove it.**
+**Know it. Prove it.**
 
-Nivora is a commitment-based competitive study platform on [Nimiq](https://nimiq.com). Upload your study material, let AI draft the Trial, put NIM on the line, and compete live against your classmates. Top 3 split the pot (50/30/10), everyone else gets 80% back — so showing up and finishing is almost always better than not. If the room doesn't fill, everyone is auto-refunded in full.
+Qestia is a commitment-based competitive study platform on [Nimiq](https://nimiq.com) — where knowing becomes proving. Upload your study material, let AI draft the Qestia, put NIM on the line, and compete live against your classmates. Top 3 split the pot (50/30/10), everyone else gets 80% back — so showing up and finishing is almost always better than not. If the room doesn't fill, everyone is auto-refunded in full.
 
 This is a monorepo:
 
@@ -14,8 +14,8 @@ This is a monorepo:
 ## How it works
 
 1. **Create** — paste study notes; the generator drafts cloze-style questions (AI upgrade path behind the same interface). Review, set stake/duration/start time, publish.
-2. **Commit** — Challengers lock in the stake in NIM. Mock mode instant-confirms; real mode issues a unique `NV-XXXX` memo, the Nimiq Pay wallet sends a feeless escrow transaction with the memo, and the backend verifies it on-chain (recipient, value, memo, sender).
-3. **Compete** — when quorum (min 3) is met the Trial goes LIVE at start time. One answer per question, server-clock deadline, sealed answers until validation.
+2. **Commit** — Challengers lock in the stake in NIM. Mock mode instant-confirms; real mode issues a unique `QS-XXXX` memo, the Nimiq Pay wallet sends a feeless escrow transaction with the memo, and the backend verifies it on-chain (recipient, value, memo, sender).
+3. **Compete** — when quorum (min 3) is met the Qestia goes LIVE at start time. One answer per question, server-clock deadline, sealed answers until validation.
 4. **Payout** — after a dispute window the quiz finalizes: competition ranking (ties share a rank's cut), 10% completion bonus, no-shows forfeit 50% to the pool. The settlement sidecar pays the escrow out on-chain and settles.
 
 ## Quickstart (frontend, mock mode — no backend needed)
@@ -42,7 +42,7 @@ pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 npm run api                       # uvicorn on http://localhost:8000
 ```
 
-Dev runs on zero-setup SQLite (`backend/nivora.db`); production sets `DATABASE_URL` to Postgres and applies `sql/001_initial_schema.sql`.
+Dev runs on zero-setup SQLite (`./qestia.db` at the repo root); production sets `DATABASE_URL` to Postgres and applies `sql/001_initial_schema.sql`.
 
 Frontend against the real backend — set `frontend/.env`:
 
@@ -72,7 +72,7 @@ npm run dev
 node scripts/e2e-smoke.mjs
 ```
 
-UI walkthrough (mock mode): Welcome → pick Demo → Home → **Create Trial** → paste any text → Generate → Publish → open a second browser window, join as another challenger ×2 → quorum met → Trial goes LIVE → answer questions → submitted screen → results (podium, Standing, status stepper) → review with explanations → profile history. The whole loop also runs headless: `python -m pytest backend/tests -q` (14 tests incl. real-mode with a fake chain) and `npm run test` (18 frontend tests).
+UI walkthrough (mock mode): Welcome → pick Demo → Home → **Create Qestia** → paste any text → Generate → Publish → open a second browser window, join as another challenger ×2 → quorum met → Qestia goes LIVE → answer questions → submitted screen → results (podium, Standing, status stepper) → review with explanations → profile history. The whole loop also runs headless: `python -m pytest backend/tests -q` (14 tests incl. real-mode with a fake chain) and `npm run test` (18 frontend tests).
 
 ## Real payments mode (Nimiq)
 

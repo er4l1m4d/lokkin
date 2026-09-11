@@ -114,7 +114,7 @@ export function LobbyScreen() {
                 Room is <span className="highlight-swipe">live</span>
               </p>
               <Button size="lg" onClick={() => navigate(`/quiz/${quizId}/play`)}>
-                Enter the quiz
+                Enter Qestia
               </Button>
             </>
           ) : (

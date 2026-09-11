@@ -7,7 +7,7 @@ import type {
   CreateUserRequest,
   HistoryEntry,
   JoinResult,
-  NivoraApi,
+  QestiaApi,
   Participant,
   PlayerQuestion,
   Quiz,
@@ -43,7 +43,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>
 }
 
-export function createRealApi(): NivoraApi {
+export function createRealApi(): QestiaApi {
   return {
     async getConfig() {
       return request<AppConfig>('/api/config')

@@ -1,9 +1,9 @@
 {
-  "name": "nivora-settlement",
+  "name": "qestia-settlement",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Nivora escrow settlement sidecar — pays out finalized quizzes on Nimiq",
+  "description": "Qestia escrow settlement sidecar — pays out finalized quizzes on Nimiq",
   "scripts": {
     "start": "node index.mjs",
     "new-key": "node generate-key.mjs"

@@ -1,5 +1,5 @@
-const KEY = 'nivora.streak'
-const LAST = 'nivora.streak.last'
+const KEY = 'qestia.streak'
+const LAST = 'qestia.streak.last'
 
 /** Read the current streak count (0 = never played) */
 export function getStreak(): number {

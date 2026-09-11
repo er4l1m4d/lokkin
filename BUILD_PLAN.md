@@ -1,4 +1,4 @@
-# Nivora Build Plan
+# Qestia Build Plan
 
 **Deadline: Sep 18** · Stack: React+Vite+TS+Tailwind / FastAPI / Nimiq SDK · Payments: mock first, real later
 
@@ -29,12 +29,12 @@
 - [x] **0.5.1 Git repo** — `git init -b main`, root `.gitignore` (deps, dist, env, logs, zip, private planning docs); `git status` clean of junk.- [x] **0.5.2 ERROR.md** — Every error hit so far logged with cause + fix (13 entries; see E-013 for the CI block diagnosis).
 - [x] **0.5.3 CI workflow** — `.github/workflows/ci.yml`: frontend (npm ci → lint → build) + backend (pip install → compileall). **Blocked from going green by account-level Actions restriction (E-013) — fix = add payment method to GitHub account, then re-push. Local gates remain mandatory meanwhile.**
 - [x] **0.5.4 DEPLOY.md** — Deploy checklist, production smoke tests, rollback procedure, critical-flow list.
-- [x] **0.5.5 Commit & push** — Backend baseline + Phase 0 + Phase 0.5 committed and pushed to https://github.com/er4l1m4d/nivora (public). CI green pending E-013 fix.
+- [x] **0.5.5 Commit & push** — Backend baseline + Phase 0 + Phase 0.5 committed and pushed to https://github.com/er4l1m4d/qestia (public). CI green pending E-013 fix.
 
 ## Phase 1 — Foundation (API layer + shared components) ✅
 **Goal:** Everything screens are built from, so screen work is assembly only.
 
-- [x] **1.1 Types** — `api/types.ts`: Quiz, Participant, Question, Answer, User, all status enums, request/response shapes, `NivoraApi` interface, `VALID_QUIZ_TRANSITIONS` mirroring `services.py`, `QUIZ_LIFECYCLE` for the status stepper.
+- [x] **1.1 Types** — `api/types.ts`: Quiz, Participant, Question, Answer, User, all status enums, request/response shapes, `QestiaApi` interface, `VALID_QUIZ_TRANSITIONS` mirroring `services.py`, `QUIZ_LIFECYCLE` for the status stepper.
 - [x] **1.2 API client** — `api/client.ts`: typed fetch wrapper for all existing endpoints (users, quizzes CRUD, publish/open/start, demo-start, state, answers) + JSON→domain mappers; `ApiError`. Base URL from `VITE_API_URL`.
 - [x] **1.3 Mock mode** — `api/mock.ts`: full in-memory implementation (seeded quizzes, state machine, one-answer enforcement, auto-lifecycle advance) + `computePayouts` implementing the locked economics (50/30/10, 80/20, no-show 50/50, 10% completion bonus, ties split, skipped allocations → bonus). Toggle: `VITE_USE_MOCK=true`.
 - [x] **1.4 Polling hook** — `hooks/usePolling.ts`: interval + pause-when-hidden + error swallowing.

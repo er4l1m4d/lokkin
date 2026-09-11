@@ -219,7 +219,7 @@ export function DevGallery() {
       </Section>
 
       <Section title="MemoCard">
-        <MemoCard code="NV-7F3K" address="NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0" />
+        <MemoCard code="QS-7F3K" address="NQ02 4RCH AXQ1 P50Y 2LJV F9RN 0FCX 4VKM YYQ0" />
       </Section>
 
       <Section title="EmptyState">

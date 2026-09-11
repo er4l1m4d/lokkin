@@ -44,7 +44,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Nivora Core API", version="0.3.0", lifespan=lifespan)
+app = FastAPI(title="Qestia Core API", version="0.3.0", lifespan=lifespan)
 
 # CORS — the Vercel frontend is a different origin from this API.
 # CORS_ORIGINS is a comma-separated allowlist (e.g. the Vercel URL + Nimiq origins).

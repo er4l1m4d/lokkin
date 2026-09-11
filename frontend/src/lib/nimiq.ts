@@ -32,7 +32,7 @@ export async function listWallets(): Promise<string[]> {
 
 /**
  * Send a commitment payment from the user's wallet. NIM transfers are feeless.
-   * `data` carries the NV-XXXX memo that binds the payment to the commitment.
+   * `data` carries the QS-XXXX memo that binds the payment to the commitment.
  * Returns whatever reference the wallet yields (tx hash or serialized tx).
  */
 export async function sendCommitment(
@@ -41,7 +41,7 @@ export async function sendCommitment(
   memo: string,
 ): Promise<{ txRef: string } | { error: string }> {
   const nimiq = await getNimiqProvider()
-  if (!nimiq) return { error: 'No Nimiq wallet available — open Nivora inside Nimiq Pay.' }
+  if (!nimiq) return { error: 'No Nimiq wallet available — open Qestia inside Nimiq Pay.' }
   const accounts = await listWallets()
   if (!Array.isArray(accounts) || accounts.length === 0) {
     return { error: 'No account in your wallet.' }

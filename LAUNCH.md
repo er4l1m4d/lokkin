@@ -5,7 +5,7 @@ Launch night runbook: register on the competition dashboard, seed the first quiz
 ## 1. Competition registration
 
 - [ ] Create the competition dashboard submission:
-  - [ ] Repo link: `https://github.com/er4l1m4d/nivora` (public ✓, MIT ✓)
+  - [ ] Repo link: `https://github.com/er4l1m4d/qestia` (public ✓, MIT ✓)
   - [ ] Paste the 250-word description from [`DESCRIPTION.md`](DESCRIPTION.md)
   - [ ] Demo video (record per [`DEMO_SCRIPT.md`](DEMO_SCRIPT.md)) — upload or link
   - [ ] Live demo URL (the Vercel URL from the 8.2 deploy)
@@ -32,7 +32,7 @@ Launch night runbook: register on the competition dashboard, seed the first quiz
 Message template (send as broadcast, not group — keep it personal):
 
 > 🎓 **Study + win, tonight.**
-> I built a quiz app called **Nivora** — it turns your notes into a live quiz where everyone puts in a stake, and the top 3 split the pot. Everyone else gets 80% back just for finishing, so it literally pays to show up.
+> I built a quiz app called **Qestia** — it turns your notes into a live quiz where everyone puts in a stake, and the top 3 split the pot. Everyone else gets 80% back just for finishing, so it literally pays to show up.
 > Opening room starts in **[time]** — 6 questions, [X] NIM to enter.
 > 👉 [live demo link]
 > Works in the browser, no install. If you've got 5 minutes tonight, come prove what you know.

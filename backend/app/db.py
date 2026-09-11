@@ -7,7 +7,7 @@ from .models import Base
 
 # Dev default is a local SQLite file (zero setup); production sets
 # DATABASE_URL to Postgres (e.g. postgresql+asyncpg://... on Render/Neon).
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./nivora.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./qestia.db")
 
 # Neon/Render may pass postgresql:// — async engine needs postgresql+asyncpg://
 if DATABASE_URL.startswith("postgresql://"):

@@ -61,7 +61,7 @@ export function CreateScreen() {
 
   const generate = async () => {
     if (title.trim().length < 3) {
-      setError('Give your Trial a title (3+ characters)')
+      setError('Give your Qestia a title (3+ characters)')
       return
     }
     if (!canGenerate(material)) {
@@ -167,10 +167,10 @@ export function CreateScreen() {
       <div className="flex flex-col gap-5">
         <header>
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
-            Create a <span className="highlight">Trial</span>
+            Create a <span className="highlight">Qestia</span>
           </h1>
           <p className="mt-1 text-sm text-ink-soft">
-            Your material in, a Trial out. You play blind — same as everyone.
+            Your material in, a challenge out. You play blind — same as everyone.
           </p>
         </header>
 

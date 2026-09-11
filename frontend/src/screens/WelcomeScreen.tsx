@@ -20,7 +20,7 @@ const MODES: Array<{ id: QuizMode; icon: IconName; title: string; blurb: string 
     id: 'practice',
     icon: 'book',
     title: 'Practice',
-    blurb: 'Study solo with AI-drafted Trials. Free, no stakes.',
+    blurb: 'Study solo with AI-drafted Qestias. Free, no stakes.',
   },
   {
     id: 'commitment',
@@ -55,7 +55,7 @@ export function WelcomeScreen() {
     setError(null)
     try {
       if (subjects.length) {
-        try { localStorage.setItem('nivora.subjects', JSON.stringify(subjects)) } catch { /* non-essential */ }
+        try { localStorage.setItem('qestia.subjects', JSON.stringify(subjects)) } catch { /* non-essential */ }
       }
       await signIn(trimmed, mode)
       navigate('/home', { replace: true })
@@ -84,7 +84,7 @@ export function WelcomeScreen() {
         </header>
 
         <div key={step} className="flex flex-1 flex-col animate-screen-enter">
-          {step === 0 && <StepIntro onNext={() => setStep(1)} />}
+          {step === 0 && <StepIntro onNext={() => { setMode('demo'); setStep(1) }} />}
           {step === 1 && <StepLane mode={mode} onMode={setMode} onNext={() => setStep(2)} />}
           {step === 2 && (
             <StepYou
@@ -112,17 +112,22 @@ function StepIntro({ onNext }: { onNext: () => void }) {
     <div className="flex flex-1 flex-col">
       <div className="mt-8 flex items-center gap-2" aria-hidden>
         <span className="flex h-9 w-9 items-center justify-center rounded-card border-2 border-ink bg-ink text-volt">
-          <Icon name="lock" size={20} weight="fill" />
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
+            <circle cx="11" cy="10.5" r="6" stroke="currentColor" strokeWidth="2.4" fill="none" />
+            <circle cx="11" cy="10.5" r="2.2" fill="currentColor" />
+            <path d="M14.5 15.5 19 20.5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+          </svg>
         </span>
-        <span className="font-display text-xl font-extrabold tracking-tight">Nivora</span>
+        <span className="font-display text-xl font-extrabold tracking-tight">Qestia</span>
       </div>
 
       <h1 className="mt-10 font-display text-[2.75rem] font-extrabold leading-[1.04] tracking-tight text-ink">
-        Don't just know it. <span className="highlight-swipe">Prove it.</span>
+        Know it.
+        <br />
+        <span className="highlight-swipe">Prove it.</span>
       </h1>
       <p className="mt-4 max-w-[32ch] text-[15px] leading-relaxed text-ink-soft">
-        Turn your notes into live Trials. Stake NIM on yourself, go head-to-head with your
-        class, and take the pot.
+        Challenge what you've learned. Compete with your class. Earn your Standing.
       </p>
 
       {/* Mini quiz-card still life — the product in one glance */}
@@ -159,7 +164,7 @@ function StepIntro({ onNext }: { onNext: () => void }) {
 
       <div className="mt-auto pt-8">
         <Button size="lg" block onClick={onNext}>
-          Prove it <Icon name="arrow-right" size={18} weight="bold" />
+          Try a demo <Icon name="arrow-right" size={18} weight="bold" />
         </Button>
       </div>
     </div>
@@ -304,7 +309,7 @@ function StepYou({
 
       <div className="mt-auto pt-8">
         <Button size="lg" block onClick={onEnter} disabled={busy}>
-          {busy ? 'Locking in…' : 'Enter Nivora'}
+          {busy ? 'Locking in…' : 'Enter Qestia'}
           {!busy && <Icon name="lock" size={18} weight="fill" />}
         </Button>
         <p className="mt-3 text-center text-xs leading-relaxed text-ink-muted">

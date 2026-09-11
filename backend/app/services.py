@@ -45,7 +45,7 @@ class DomainError(Exception):
 
 
 def generate_memo_code() -> str:
-    return "NV-" + "".join(secrets.choice(MEMO_ALPHABET) for _ in range(4))
+    return "QS-" + "".join(secrets.choice(MEMO_ALPHABET) for _ in range(4))
 
 
 def utcnow() -> datetime:

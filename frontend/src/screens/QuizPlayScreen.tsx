@@ -22,7 +22,7 @@ interface PlaySession {
   durationSeconds: number
 }
 
-const SESSION_KEY = (quizId: string) => `nivora.play.${quizId}`
+const SESSION_KEY = (quizId: string) => `qestia.play.${quizId}`
 
 export function QuizPlayScreen() {
   const { quizId } = useParams<{ quizId: string }>()

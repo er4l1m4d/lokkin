@@ -1,6 +1,6 @@
 # ERROR.md — Error Log
 
-Running log of every error hit while building Nivora, with cause and fix.
+Running log of every error hit while building Qestia, with cause and fix.
 **Before debugging any new error, scan this file first** — similar signatures often repeat (especially PowerShell and npm quirks on this machine).
 
 When you hit a new error: fix it, then append an entry (phase, error, cause, fix).

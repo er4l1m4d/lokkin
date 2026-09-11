@@ -11,7 +11,7 @@ interface UsePollingOptions {
 
 /**
  * Poll an async function on an interval. Pauses when the document is hidden
- * (no WebSockets in Nivora — polling is the state transport).
+ * (no WebSockets in Qestia — polling is the state transport).
  * Errors are swallowed into `error` so one failed poll doesn't kill the loop.
  */
 export function usePolling<T>(
