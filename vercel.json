@@ -12,8 +12,10 @@
     { "source": "/api/(.*)", "destination": "/api/index.py" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
+  "buildEnv": {
+    "PYTHON_VERSION": "3.12"
+  },
   "env": {
-    "PYTHON_VERSION": "3.12",
     "PAYMENTS_MODE": "mock",
     "DISPUTE_WINDOW_SECONDS": "300",
     "CORS_ORIGINS": "https://qestia.vercel.app",
