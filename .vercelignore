@@ -1,0 +1,11 @@
+.git/
+**/__pycache__/
+**/*.pyc
+backend/tests/
+backend/pytest.ini
+backend/requirements-dev.txt
+**/*.db
+**/*.log
+.pytest_cache/
+node_modules/
+frontend/node_modules/

@@ -238,9 +238,28 @@ async def list_quizzes(
     db: AsyncSession = Depends(get_db),
 ):
     quizzes = (await db.execute(select(Quiz))).scalars().all()
-    for quiz in quizzes:
-        if quiz.status not in ("SETTLED", "REFUNDED"):
-            await maybe_advance(db, quiz)
+
+    # Only advance quizzes that can actually transition. Previously this looped
+    # over every quiz and ran a participant query each — O(N) round-trips in a
+    # single serverless invocation. Now we skip terminal/static states, defer
+    # OPEN quizzes whose start window hasn't passed, and load all candidate
+    # participants in ONE query instead of N.
+    ADVANCE_STATES = {"OPEN", "LIVE", "ENDED", "VALIDATING", "FINALIZED", "CANCELLED", "REFUNDING"}
+    now = utcnow()
+    candidate_ids = [
+        q.id for q in quizzes
+        if q.status in ADVANCE_STATES
+        and (q.status != "OPEN" or (as_aware(q.starts_at) is not None and now >= as_aware(q.starts_at)))
+    ]
+    if candidate_ids:
+        rows = await db.execute(select(Participant).where(Participant.quiz_id.in_(candidate_ids)))
+        by_quiz: dict[UUID, list[Participant]] = {}
+        for p in rows.scalars().all():
+            by_quiz.setdefault(p.quiz_id, []).append(p)
+        for q in quizzes:
+            if q.id in by_quiz:
+                await maybe_advance(db, q, by_quiz[q.id])
+
     # re-read after possible transitions
     quizzes = (await db.execute(select(Quiz))).scalars().all()
 

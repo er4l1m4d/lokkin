@@ -2,34 +2,45 @@
 
 Solo-dev safety system. Every deployment follows this file. Every deploy maps to a git commit — rollback is always "redeploy the previous tag".
 
-## Production topology (Phase 8.2)
+## Production topology (Phase 8.2 — single Vercel project)
+
+One Vercel project serves BOTH the Vite frontend and the FastAPI backend
+(Python serverless function). Same origin → no CORS for the browser, one deploy.
 
 ```
-Vercel (frontend SPA)  ──HTTPS──▶  Render (FastAPI, free plan)  ──▶  Neon (Postgres)
-                                        │
-                                        └──▶  Nimiq RPC node (tx verification, real mode only)
-settlement sidecar (runs on the dev PC for now) ──▶ Render API
+Vercel (project root)                       Neon (Postgres)
+  frontend/  → static SPA  (output: frontend/dist)
+  api/index.py → Python serverless fn  ──▶  │
+        │                                   └─ Nimiq RPC node (real mode only)
+        └── /api/* routed to the function
+settlement sidecar (runs on dev PC for now) ──▶ https://<project>.vercel.app/api/settlement/*
 ```
 
-- **Neon** — free Postgres. Copy the **pooled** connection string, append `?sslmode=require`.
-- **Render** — blueprint in `render.yaml` (auto-deploys `main` after every push; CI gates the push, Render doesn't wait for CI — only push green commits).
-- **Vercel** — frontend, root directory `frontend/`, framework Vite, `vercel.json` handles SPA rewrites.
-- **Backend origin must be in CORS:** `CORS_ORIGINS` env on Render = the Vercel URL(s), comma-separated. The backend blocks all other browser origins.
+- **Neon** — free Postgres. Copy the **pooled** connection string (port `6543`, ends `-pooler.neon.tech`) and use it as `DATABASE_URL`. The pooled endpoint survives serverless connection churn and respects the free-tier connection limit. `db.py` already strips `?sslmode=` and disables asyncpg's prepared-statement cache (required for pgBouncer transaction pooling).
+- **Vercel project** — import the repo, set **Root Directory = repository root**. `vercel.json` (repo root) sets the frontend build (`frontend/dist` output) and routes `/api/*` to `api/index.py` (a Mangum-wrapped FastAPI app), with `maxDuration: 10`. No `render.yaml` anymore.
+- **Same-origin calls:** the frontend sets `VITE_API_URL` to empty/relative so it calls `/api/*` on its own domain — no CORS needed for browser traffic. `CORS_ORIGINS` is still configured (harmless) for any cross-origin tooling.
+- **Serverless limits (Hobby):** 10s function timeout, 100K invocations/mo, 100 GB-hrs, 100 GB bandwidth. The `list_quizzes` `maybe_advance` loop was refactored to batch all participant loads into one query, so a cold `GET /api/quizzes` with many live quizzes stays well inside the timeout.
 
 ## First deploy runbook (execute top to bottom)
 
-1. **Neon:** create project `qestia` (region matches Render) → copy pooled `DATABASE_URL`.
-2. **Render:** New → Blueprint → select the repo → it reads `render.yaml` → set `DATABASE_URL` (Neon) and `CORS_ORIGINS` (placeholder until Vercel URL exists) → create.
-3. **Verify API:** `GET https://nivora-api.onrender.com/health` → 200 (first boot can take ~1 min on the free plan; `init_db()` creates all tables — `sql/001_initial_schema.sql` is the reference schema, not a required migration).
-4. **Vercel:** import repo → root directory `frontend/` → env `VITE_API_URL=https://nivora-api.onrender.com`, `VITE_USE_MOCK=false` → deploy → note the production URL.
-5. **Render:** update `CORS_ORIGINS` with the Vercel URL → service redeploys.
-6. **Tag:** `git tag vX.Y.Z && git push origin vX.Y.Z` (matches the commit that's deployed).
-7. **Smoke test** (section below) + seed the first quiz (8.5).
-8. Point the Nimiq mini app / launch links at the Vercel URL.
+1. **Neon:** create project `qestia` (region e.g. `aws-eu-central-1` to match the cohort) → copy the **pooled** `DATABASE_URL`.
+2. **Vercel:** New Project → import repo → **Root Directory: repository root** → deploy. Set env vars (dashboard, all required):
+   - `DATABASE_URL` = Neon pooled connection string
+   - `PYTHON_VERSION` = `3.12`
+   - `PAYMENTS_MODE` = `mock` (flip to `real` only after the real-payments checklist)
+   - `DISPUTE_WINDOW_SECONDS` = `300`
+   - `CORS_ORIGINS` = `http://localhost:5173` (placeholder; same-origin in prod so rarely hit)
+   - `ESCROW_ADDRESS`, `NIMIQ_RPC_URL` (real mode), `SETTLEMENT_TOKEN` (generate a random secret)
+   - Frontend env: `VITE_API_URL=` (empty → same-origin `/api`), `VITE_USE_MOCK=false`
+3. **Verify API:** `GET https://<project>.vercel.app/api/health` → 200 (cold start may take a few seconds while Neon wakes and `init_db()` creates tables — `sql/001_initial_schema.sql` is the reference schema, not a required migration).
+4. **Verify frontend:** homepage loads; SPA routes deep-linkable (e.g. `/quiz/x` reloads).
+5. **Tag:** `git tag vX.Y.Z && git push origin vX.Y.Z` (matches the commit that's deployed).
+6. **Smoke test** (section below) + seed the first quiz (8.5).
+7. Point the Nimiq mini app / launch links at the Vercel URL.
 
 ## CI runner (self-hosted)
 
-- **Where:** `C:\Users\hp\actions-runner`, registered to `er4l1m4d/qestia` as `nivora-pc` (labels: `self-hosted, nivora-pc, Windows, X64`)
+- **Where:** `C:\Users\hp\actions-runner`, registered to `er4l1m4d/qestia` as `qestia-pc` (labels: `self-hosted, qestia-pc, Windows, X64`)
 - **Why:** GitHub's hosted runners are blocked for this account (see ERROR.md E-013). The self-hosted runner is the CI gate until that lifts.
 - **Auto-start:** NOT automatic yet (scheduled-task creation denied — no admin). Runner must be started per boot/session with the WMI detach (see E-018):
   ```powershell
@@ -70,16 +81,16 @@ build feature → local checks → push → CI (lint/typecheck/test/build)
 - [ ] `npm run test` + `python -m pytest backend/tests -q` pass
 - [ ] No debug code / console.log / dev-server.log accidentally left in
 - [ ] DB changes reviewed (schema/migration checked against `sql/`)
-- [ ] `CORS_ORIGINS` on Render includes the current Vercel URL (frontend → API calls fail without it)
+- [ ] Frontend `VITE_API_URL` is empty (same-origin) or the correct API origin
 
 ## Deploy
 
-- [ ] Deployment succeeds from `main` (Vercel + Render, auto on push)
+- [ ] Deployment succeeds from `main` (single Vercel project, frontend + API, auto on push)
 - [ ] Tag the release: ` vX.Y.Z ` + note the commit SHA
 
 ## After deploy — production smoke test
 
-- [ ] `GET https://nivora-api.onrender.com/health` → 200, DB connected, app responding
+- [ ] `GET https://<project>.vercel.app/api/health` → 200, DB connected, app responding
 - [ ] Vercel homepage loads (SPA routes deep-linkable, e.g. `/quiz/x` reloads fine)
 - [ ] Session works (display name / wallet link)
 - [ ] Core Qestia flow works (create → join → play → results)

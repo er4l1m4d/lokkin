@@ -32,7 +32,15 @@ if DATABASE_URL.startswith("sqlite"):
     else:
         engine = create_async_engine(DATABASE_URL)
 else:
-    engine = create_async_engine(DATABASE_URL, pool_pre_ping=True)
+    # On Vercel the app runs as a serverless function talking to Neon. Use the
+    # pooled connection string (port 6543) to avoid exhausting the free tier's
+    # connection limit. pgBouncer's transaction pooling is incompatible with
+    # asyncpg's prepared-statement cache, so disable it.
+    engine = create_async_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        connect_args={"prepared_statement_cache_size": 0},
+    )
 
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 

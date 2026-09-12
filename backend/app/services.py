@@ -206,13 +206,22 @@ def quiz_deadline(quiz: Quiz) -> datetime | None:
     return started + timedelta(seconds=quiz.duration_seconds)
 
 
-async def maybe_advance(db: AsyncSession, quiz: Quiz) -> None:
+async def maybe_advance(
+    db: AsyncSession,
+    quiz: Quiz,
+    participants: list[Participant] | None = None,
+) -> None:
     """Server-authoritative lifecycle. One transition per call so status
-    steppers visibly walk VALIDATING -> FINALIZED -> SETTLED on polling."""
+    steppers visibly walk VALIDATING -> FINALIZED -> SETTLED on polling.
+
+    `participants` may be preloaded (e.g. batched for list_quizzes) to avoid
+    one DB query per quiz on serverless where each call is billed/timeout-bound.
+    """
     now = utcnow()
-    participants = (await db.execute(
-        select(Participant).where(Participant.quiz_id == quiz.id)
-    )).scalars().all()
+    if participants is None:
+        participants = (await db.execute(
+            select(Participant).where(Participant.quiz_id == quiz.id)
+        )).scalars().all()
     confirmed = [p for p in participants if p.status in CONFIRMED_STATUSES]
 
     if quiz.status == "OPEN":
