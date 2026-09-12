@@ -19,7 +19,10 @@ import type {
   VerifyCommitmentResult,
 } from './types'
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+// Defaults to same-origin relative paths so the app works both in local dev
+// (Vite proxies /api -> localhost:8000) and in production (Vercel serves /api
+// from the same origin). Set VITE_API_URL only to point at a different backend.
+const BASE_URL = import.meta.env.VITE_API_URL ?? ''
 
 export class ApiError extends Error {
   status: number

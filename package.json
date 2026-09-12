@@ -10,6 +10,6 @@
     "test": "npm --prefix frontend run test",
     "checks": "npm --prefix frontend run lint && npm --prefix frontend run test && npm --prefix frontend run build",
     "install:frontend": "npm --prefix frontend install",
-    "api": "python -m uvicorn app.main:app --reload --app-dir backend"
+    "api": "python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000"
   }
 }
