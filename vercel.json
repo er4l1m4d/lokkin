@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "uv python install 3.12 && uv pip install --system --python 3.12 -r requirements.txt && npm --prefix frontend install",
+  "installCommand": "uv venv .venv --python 3.12 && uv pip install -r requirements.txt && npm --prefix frontend install",
   "buildCommand": "npm --prefix frontend run build",
   "outputDirectory": "frontend/dist",
   "framework": null,
