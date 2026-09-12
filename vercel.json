@@ -1,6 +1,8 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm --prefix frontend install && npm --prefix frontend run build",
   "outputDirectory": "frontend/dist",
+  "framework": null,
   "functions": {
     "api/index.py": {
       "maxDuration": 10
@@ -9,5 +11,13 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.py" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  ],
+  "env": {
+    "PYTHON_VERSION": "3.12",
+    "PAYMENTS_MODE": "mock",
+    "DISPUTE_WINDOW_SECONDS": "300",
+    "CORS_ORIGINS": "https://qestia.vercel.app",
+    "VITE_API_URL": "",
+    "VITE_USE_MOCK": "false"
+  }
 }
