@@ -12,11 +12,11 @@ Qestia is a commitment-based competitive study platform on Nimiq — **where kno
 
 Qestia speaks a shared language across every surface — keep it consistent:
 
-- **Qestia** — a challenge itself ("Create a Qestia", "Enter Qestia"); code identifiers keep `quiz`
+- **Qest** (plural **Qests**) — a challenge itself ("Create a Qest", "Enter Qest"); the app stays **Qestia**; code identifiers keep `quiz`
 - **Challenger** — a player/participant
 - **Standing** — the leaderboard / full ranking
-- **Host** — the Qestia's creator in UI ("Keeper" is reserved for lore)
-- **The Threshold** — the moment of entry: commitment confirmed, clock started. Reserve "crossing" language for that exact moment (commit confirm, Enter Qestia button)
+- **Host** — the Qest's creator in UI ("Keeper" is reserved for lore)
+- **The Threshold** — the moment of entry: commitment confirmed, clock started. Reserve "crossing" language for that exact moment (commit confirm, Enter Qest button)
 - The lock stays the commitment motif (stakes, sealed answers, locked-in states); the **Q-portal mark** (volt ring + tail on ink) is the brand symbol
 
 ## The idea

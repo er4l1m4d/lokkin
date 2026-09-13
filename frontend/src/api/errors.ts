@@ -20,14 +20,14 @@ export function friendlyError(err: unknown, fallback = 'Something went wrong —
   return fallback
 }
 
-/** 409 messages are state conflicts ("Quiz is not open…") — soften known ones */
+/** 409 messages are state conflicts ("Qest is not open…") — soften known ones */
 function friendlyConflict(message: string): string {
   const m = message.toLowerCase()
   if (m.includes('not open') || m.includes('not available')) {
-    return "This quiz isn't taking entries anymore."
+    return "This Qest isn't taking entries anymore."
   }
   if (m.includes('not live')) {
-    return "The quiz hasn't started yet — hang tight in the lobby."
+    return "The Qest hasn't started yet — hang tight in the lobby."
   }
   if (m.includes('time') && m.includes('up')) {
     return "Time is up for this question."

@@ -177,9 +177,9 @@ async def create_quiz(req: CreateQuizRequest, db: AsyncSession = Depends(get_db)
 async def add_question(quiz_id: UUID, req: CreateQuestionRequest, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     if quiz.status not in {"DRAFT", "PUBLISHED", "OPEN"}:
-        raise HTTPException(409, "Questions cannot be changed in this quiz state")
+        raise HTTPException(409, "Questions cannot be changed in this Qest state")
     q = Question(
         quiz_id=quiz.id,
         position=req.position,
@@ -285,7 +285,7 @@ async def list_quizzes(
 async def get_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     await maybe_advance(db, quiz)
     await db.refresh(quiz)
     return quiz_json(quiz, await quiz_participant_count(db, quiz.id))
@@ -295,11 +295,11 @@ async def get_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
 async def publish_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     if quiz.status != "DRAFT":
-        raise HTTPException(409, "Quiz is not a draft")
+        raise HTTPException(409, "Qest is not a draft")
     if quiz.question_count == 0:
-        raise HTTPException(400, "Quiz must contain at least one question")
+        raise HTTPException(400, "Qest must contain at least one question")
     try:
         await transition_quiz(db, quiz, "PUBLISHED")
         quiz.published_at = utcnow()
@@ -320,7 +320,7 @@ async def publish_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
 async def open_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     try:
         await transition_quiz(db, quiz, "OPEN")
         await db.commit()
@@ -336,9 +336,9 @@ async def start_quiz(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     at starts_at once quorum is met."""
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     if quiz.status not in ("PUBLISHED", "OPEN"):
-        raise HTTPException(409, f"Quiz cannot start from status {quiz.status}")
+        raise HTTPException(409, f"Qest cannot start from status {quiz.status}")
     try:
         await transition_quiz(db, quiz, "LIVE")
         participants = (await db.execute(
@@ -360,9 +360,9 @@ async def join_quiz(quiz_id: UUID, req: JoinRequest, db: AsyncSession = Depends(
     quiz = await db.get(Quiz, quiz_id)
     user = await db.get(User, req.user_id)
     if not quiz or not user:
-        raise HTTPException(404, "Quiz or user not found")
+        raise HTTPException(404, "Qest or user not found")
     if quiz.status != "OPEN":
-        raise HTTPException(409, f"Quiz is not open for commitments (status: {quiz.status})")
+        raise HTTPException(409, f"Qest is not open for commitments (status: {quiz.status})")
     participant = await add_participant(db, quiz, user.id)
     await db.commit()
     return {
@@ -385,7 +385,7 @@ async def verify_quiz_commitment(
     quiz = await db.get(Quiz, quiz_id)
     participant = await db.get(Participant, req.participant_id)
     if not quiz or not participant or participant.quiz_id != quiz.id:
-        raise HTTPException(404, "Quiz or participant not found")
+        raise HTTPException(404, "Qest or participant not found")
     user = await db.get(User, participant.user_id)
     ok, detail = await verify_commitment(
         db, quiz, participant, req.tx_ref, chain_for(request),
@@ -429,9 +429,9 @@ async def demo_start(quiz_id: UUID, user_id: UUID, db: AsyncSession = Depends(ge
     quiz = await db.get(Quiz, quiz_id)
     user = await db.get(User, user_id)
     if not quiz or not user:
-        raise HTTPException(404, "Quiz or user not found")
+        raise HTTPException(404, "Qest or user not found")
     if quiz.status not in {"PUBLISHED", "OPEN", "LIVE"}:
-        raise HTTPException(409, "Quiz is not available")
+        raise HTTPException(409, "Qest is not available")
     participant = await add_participant(db, quiz, user.id)
     if quiz.status == "LIVE" and participant.status == "JOINED":
         participant.status = "ACTIVE"
@@ -443,7 +443,7 @@ async def demo_start(quiz_id: UUID, user_id: UUID, db: AsyncSession = Depends(ge
 async def get_participants(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     rows = await db.execute(
         select(Participant, User).join(User, Participant.user_id == User.id).where(Participant.quiz_id == quiz.id)
     )
@@ -468,7 +468,7 @@ async def get_participants(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
 async def quiz_state(quiz_id: UUID, user_id: UUID | None = None, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     await maybe_advance(db, quiz)
     await db.refresh(quiz)
 
@@ -494,7 +494,7 @@ async def get_questions(quiz_id: UUID, user_id: UUID | None = None, db: AsyncSes
     """Player view — never leaks correct answers. Marks the caller ACTIVE on entry."""
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     if quiz.status != "LIVE":
         raise HTTPException(409, "Questions are sealed until the room is live")
 
@@ -504,7 +504,7 @@ async def get_questions(quiz_id: UUID, user_id: UUID | None = None, db: AsyncSes
         )
         participant = row.scalar_one_or_none()
         if participant is None:
-            raise HTTPException(403, "You are not part of this quiz")
+            raise HTTPException(403, "You are not part of this Qest")
         if participant.status == "PENDING":
             raise HTTPException(403, "Your commitment is not confirmed yet")
         if participant.status == "JOINED":
@@ -534,7 +534,7 @@ async def get_questions(quiz_id: UUID, user_id: UUID | None = None, db: AsyncSes
 async def answer_question(quiz_id: UUID, req: AnswerRequest, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     try:
         answer = await submit_answer(db, quiz, req.participant_id, req.question_id, req.selected_option)
         await db.commit()
@@ -548,7 +548,7 @@ async def answer_question(quiz_id: UUID, req: AnswerRequest, db: AsyncSession = 
 async def get_results(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     await maybe_advance(db, quiz)
     await db.refresh(quiz)
     if quiz.status not in ("VALIDATING", "FINALIZED", "SETTLED"):
@@ -589,11 +589,11 @@ async def get_results(quiz_id: UUID, db: AsyncSession = Depends(get_db)):
 async def get_review(quiz_id: UUID, user_id: UUID, db: AsyncSession = Depends(get_db)):
     quiz = await db.get(Quiz, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     await maybe_advance(db, quiz)
     await db.refresh(quiz)
     if quiz.status not in ("VALIDATING", "FINALIZED", "SETTLED"):
-        raise HTTPException(409, "Review unlocks when the quiz ends")
+        raise HTTPException(409, "Review unlocks when the Qest ends")
 
     participant = (await db.execute(
         select(Participant).where(Participant.quiz_id == quiz.id, Participant.user_id == user_id)
@@ -681,9 +681,9 @@ async def settlement_complete(req: SettlementCompleteRequest, request: Request, 
 
     quiz = await db.get(Quiz, req.quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz not found")
+        raise HTTPException(404, "Qest not found")
     if quiz.status not in ("FINALIZED", "SETTLED"):
-        raise HTTPException(409, f"Quiz is not awaiting settlement (status: {quiz.status})")
+        raise HTTPException(409, f"Qest is not awaiting settlement (status: {quiz.status})")
 
     by_participant = {p.participant_id: p.tx_hash for p in req.payouts}
     participants = (await db.execute(

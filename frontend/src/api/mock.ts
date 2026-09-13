@@ -413,7 +413,7 @@ export function createMockApi(): QestiaApi {
     async addQuestion(quizId: string, req: CreateQuestionRequest) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       const questions = store.questions.get(quizId) ?? []
       const question: Question = {
         id: uid(),
@@ -436,7 +436,7 @@ export function createMockApi(): QestiaApi {
     async getQuiz(quizId: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       maybeAdvanceLifecycle(quiz)
       return { ...quiz, participantCount: store.participants.get(quizId)?.length ?? 0 }
     },
@@ -456,7 +456,7 @@ export function createMockApi(): QestiaApi {
     async publishQuiz(quizId: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       setQuizStatus(quiz, 'PUBLISHED')
       return { quizId, status: quiz.status }
     },
@@ -464,7 +464,7 @@ export function createMockApi(): QestiaApi {
     async openQuiz(quizId: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       setQuizStatus(quiz, 'OPEN')
       return { quizId, status: quiz.status }
     },
@@ -472,7 +472,7 @@ export function createMockApi(): QestiaApi {
     async startQuiz(quizId: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       setQuizStatus(quiz, 'LIVE')
       const participants = store.participants.get(quizId) ?? []
       for (const p of participants) {
@@ -485,7 +485,7 @@ export function createMockApi(): QestiaApi {
       await delay()
       const quiz = store.quizzes.get(quizId)
       const user = store.users.get(userId)
-      if (!quiz || !user) throw new Error('Quiz or user not found')
+      if (!quiz || !user) throw new Error('Qest or user not found')
       const participants = store.participants.get(quizId) ?? []
       const existing = participants.find((p) => p.userId === userId)
       if (existing) {
@@ -563,14 +563,14 @@ export function createMockApi(): QestiaApi {
     async getParticipants(quizId: string) {
       await delay()
       const participants = store.participants.get(quizId)
-      if (!participants) throw new Error('Quiz not found')
+      if (!participants) throw new Error('Qest not found')
       return participants.map((p) => ({ ...p }))
     },
 
     async getQuizState(quizId: string, userId?: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       maybeAdvanceLifecycle(quiz)
       const mine = userId
         ? (store.participants.get(quizId) ?? []).find((p) => p.userId === userId)
@@ -605,11 +605,11 @@ export function createMockApi(): QestiaApi {
     async submitAnswer(quizId: string, req: AnswerRequest) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       const participants = store.participants.get(quizId) ?? []
       const participant = participants.find((p) => p.id === req.participantId)
-      if (!participant) throw new Error('Participant is not part of this quiz')
-      if (quiz.status !== 'LIVE') throw new Error('Quiz is not live')
+      if (!participant) throw new Error('Participant is not part of this Qest')
+      if (quiz.status !== 'LIVE') throw new Error('Qest is not live')
 
       const questions = store.questions.get(quizId) ?? []
       const question = questions.find((q) => q.id === req.questionId)
@@ -642,7 +642,7 @@ export function createMockApi(): QestiaApi {
     async getResults(quizId: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       maybeAdvanceLifecycle(quiz)
       const participants = store.participants.get(quizId) ?? []
 
@@ -662,10 +662,10 @@ export function createMockApi(): QestiaApi {
     async getReview(quizId: string, userId: string) {
       await delay()
       const quiz = store.quizzes.get(quizId)
-      if (!quiz) throw new Error('Quiz not found')
+      if (!quiz) throw new Error('Qest not found')
       maybeAdvanceLifecycle(quiz)
       if (quiz.status !== 'VALIDATING' && quiz.status !== 'FINALIZED' && quiz.status !== 'SETTLED') {
-        throw new Error('Review unlocks when the quiz ends')
+        throw new Error('Review unlocks when the Qest ends')
       }
       const participant = (store.participants.get(quizId) ?? []).find((p) => p.userId === userId)
       const questions = store.questions.get(quizId) ?? []

@@ -61,7 +61,7 @@ def as_aware(dt: datetime | None) -> datetime | None:
 
 async def transition_quiz(db: AsyncSession, quiz: Quiz, new_status: str) -> None:
     if new_status not in VALID_TRANSITIONS.get(quiz.status, set()):
-        raise DomainError(f"Illegal quiz transition: {quiz.status} -> {new_status}")
+        raise DomainError(f"Illegal Qest transition: {quiz.status} -> {new_status}")
     quiz.status = new_status
     now = utcnow()
     if new_status == "LIVE":
@@ -402,9 +402,9 @@ async def finalize_results(db: AsyncSession, quiz: Quiz, participants: list[Part
 async def submit_answer(db: AsyncSession, quiz: Quiz, req_participant: UUID, question_id, selected: str):
     participant = await db.get(Participant, req_participant)
     if not participant or participant.quiz_id != quiz.id:
-        raise DomainError("Participant is not part of this quiz")
+        raise DomainError("Participant is not part of this Qest")
     if quiz.status != "LIVE":
-        raise DomainError("Quiz is not live")
+        raise DomainError("Qest is not live")
     if participant.status == "PENDING":
         raise DomainError("Your commitment is not confirmed yet")
     if participant.status in {"FORFEITED", "DISQUALIFIED", "TIMED_OUT", "COMPLETED"}:

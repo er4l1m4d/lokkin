@@ -19,8 +19,8 @@
 - Type name "Ada", select **Commitment** mode, press Enter.
 
 ### 0:15–0:45 — Create (host)
-**VO:** "Paste your study notes. Qestia drafts the quiz — you never see the questions, so you play blind like everyone else."
-- Home → **Create quiz** → paste a chunk of notes (have them ready on clipboard)
+**VO:** "Paste your study notes. Qestia drafts the Qest — you never see the questions, so you play blind like everyone else."
+- Home → **Create a Qest** → paste a chunk of notes (have them ready on clipboard)
 - Settings: 5 questions · 3 min · 10 NIM · starts now
 - **Generate questions** → progress stages → review screen, tap through one question to show editing
 - **Publish** → lands on quiz detail
@@ -34,7 +34,7 @@
 
 ### 1:10–1:35 — Compete (Window A, then B briefly)
 **VO:** "Quorum met — the room goes live. One answer per question. The clock is the server's, not yours. Wrong answers and no-shows feed the pool; finishing pays a bonus."
-- Lobby auto-detects LIVE → **Enter the quiz**
+- Lobby auto-detects LIVE → **Enter Qest**
 - Answer 2–3 questions fast; show a correct reveal and a wrong reveal
 - Let the timer visibly run; finish
 

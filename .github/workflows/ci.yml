@@ -11,7 +11,7 @@ on:
 jobs:
   frontend:
     name: Frontend (lint + typecheck + build)
-    runs-on: [self-hosted, nivora-pc]
+    runs-on: [self-hosted, qestia-pc]
     defaults:
       run:
         working-directory: frontend
@@ -29,7 +29,7 @@ jobs:
 
   backend:
     name: Backend (install + tests + compile check)
-    runs-on: [self-hosted, nivora-pc]
+    runs-on: [self-hosted, qestia-pc]
     defaults:
       run:
         working-directory: backend
