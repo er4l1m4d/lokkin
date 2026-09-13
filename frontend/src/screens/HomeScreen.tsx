@@ -24,11 +24,11 @@ const FILTERS: Array<{ id: Filter; label: string }> = [
 ]
 
 const EMPTY_TITLES: Record<Filter, string> = {
-  ALL: 'No Qestias yet',
+  ALL: 'No Qests yet',
   OPEN: 'Nothing open to join right now',
-  LIVE: 'No live Qestias right now',
+  LIVE: 'No live Qests right now',
   VALIDATING: 'Nothing in validation right now',
-  SETTLED: 'No settled Qestias yet',
+  SETTLED: 'No settled Qests yet',
 }
 
 /** Sort: joinable first (OPEN, then LIVE), then by soonest start, rest after */
@@ -75,8 +75,8 @@ export function HomeScreen() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-6">
-        <header className="flex items-center justify-between gap-3">
+      <div className="screen gap-6">
+        <header className="flex shrink-0 items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="w-fit rounded-pill bg-paper-deep px-2.5 py-0.5 text-xs font-semibold text-ink-muted">
               {MODE_LABEL[mode] ?? 'Demo mode'}
@@ -105,14 +105,14 @@ export function HomeScreen() {
           </div>
         </header>
 
-        <section className="rounded-card border-2 border-ink bg-ink p-5 text-paper shadow-press">
+        <section className="shrink-0 rounded-card border-2 border-ink bg-ink p-5 text-paper shadow-press">
           <div className="flex items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card border-2 border-ink bg-volt text-ink" aria-hidden>
               <Icon name="lock" size={22} weight="fill" />
             </div>
             <div>
               <h2 className="font-display text-xl font-extrabold tracking-tight text-paper">
-                Which Qestia will you enter?
+                Which Qest will you enter?
               </h2>
               <p className="mt-1 max-w-[34ch] text-sm leading-relaxed text-paper/70">
                 Pick a challenge, trust your prep, and make every answer count.
@@ -122,9 +122,9 @@ export function HomeScreen() {
         </section>
 
         <div
-          className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5"
+          className="no-scrollbar -mx-5 flex shrink-0 gap-2 overflow-x-auto px-5"
           role="group"
-          aria-label="Filter Qestias by status"
+          aria-label="Filter Qests by status"
         >
           {FILTERS.map((f) => (
             <button
@@ -143,45 +143,46 @@ export function HomeScreen() {
           ))}
         </div>
 
-        {error && !quizzes ? (
-          <ErrorState
-            title="Can't reach the Qestias"
-            description="The list didn't load — your Qestias are safe."
-            hint="Check your connection"
-            onRetry={() => void refresh()}
-          />
-        ) : filtered.length === 0 ? (
-          quizzes === null ? (
-            <SkeletonList count={3} className="h-32" />
-          ) : (
-            <EmptyState
-              icon={<Icon name="podium" size={26} weight="duotone" />}
-              title={EMPTY_TITLES[filter]}
-              description="Be the first — turn your study material into a Qestia."
-              action={
-                <Link to="/create">
-                  <Button size="sm">Create a quiz</Button>
-                </Link>
-              }
+        <div className="screen-scroll gap-3">
+          {error && !quizzes ? (
+            <ErrorState
+              title="Can't reach the Qests"
+              description="The list didn't load — your Qests are safe."
+              hint="Check your connection"
+              onRetry={() => void refresh()}
             />
-          )
-        ) : (
-          <>
-            {error && quizzes && <StaleBanner />}
-            <div className="flex flex-col gap-3">
+          ) : filtered.length === 0 ? (
+            quizzes === null ? (
+              <SkeletonList count={3} className="h-32" />
+            ) : (
+              <EmptyState
+                icon={<Icon name="podium" size={26} weight="duotone" />}
+                title={EMPTY_TITLES[filter]}
+                description="Be the first — turn your study material into a Qest."
+                action={
+                  <Link to="/create">
+                    <Button size="sm">Create a Qest</Button>
+                  </Link>
+                }
+              />
+            )
+          ) : (
+            <>
+              {error && quizzes && <StaleBanner />}
               {filtered.map((quiz) => (
                 <QuizCard key={quiz.id} quiz={quiz} />
               ))}
-            </div>
-          </>
-        )}
-        <div className="pointer-events-none sticky bottom-24 z-30 flex justify-end">
+            </>
+          )}
+        </div>
+
+        <div className="screen-footer">
           <Link
             to="/create"
-            className="press pointer-events-auto flex min-h-12 items-center gap-2 rounded-pill border-2 border-ink bg-volt px-5 font-display text-sm font-extrabold tracking-tight text-ink shadow-press hover:bg-volt-deep"
+            className="press flex min-h-12 items-center justify-center gap-2 rounded-pill border-2 border-ink bg-volt px-5 font-display text-sm font-extrabold tracking-tight text-ink shadow-press hover:bg-volt-deep"
           >
-            <            Icon name="plus" size={17} weight="bold" />
-            Create a Qestia
+            <Icon name="plus" size={17} weight="bold" />
+            Create a Qest
           </Link>
         </div>
       </div>

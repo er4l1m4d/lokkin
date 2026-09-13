@@ -34,7 +34,7 @@ export function SubmittedScreen() {
   if (error && !state) {
     return (
       <AppShell>
-        <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
+        <div className="screen items-center justify-center gap-4 text-center">
           <div className="flex h-20 w-20 items-center justify-center rounded-pill border-2 border-ink bg-danger-soft text-danger" aria-hidden>
             <Icon name="alert" size={34} weight="fill" />
           </div>
@@ -53,11 +53,11 @@ export function SubmittedScreen() {
   }
 
   return (
-    <AppShell>
-      <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
-        <div className="flex h-20 w-20 items-center justify-center rounded-pill border-2 border-ink bg-volt text-ink shadow-press-sm" aria-hidden>
-          <Icon name="lock" size={38} weight="fill" />
-        </div>
+      <AppShell>
+        <div className="screen items-center justify-center gap-4 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-pill border-2 border-ink bg-volt text-ink shadow-press-sm" aria-hidden>
+            <Icon name="lock" size={38} weight="fill" />
+          </div>
         <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink">
           You're <span className="highlight-swipe">locked in</span>
         </h1>

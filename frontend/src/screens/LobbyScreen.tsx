@@ -83,10 +83,10 @@ export function LobbyScreen() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-4">
+      <div className="screen gap-4">
         {error && data && <StaleBanner />}
 
-        <header className="text-center">
+        <header className="shrink-0 text-center">
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">{quiz.title}</h1>
           <p className="mt-1 text-sm font-semibold text-ink-soft tabular-nums">
             {quiz.entryAmount} NIM stake · {quiz.questionCount} questions ·{' '}
@@ -94,7 +94,7 @@ export function LobbyScreen() {
           </p>
         </header>
 
-        <section aria-live="polite" className="flex flex-col items-center gap-3 rounded-card border-2 border-ink bg-surface p-6 shadow-card">
+        <section aria-live="polite" className="flex shrink-0 flex-col items-center gap-3 rounded-card border-2 border-ink bg-surface p-6 shadow-card">
           {roomClosed ? (
             <>
               <span className="flex h-12 w-12 items-center justify-center rounded-card border-2 border-ink bg-volt text-ink" aria-hidden>
@@ -114,7 +114,7 @@ export function LobbyScreen() {
                 Room is <span className="highlight-swipe">live</span>
               </p>
               <Button size="lg" onClick={() => navigate(`/quiz/${quizId}/play`)}>
-                Enter Qestia
+                Enter Qest
               </Button>
             </>
           ) : (
@@ -127,8 +127,9 @@ export function LobbyScreen() {
           )}
         </section>
 
-        <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
-          <MeterBar
+        <div className="screen-scroll gap-4">
+          <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
+            <MeterBar
             value={confirmed}
             target={minRequired}
             max={Math.max(minRequired, confirmed + 2)}
@@ -136,7 +137,7 @@ export function LobbyScreen() {
           />
           {readyToStart ? (
             <p className="mt-3 rounded-card border border-success/30 bg-success-soft px-4 py-2.5 text-xs font-bold text-success">
-              All set — enough players are in. This quiz is happening.
+              All set — enough players are in. This Qest is happening.
             </p>
           ) : (
             <p className="mt-3 rounded-card border border-amber/30 bg-amber-soft px-4 py-2.5 text-xs leading-relaxed text-ink">
@@ -153,7 +154,7 @@ export function LobbyScreen() {
           </h2>
           {participants.length === 0 ? (
             <p className="mt-3 text-sm text-ink-soft">
-              Nobody has committed yet — you're early. Share the quiz to fill the room.
+              Nobody has committed yet — you're early. Share the Qest to fill the room.
             </p>
           ) : (
             <ul className="mt-3 flex flex-col gap-2">
@@ -180,6 +181,7 @@ export function LobbyScreen() {
             Keep this page open — the room opens automatically when the countdown ends.
           </p>
         )}
+        </div>
       </div>
     </AppShell>
   )

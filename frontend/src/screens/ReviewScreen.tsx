@@ -28,11 +28,11 @@ export function ReviewScreen() {
         {locked ? (
           <EmptyState
             icon={<Icon name="lock" size={28} weight="duotone" />}
-            title="Review unlocks when the quiz ends"
+            title="Review unlocks when the Qest ends"
             description="Answers stay sealed until everyone finishes and results are validated."
             action={
               <Link to={quizId ? `/quiz/${quizId}` : '/home'}>
-                <Button size="sm">Back to the quiz</Button>
+                <Button size="sm">Back to the Qest</Button>
               </Link>
             }
           />
@@ -41,7 +41,7 @@ export function ReviewScreen() {
             title="Review didn't load"
             description={
               user
-                ? "Either you didn't take part in this quiz, or the page just couldn't reach it."
+                ? "Either you didn't take part in this Qest, or the page just couldn't reach it."
                 : 'Your session expired — sign in again to see your review.'
             }
             hint="Check your connection"
@@ -71,10 +71,10 @@ export function ReviewScreen() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-4">
+      <div className="screen gap-4">
         {error && review && <StaleBanner />}
 
-        <header className="flex items-start justify-between gap-3">
+        <header className="flex shrink-0 items-start justify-between gap-3">
           <div>
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
               Rev<span className="highlight">iew</span>
@@ -92,18 +92,22 @@ export function ReviewScreen() {
         </header>
 
         {answered.length === 0 && (
-          <p className="rounded-card border border-amber/30 bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
-            You didn't answer any questions in this quiz — here's what was asked.
+          <p className="shrink-0 rounded-card border border-amber/30 bg-amber-soft px-4 py-3 text-sm font-semibold text-ink" role="status">
+            You didn't answer any questions in this Qest — here's what was asked.
           </p>
         )}
 
-        {review.map((q, i) => (
-          <ReviewCard key={q.id} question={q} index={i + 1} />
-        ))}
+        <div className="screen-scroll gap-4">
+          {review.map((q, i) => (
+            <ReviewCard key={q.id} question={q} index={i + 1} />
+          ))}
+        </div>
 
-        <Button variant="secondary" size="sm" onClick={() => window.history.back()}>
-          Back
-        </Button>
+        <div className="screen-footer">
+          <Button variant="secondary" size="sm" onClick={() => window.history.back()}>
+            Back
+          </Button>
+        </div>
       </div>
     </AppShell>
   )

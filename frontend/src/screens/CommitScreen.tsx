@@ -48,7 +48,7 @@ export function CommitScreen() {
         setTitle(quiz.title)
       }
     }).catch(() => {
-      if (!cancelled) setError('Quiz not found')
+      if (!cancelled) setError('Qest not found')
     })
     return () => {
       cancelled = true
@@ -140,8 +140,8 @@ export function CommitScreen() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-4">
-        <header>
+      <div className="screen gap-4">
+        <header className="shrink-0">
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
             Lock in your <span className="highlight">stake</span>
           </h1>
@@ -149,6 +149,8 @@ export function CommitScreen() {
         </header>
 
         {error && <ErrorBanner>{error}</ErrorBanner>}
+
+        <div className="screen-scroll gap-4">
 
         {stage === 'summary' && (
           <>
@@ -173,7 +175,7 @@ export function CommitScreen() {
               <ul className="mt-3 flex flex-col gap-2.5 text-sm text-ink">
                 <PayoutRow icon="trophy" text="Finish top 3 — get 100% back plus your share of the pool (50 / 30 / 10)" />
                 <PayoutRow icon="podium" text="Finish outside the top 3 — get 80% back, 20% feeds the pool" />
-                <PayoutRow icon="check" text="Complete the quiz — split a 10% completion bonus with everyone who finished" />
+                <PayoutRow icon="check" text="Complete the Qest — split a 10% completion bonus with everyone who finished" />
                 <PayoutRow icon="clock" text="No-show — 50% back, 50% to the pool. Locking in means showing up" />
               </ul>
               <p className="mt-4 rounded-card border border-amber/30 bg-amber-soft px-3.5 py-2.5 text-xs leading-relaxed text-ink">
@@ -289,6 +291,7 @@ export function CommitScreen() {
             </Button>
           </>
         )}
+        </div>
       </div>
     </AppShell>
   )

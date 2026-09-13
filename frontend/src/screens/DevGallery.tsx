@@ -107,7 +107,7 @@ export function DevGallery() {
   const [demoUntil] = useState(() => new Date(Date.now() + 90_000))
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-4 border-line px-5 py-8 sm:border-x">
+    <main className="mx-auto flex h-dvh max-w-md flex-col gap-4 overflow-y-auto border-line px-5 py-8 sm:border-x">
       <header className="text-center">
         <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
           Component <span className="highlight">Gallery</span>
@@ -138,7 +138,7 @@ export function DevGallery() {
 
       <Section title="Buttons">
         <div className="flex flex-col gap-2">
-          <Button size="lg">Enter a quiz</Button>
+          <Button size="lg">Enter a Qest</Button>
           <Button variant="secondary" size="lg">
             Practice free
           </Button>
@@ -225,15 +225,15 @@ export function DevGallery() {
       <Section title="EmptyState">
         <EmptyState
           icon={<Icon name="podium" size={28} weight="duotone" />}
-          title="No quizzes yet"
-          description="Be the first — create a quiz from your study material and challenge your group."
-          action={<Button size="sm">Create a quiz</Button>}
+          title="No Qests yet"
+          description="Be the first — create a Qest from your study material and challenge your group."
+          action={<Button size="sm">Create a Qest</Button>}
         />
       </Section>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Confirm commitment">
         <p className="text-sm text-ink-soft">
-          You're committing 50 NIM to this quiz. Top 3 split the pool.
+          You're committing 50 NIM to this Qest. Top 3 split the pool.
         </p>
         <div className="mt-4 flex gap-2">
           <Button block onClick={() => setModalOpen(false)}>

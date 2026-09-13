@@ -80,7 +80,7 @@ export function QuizPlayScreen() {
         }
         const questions = await api.getQuestions(quizId, user.id)
         if (cancelled) return
-        if (questions.length === 0) throw new Error('This quiz has no active questions')
+        if (questions.length === 0) throw new Error('This Qest has no active questions')
         const started: PlaySession = {
           participantId,
           questions,
@@ -92,7 +92,7 @@ export function QuizPlayScreen() {
         setBooting(false)
       } catch (err) {
         if (cancelled) return
-        setBootError(err instanceof Error ? err.message : 'Could not start the quiz')
+        setBootError(err instanceof Error ? err.message : 'Could not start the Qest')
         setBooting(false)
       }
     })()
@@ -164,20 +164,22 @@ export function QuizPlayScreen() {
   if (bootError) {
     return (
       <AppShell hideNav>
-        <div className="rounded-card border-2 border-ink bg-surface p-8 text-center shadow-card">
-          <Icon name="alert" className="text-danger" size={30} weight="fill" />
-          <h1 className="mt-2 font-display text-lg font-extrabold tracking-tight text-ink">Can't enter the quiz</h1>
-          <p className="mt-1 text-sm text-ink-soft">{bootError}</p>
-          <div className="mt-4 flex flex-col items-center gap-2">
-            <Button size="sm" onClick={() => {
-              setBootError(null)
-              setBooting(true)
-            }}>
-              Try again
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => navigate(quizId ? `/quiz/${quizId}` : '/home')}>
-              Back to the quiz page
-            </Button>
+        <div className="screen items-center justify-center">
+          <div className="rounded-card border-2 border-ink bg-surface p-8 text-center shadow-card">
+            <Icon name="alert" className="text-danger" size={30} weight="fill" />
+            <h1 className="mt-2 font-display text-lg font-extrabold tracking-tight text-ink">Can't enter the Qest</h1>
+            <p className="mt-1 text-sm text-ink-soft">{bootError}</p>
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <Button size="sm" onClick={() => {
+                setBootError(null)
+                setBooting(true)
+              }}>
+                Try again
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate(quizId ? `/quiz/${quizId}` : '/home')}>
+                Back to the Qest page
+              </Button>
+            </div>
           </div>
         </div>
       </AppShell>
@@ -187,7 +189,7 @@ export function QuizPlayScreen() {
   if (booting || !session || !question) {
     return (
       <AppShell hideNav>
-        <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+        <div className="screen items-center justify-center gap-3">
           <div className="h-12 w-12 animate-spin rounded-pill border-4 border-paper-deep border-t-ink" />
           <p className="text-sm font-semibold text-ink-soft">Getting you into the room…</p>
         </div>
@@ -198,7 +200,7 @@ export function QuizPlayScreen() {
   if (finished) {
     return (
       <AppShell hideNav>
-        <div className="flex min-h-[70vh] flex-col items-center justify-center gap-4 text-center">
+        <div className="screen items-center justify-center gap-4 text-center">
           <span className="flex h-16 w-16 items-center justify-center rounded-card border-2 border-ink bg-volt text-ink" aria-hidden>
             <Icon name="lock" size={30} weight="fill" />
           </span>
@@ -219,8 +221,8 @@ export function QuizPlayScreen() {
 
   return (
     <AppShell hideNav>
-      <div className="flex flex-col gap-5">
-        <header className="flex items-center justify-between">
+      <div className="screen gap-5">
+        <header className="flex shrink-0 items-center justify-between">
           {/* screen heading — visually a label, semantically the h1 */}
           <h1 className="font-display text-sm font-extrabold text-ink-muted tabular-nums">
             Question {index + 1}
@@ -229,68 +231,72 @@ export function QuizPlayScreen() {
           {deadline && <TimerPill until={new Date(deadline)} onExpire={onExpire} />}
         </header>
 
-        <div className="h-3 overflow-hidden rounded-pill border-2 border-ink bg-surface" role="progressbar" aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={total}>
+        <div className="h-3 shrink-0 overflow-hidden rounded-pill border-2 border-ink bg-surface" role="progressbar" aria-valuenow={index + 1} aria-valuemin={1} aria-valuemax={total}>
           <div
             className="h-full rounded-pill bg-volt transition-all duration-500"
             style={{ width: `${((index + (reveal ? 1 : 0)) / total) * 100}%` }}
           />
         </div>
 
-        <section className="rounded-card border-2 border-ink bg-surface p-6 shadow-card">
-          <h2 className="font-display text-[1.35rem] leading-snug font-extrabold tracking-tight text-ink">
-            {question.questionText}
-          </h2>
-          <div className="mt-5 flex flex-col gap-2.5" aria-live="polite">
-            {question.options.map((opt) => {
-              let optReveal: 'correct' | 'wrong' | 'missed' | undefined
-              if (reveal) {
-                if (opt.key === reveal.picked) {
-                  optReveal = reveal.correct ? 'correct' : 'wrong'
-                } else {
-                  optReveal = 'missed'
+        <div className="screen-scroll gap-5">
+          <section className="rounded-card border-2 border-ink bg-surface p-6 shadow-card">
+            <h2 className="font-display text-[1.35rem] leading-snug font-extrabold tracking-tight text-ink">
+              {question.questionText}
+            </h2>
+            <div className="mt-5 flex flex-col gap-2.5" aria-live="polite">
+              {question.options.map((opt) => {
+                let optReveal: 'correct' | 'wrong' | 'missed' | undefined
+                if (reveal) {
+                  if (opt.key === reveal.picked) {
+                    optReveal = reveal.correct ? 'correct' : 'wrong'
+                  } else {
+                    optReveal = 'missed'
+                  }
                 }
-              }
-              return (
-                <OptionButton
-                  key={opt.key}
-                  optionKey={opt.key}
-                  text={opt.text}
-                  selected={selected === opt.key}
-                  disabled={reveal !== null || submitting}
-                  reveal={optReveal}
-                  onSelect={(k) => {
-                    if (!reveal && !submitting) setSelected(k)
-                  }}
-                />
-              )
-            })}
-          </div>
-        </section>
+                return (
+                  <OptionButton
+                    key={opt.key}
+                    optionKey={opt.key}
+                    text={opt.text}
+                    selected={selected === opt.key}
+                    disabled={reveal !== null || submitting}
+                    reveal={optReveal}
+                    onSelect={(k) => {
+                      if (!reveal && !submitting) setSelected(k)
+                    }}
+                  />
+                )
+              })}
+            </div>
+          </section>
+        </div>
 
-        {submitError && <ErrorBanner>{submitError}</ErrorBanner>}
+        <div className="screen-footer">
+          {submitError && <ErrorBanner>{submitError}</ErrorBanner>}
 
-        {!reveal ? (
-          <Button
-            size="lg"
-            disabled={selected === null || submitting}
-            onClick={() => selected && void confirmAnswer(selected)}
-          >
-            {submitting ? 'Locking answer…' : selected ? 'Lock answer' : 'Pick an option'}
-            {selected && !submitting && <Icon name="lock" size={18} weight="fill" />}
-          </Button>
-        ) : (
-          <p
-            className={`flex items-center justify-center gap-1.5 text-center font-display text-base font-extrabold tracking-tight ${reveal.correct ? 'text-success' : 'text-danger'}`}
-            role="status"
-          >
-            <Icon name={reveal.correct ? 'check-circle' : 'x-circle'} size={20} weight="fill" />
-            {reveal.correct ? 'Correct' : 'Not quite'}
+          {!reveal ? (
+            <Button
+              size="lg"
+              disabled={selected === null || submitting}
+              onClick={() => selected && void confirmAnswer(selected)}
+            >
+              {submitting ? 'Locking answer…' : selected ? 'Lock answer' : 'Pick an option'}
+              {selected && !submitting && <Icon name="lock" size={18} weight="fill" />}
+            </Button>
+          ) : (
+            <p
+              className={`flex items-center justify-center gap-1.5 text-center font-display text-base font-extrabold tracking-tight ${reveal.correct ? 'text-success' : 'text-danger'}`}
+              role="status"
+            >
+              <Icon name={reveal.correct ? 'check-circle' : 'x-circle'} size={20} weight="fill" />
+              {reveal.correct ? 'Correct' : 'Not quite'}
+            </p>
+          )}
+
+          <p className="mt-3 text-center text-[11px] leading-relaxed text-ink-muted">
+            One answer per question — locked the moment you confirm. No going back.
           </p>
-        )}
-
-        <p className="text-center text-[11px] leading-relaxed text-ink-muted">
-          One answer per question — locked the moment you confirm. No going back.
-        </p>
+        </div>
       </div>
     </AppShell>
   )

@@ -76,8 +76,9 @@ export function ProfileScreen() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-4">
-        <header className="flex items-center gap-4">
+      <div className="screen gap-4">
+        <div className="screen-scroll gap-4">
+        <header className="flex shrink-0 items-center gap-4">
           <div
             className="flex h-16 w-16 shrink-0 items-center justify-center rounded-pill border-2 border-ink bg-volt font-display text-2xl font-extrabold text-ink shadow-press-sm"
             aria-hidden
@@ -106,7 +107,7 @@ export function ProfileScreen() {
         </header>
 
         <section className="grid grid-cols-3 gap-3">
-          <StatCard label="Qestias" value={history === null ? '—' : `${stats.played}`} />
+          <StatCard label="Qests" value={history === null ? '—' : `${stats.played}`} />
           <StatCard label="Podiums" value={history === null ? '—' : `${stats.podiums}`} />
           <StatCard
             label="Net NIM"
@@ -215,11 +216,11 @@ export function ProfileScreen() {
           ) : history.length === 0 ? (
             <EmptyState
               icon={<Icon name="podium" size={28} weight="duotone" />}
-              title="No Qestias yet"
-              description="Join or create your first Qestia and your results will show up here."
+              title="No Qests yet"
+              description="Join or create your first Qest and your results will show up here."
               action={
                 <Link to="/home">
-                  <Button size="sm">Find a quiz</Button>
+                  <Button size="sm">Find a Qest</Button>
                 </Link>
               }
             />
@@ -275,25 +276,28 @@ export function ProfileScreen() {
           )}
         </section>
 
-        <Button
-          variant="secondary"
-          onClick={() => {
-            signOut()
-            navigate('/')
-          }}
-        >
-          Sign out
-        </Button>
+        <div className="screen-footer">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              signOut()
+              navigate('/')
+            }}
+          >
+            Sign out
+          </Button>
 
-        <p className="text-center text-[11px] text-ink-muted">
-          Qestia · where knowing becomes proving · v0.1
-        </p>
+          <p className="text-center text-[11px] text-ink-muted">
+            Qestia · where knowing becomes proving · v0.1
+          </p>
+        </div>
+        </div>
       </div>
 
       <Modal open={showHow} onClose={() => setShowHow(false)} title="How the money works">
         <div className="flex flex-col gap-4">
           <p className="text-sm leading-relaxed text-ink-soft">
-            Every stake sits in escrow until the quiz settles. No house, no hidden cut.
+            Every stake sits in escrow until the Qest settles. No house, no hidden cut.
           </p>
 
           <div className="rounded-card border-2 border-ink bg-surface p-4 shadow-card">

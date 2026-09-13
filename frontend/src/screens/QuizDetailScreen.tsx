@@ -46,7 +46,7 @@ export function QuizDetailScreen() {
       <AppShell>
         {notFound ? (
           <ErrorState
-            title="Quiz not found"
+            title="Qest not found"
             description="It may have been removed by its creator."
             action={
               <Button size="sm" onClick={() => navigate('/home')}>
@@ -56,7 +56,7 @@ export function QuizDetailScreen() {
           />
         ) : (
           <ErrorState
-            title="This quiz didn't load"
+            title="This Qest didn't load"
             description="It's out there — the page just couldn't reach it."
             hint="Check your connection"
             onRetry={() => void refresh()}
@@ -74,7 +74,7 @@ export function QuizDetailScreen() {
   if (!quiz) {
     return (
       <AppShell>
-        <div role="status" aria-label="Loading quiz">
+        <div role="status" aria-label="Loading Qest">
           <div className="h-72 animate-pulse rounded-card border border-line bg-paper-deep" />
         </div>
       </AppShell>
@@ -86,11 +86,12 @@ export function QuizDetailScreen() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-4">
+      <div className="screen gap-4">
         {error && data && <StaleBanner />}
 
-        <Link to="/home" className="inline-flex min-h-11 items-center gap-2 font-display text-sm font-bold text-ink-muted transition-colors hover:text-ink">
-          <Icon name="arrow-left" size={17} weight="bold" /> All quizzes
+        <div className="screen-scroll gap-4">
+        <Link to="/home" className="inline-flex min-h-11 shrink-0 items-center gap-2 font-display text-sm font-bold text-ink-muted transition-colors hover:text-ink">
+          <Icon name="arrow-left" size={17} weight="bold" /> All Qests
         </Link>
 
         <section className="rounded-card border-2 border-ink bg-surface p-5 shadow-card">
@@ -175,15 +176,17 @@ export function QuizDetailScreen() {
 
         {isCreator && (
           <p className="rounded-card border border-amber/30 bg-amber-soft px-4 py-3 text-xs font-semibold leading-relaxed text-ink">
-            You created this quiz — you play blind, same as everyone else. You never see the
+            You created this Qest — you play blind, same as everyone else. You never see the
             questions before the room opens.
           </p>
         )}
 
-        <div className="sticky bottom-24">
+        </div>
+
+        <div className="screen-footer">
           {joined ? (
             <Button size="lg" block onClick={() => navigate(`/quiz/${quizId}/lobby`)}>
-              {quiz.status === 'LIVE' ? 'Return to the quiz' : 'Go to lobby'}
+              {quiz.status === 'LIVE' ? 'Return to the Qest' : 'Go to lobby'}
             </Button>
           ) : quiz.status === 'OPEN' ? (
             <Button size="lg" block onClick={() => navigate(`/quiz/${quizId}/commit`)}>

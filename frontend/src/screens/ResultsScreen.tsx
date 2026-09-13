@@ -53,7 +53,7 @@ export function ResultsScreen() {
         {notFound ? (
           <EmptyState
             icon={<Icon name="alert" size={28} weight="duotone" />}
-            title="Quiz not found"
+            title="Qest not found"
             description="It may have been removed."
             action={
               <Link to="/home">
@@ -64,7 +64,7 @@ export function ResultsScreen() {
         ) : (
           <ErrorState
             title="Results didn't load"
-            description="The quiz exists — this page just couldn't reach it."
+            description="The Qest exists — this page just couldn't reach it."
             hint="Check your connection"
             onRetry={() => void refresh()}
             action={
@@ -98,10 +98,10 @@ export function ResultsScreen() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-4">
+      <div className="screen gap-4">
         {error && data && <StaleBanner />}
 
-        <header className="flex items-start justify-between gap-3">
+        <header className="flex shrink-0 items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">{quiz.title}</h1>
             <p className="mt-0.5 text-xs font-semibold text-ink-soft tabular-nums">
@@ -111,9 +111,12 @@ export function ResultsScreen() {
           <StatusPill status={quiz.status} />
         </header>
 
-        <StatusStepper current={quiz.status} />
+        <div className="shrink-0">
+          <StatusStepper current={quiz.status} />
+        </div>
 
-        {results === null ? (
+        <div className="screen-scroll gap-4">
+          {results === null ? (
           <section className="flex flex-col items-center gap-3 rounded-card border-2 border-ink bg-surface p-8 text-center shadow-card">
             <div className="flex h-12 w-12 items-center justify-center rounded-pill bg-volt-faint text-ink" aria-hidden>
               <Icon name="refresh" size={22} className="animate-spin" />
@@ -230,19 +233,22 @@ export function ResultsScreen() {
             </section>
           </>
         )}
+        </div>
 
-        <div className="flex flex-col gap-2">
-          <Button
-            size="lg"
-            variant={results ? 'primary' : 'secondary'}
-            disabled={results === null}
-            onClick={() => navigate(quizId ? `/quiz/${quizId}/review` : '/home')}
-          >
-            Review your answers
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/home')}>
-            Back to Home
-          </Button>
+        <div className="screen-footer">
+          <div className="flex flex-col gap-2">
+            <Button
+              size="lg"
+              variant={results ? 'primary' : 'secondary'}
+              disabled={results === null}
+              onClick={() => navigate(quizId ? `/quiz/${quizId}/review` : '/home')}
+            >
+              Review your answers
+            </Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/home')}>
+              Back to Home
+            </Button>
+          </div>
         </div>
       </div>
     </AppShell>

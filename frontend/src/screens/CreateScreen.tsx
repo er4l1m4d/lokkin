@@ -61,7 +61,7 @@ export function CreateScreen() {
 
   const generate = async () => {
     if (title.trim().length < 3) {
-      setError('Give your Qestia a title (3+ characters)')
+      setError('Give your Qest a title (3+ characters)')
       return
     }
     if (!canGenerate(material)) {
@@ -164,10 +164,10 @@ export function CreateScreen() {
 
   return (
     <AppShell>
-      <div className="flex flex-col gap-5">
-        <header>
+      <div className="screen gap-5">
+        <header className="shrink-0">
           <h1 className="font-display text-2xl font-extrabold tracking-tight text-ink">
-            Create a <span className="highlight">Qestia</span>
+            Create a <span className="highlight">Qest</span>
           </h1>
           <p className="mt-1 text-sm text-ink-soft">
             Your material in, a challenge out. You play blind — same as everyone.
@@ -182,6 +182,8 @@ export function CreateScreen() {
         )}
 
         {error && <ErrorBanner>{error}</ErrorBanner>}
+
+        <div className="screen-scroll gap-5">
 
         {step === 'upload' && (
           <section className="flex flex-col gap-4">
@@ -207,7 +209,7 @@ export function CreateScreen() {
                 type="text"
                 value={description}
                 maxLength={200}
-                placeholder="What is this quiz about?"
+                placeholder="What is this Qest about?"
                 onChange={(e) => setDescription(e.target.value)}
                 className="mt-1.5 min-h-12 w-full rounded-card border-2 border-ink bg-surface px-4 py-3 text-base font-medium text-ink placeholder:text-ink-muted/70 focus:bg-volt-faint"
               />
@@ -300,14 +302,11 @@ export function CreateScreen() {
               />
             </div>
 
-            <Button size="lg" onClick={() => void generate()}>
-              Generate questions
-            </Button>
-          </section>
+            </section>
         )}
 
         {step === 'generating' && (
-          <section className="flex min-h-[50vh] flex-col items-center justify-center gap-4 rounded-card border-2 border-ink bg-surface p-8 shadow-card">
+          <section className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 rounded-card border-2 border-ink bg-surface p-8 shadow-card">
             <div className="h-14 w-14 animate-spin rounded-pill border-4 border-paper-deep border-t-ink" />
             <p className="font-display text-base font-extrabold tracking-tight text-ink">{genMessage}</p>
             <p className="text-xs text-ink-muted">This usually takes a few seconds</p>
@@ -322,7 +321,7 @@ export function CreateScreen() {
               </p>
               <p className="mt-0.5 text-xs leading-relaxed text-ink-soft">
                 Check every question — you can edit, reorder, delete or add. Once someone
-                commits, the quiz locks.
+                commits, the Qest locks.
               </p>
             </div>
 
@@ -343,20 +342,31 @@ export function CreateScreen() {
               <Icon name="plus" size={16} weight="bold" />
               Add question
             </Button>
-
-            <div className="sticky bottom-24 flex flex-col gap-2">
-              <Button size="lg" onClick={() => void publish()} disabled={publishing}>
-                {publishing
-                  ? 'Publishing…'
-                  : startDelay === 0
-                    ? 'Publish — starts immediately'
-                    : `Publish — opens in ${startDelay} min`}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setStep('upload')} disabled={publishing}>
-                Back to material
-              </Button>
-            </div>
           </section>
+        )}
+        </div>
+
+        {step !== 'generating' && (
+          <div className="screen-footer">
+            {step === 'upload' ? (
+              <Button size="lg" onClick={() => void generate()}>
+                Generate questions
+              </Button>
+            ) : (
+              <>
+                <Button size="lg" onClick={() => void publish()} disabled={publishing}>
+                  {publishing
+                    ? 'Publishing…'
+                    : startDelay === 0
+                      ? 'Publish — starts immediately'
+                      : `Publish — opens in ${startDelay} min`}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setStep('upload')} disabled={publishing}>
+                  Back to material
+                </Button>
+              </>
+            )}
+          </div>
         )}
       </div>
     </AppShell>

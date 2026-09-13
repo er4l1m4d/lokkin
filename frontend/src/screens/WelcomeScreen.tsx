@@ -20,7 +20,7 @@ const MODES: Array<{ id: QuizMode; icon: IconName; title: string; blurb: string 
     id: 'practice',
     icon: 'book',
     title: 'Practice',
-    blurb: 'Study solo with AI-drafted Qestias. Free, no stakes.',
+    blurb: 'Study solo with AI-drafted Qests. Free, no stakes.',
   },
   {
     id: 'commitment',
@@ -68,7 +68,7 @@ export function WelcomeScreen() {
 
   return (
     <AppShell hideNav>
-      <div className="flex min-h-[calc(100dvh-6rem)] flex-col">
+      <div className="screen">
         <header className="relative flex items-center justify-center">
           {step > 0 && (
             <button
